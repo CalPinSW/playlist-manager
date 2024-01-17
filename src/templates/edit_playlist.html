@@ -1,0 +1,40 @@
+{% extends "layout.html" %} {% block title %}Playlist Manager App{% endblock %}
+{% block content %}
+<div class="jumbotron">
+  <h1 class="display-4">Edit Playlist</h1>
+  <p class="lead">A space to discover and manage new music.</p>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <h2>Edit Playlist</h2>
+    <form
+      method="post"
+      action="{{url_for('post_edit_playlist', id=playlist.id)}}"
+    >
+      <div class="form-group">
+        <label for="title">Title:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="title"
+          name="title"
+          value="{{playlist.title}}"
+        />
+      </div>
+      <div class="form-group">
+        <label for="description">Description:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="description"
+          name="description"
+          value="{{playlist.description}}"
+        />
+      </div>
+      <button type="submit" class="btn btn-dark">Submit</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

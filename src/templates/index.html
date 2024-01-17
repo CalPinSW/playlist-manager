@@ -12,6 +12,7 @@
       {% for playlist in playlists %}
       <li class="row">
         {{ playlist.title }} - {{ playlist.description }}
+        <a href="{{ url_for('get_edit_playlist', id=playlist.id)}}">Edit</a>
         <form
           action="{{ url_for('delete_playlist_by_id', id=playlist.id) }}"
           method="post"
