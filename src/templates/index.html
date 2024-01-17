@@ -10,7 +10,15 @@
     <h2>Playlists</h2>
     <ul class="list-group mb-4">
       {% for playlist in playlists %}
-      <li>{{ playlist.title }} - {{ playlist.description }}</li>
+      <li class="row">
+        {{ playlist.title }} - {{ playlist.description }}
+        <form
+          action="{{ url_for('delete_playlist_by_id', id=playlist.id) }}"
+          method="post"
+        >
+          <input type="submit" value="Delete" />
+        </form>
+      </li>
       {% endfor %}
     </ul>
   </div>
@@ -19,9 +27,22 @@
 <div class="row">
   <div class="col-md-12">
     <h2>Add Playlist</h2>
-    <ul class="list-group mb-4">
-      <!-- List the playlists here -->
-    </ul>
+    <form method="post" action="/create-playlist">
+      <div class="form-group">
+        <label for="title">Title:</label>
+        <input type="text" class="form-control" id="title" name="title" />
+      </div>
+      <div class="form-group">
+        <label for="description">Description:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="description"
+          name="description"
+        />
+      </div>
+      <button type="submit" class="btn btn-dark">Submit</button>
+    </form>
   </div>
 </div>
 {% endblock %}

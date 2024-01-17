@@ -30,7 +30,7 @@ def get_playlist(id):
     return next((playlist for playlist in playlists if playlist["id"] == int(id)), None)
 
 
-def add_playlist(title):
+def add_playlist(title, description):
     """
     Adds a new playlist with the specified title to the session.
 
@@ -45,7 +45,7 @@ def add_playlist(title):
     # Determine the ID for the playlist based on that of the previously added playlist
     id = playlists[-1]["id"] + 1 if playlists else 0
 
-    playlist = {"id": id, "title": title, "status": "Not Started"}
+    playlist = {"id": id, "title": title, "description": description}
 
     # Add the playlist to the list
     playlists.append(playlist)
@@ -70,3 +70,19 @@ def save_playlist(playlist):
     session["playlists"] = updated_playlists
 
     return playlist
+
+
+def delete_playlist(id):
+    """
+    Deletes an existing playlist in the session by id. If no existing playlist matches the specified ID, nothing is deleted.
+
+    Args:
+        playlist: The playlist to delete.
+    """
+    existing_playlists = get_playlists()
+    updated_playlists = [
+        playlist for playlist in existing_playlists if playlist["id"] != id
+    ]
+
+    print(updated_playlists)
+    session["playlists"] = updated_playlists
