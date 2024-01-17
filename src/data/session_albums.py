@@ -1,8 +1,8 @@
 from flask import session
 
 _DEFAULT_PLAYLISTS = [
-    {"id": 1, "status": "Not Started", "title": "List saved playlists"},
-    {"id": 2, "status": "Not Started", "title": "Allow new playlists to be added"},
+    {"id": 1, "title": "Playlist 1", "description": "A collection of albums"},
+    {"id": 2, "title": "Playlist 2", "description": "Some more good albums"},
 ]
 
 
@@ -16,7 +16,7 @@ def get_playlists():
     return session.get("playlists", _DEFAULT_PLAYLISTS.copy())
 
 
-def get_playlists(id):
+def get_playlist(id):
     """
     Fetches the saved playlist with the specified ID.
 
