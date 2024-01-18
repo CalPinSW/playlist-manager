@@ -1,5 +1,6 @@
-{% extends "layout.html" %} {% block title %}Playlist Manager App{% endblock %}
-{% block content %}
+{% from 'macros.html' import show_sort_icon_or_nothing %} {% extends
+"layout.html" %} {% block title %}Playlist Manager App{% endblock %} {% block
+content %}
 <div class="jumbotron">
   <h1 class="display-4">Playlist Manager</h1>
   <p class="lead">A space to discover and manage new music.</p>
@@ -8,20 +9,59 @@
 <div class="row">
   <div class="col-md-12">
     <h2>Playlists</h2>
-    <ul class="list-group mb-4">
-      {% for playlist in playlists %}
-      <li class="row">
-        {{ playlist.title }} - {{ playlist.description }}
-        <a href="{{ url_for('get_edit_playlist', id=playlist.id)}}">Edit</a>
-        <form
-          action="{{ url_for('delete_playlist_by_id', id=playlist.id) }}"
-          method="post"
-        >
-          <input type="submit" value="Delete" />
-        </form>
-      </li>
-      {% endfor %}
-    </ul>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">
+            <a
+              class="row"
+              href="{{ url_for('index', sort_by='title', desc=sort_by == 'title' and not desc)}}"
+            >
+              <span>Title</span>
+              {{ show_sort_icon_or_nothing(sort_by=='title', desc) }}
+            </a>
+          </th>
+          <th scope="col">
+            <a
+              class="row"
+              href="{{ url_for('index', sort_by='description', desc=sort_by == 'description' and not desc)}}"
+              ><span>Description</span>
+              {{ show_sort_icon_or_nothing(sort_by=='description', desc) }}
+            </a>
+          </th>
+          <th scope="col">
+            <a
+              class="row"
+              href="{{ url_for('index', sort_by='created_at', desc=sort_by == 'created_at' and not desc)}}"
+              ><span>Created At</span>
+              {{ show_sort_icon_or_nothing(sort_by=='created_at', desc) }}
+            </a>
+          </th>
+          <th scope="col"></th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for playlist in playlists %}
+        <tr>
+          <td>{{playlist.title}}</td>
+          <td>{{playlist.description}}</td>
+          <td>{{playlist.created_at.strftime("%m/%d/%Y")}}</td>
+          <td>
+            <a href="{{ url_for('get_edit_playlist', id=playlist.id)}}">Edit</a>
+          </td>
+          <td>
+            <form
+              action="{{ url_for('delete_playlist_by_id', id=playlist.id) }}"
+              method="post"
+            >
+              <input type="submit" value="Delete" />
+            </form>
+          </td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 

@@ -16,7 +16,13 @@ app.config.from_object(Config())
 @app.route("/")
 def index():
     playlists = get_playlists()
-    return render_template("index.html", playlists=playlists)
+    sort_by = request.args.get("sort_by")
+    desc = request.args.get("desc") == "True"
+    if sort_by is not None:
+        playlists.sort(key=lambda x: x[sort_by], reverse=desc)
+    return render_template(
+        "index.html", playlists=playlists, sort_by=sort_by, desc=desc
+    )
 
 
 @app.route("/create-playlist", methods=["POST"])

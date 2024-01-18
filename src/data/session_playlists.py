@@ -1,8 +1,19 @@
+from datetime import datetime
 from flask import session
 
 _DEFAULT_PLAYLISTS = [
-    {"id": 1, "title": "Playlist 1", "description": "A collection of albums"},
-    {"id": 2, "title": "Playlist 2", "description": "Some more good albums"},
+    {
+        "id": 1,
+        "title": "Playlist 1",
+        "description": "A collection of albums",
+        "created_at": datetime.now(),
+    },
+    {
+        "id": 2,
+        "title": "Playlist 2",
+        "description": "Some more good albums",
+        "created_at": datetime.now(),
+    },
 ]
 
 
@@ -45,7 +56,12 @@ def add_playlist(title, description):
     # Determine the ID for the playlist based on that of the previously added playlist
     id = playlists[-1]["id"] + 1 if playlists else 0
 
-    playlist = {"id": id, "title": title, "description": description}
+    playlist = {
+        "id": id,
+        "title": title,
+        "description": description,
+        "created_at": datetime.now(),
+    }
 
     # Add the playlist to the list
     playlists.append(playlist)
@@ -63,9 +79,12 @@ def save_playlist(playlist):
     """
     existing_playlists = get_playlists()
     updated_playlists = [
-        playlist if playlist["id"] == existing_playlist["id"] else existing_playlist
+        {**existing_playlist, **playlist}
+        if playlist["id"] == existing_playlist["id"]
+        else existing_playlist
         for existing_playlist in existing_playlists
     ]
+    print(updated_playlists)
 
     session["playlists"] = updated_playlists
 
