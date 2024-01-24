@@ -9,21 +9,20 @@ content %}
 <div class="row">
   <div class="col-md-12">
     <h2>Playlists</h2>
-    <table class="table">
+    <table class="table" aria-describedby="Table of created playlists">
       <thead>
         <tr>
           <th scope="col">
-            <a
-              class="row"
-              href="{{ url_for('index', sort_by='title', desc=sort_by == 'title' and not desc)}}"
-            >
-              <span>Title</span>
-              {{ show_sort_icon_or_nothing(sort_by=='title', desc) }}
-            </a>
+            <div>
+              <a
+                href="{{ url_for('index', sort_by='title', desc=sort_by == 'title' and not desc)}}"
+              >
+                Title {{ show_sort_icon_or_nothing(sort_by=='title', desc) }}
+              </a>
+            </div>
           </th>
           <th scope="col">
             <a
-              class="row"
               href="{{ url_for('index', sort_by='description', desc=sort_by == 'description' and not desc)}}"
               ><span>Description</span>
               {{ show_sort_icon_or_nothing(sort_by=='description', desc) }}
@@ -31,7 +30,6 @@ content %}
           </th>
           <th scope="col">
             <a
-              class="row"
               href="{{ url_for('index', sort_by='created_at', desc=sort_by == 'created_at' and not desc)}}"
               ><span>Created At</span>
               {{ show_sort_icon_or_nothing(sort_by=='created_at', desc) }}
@@ -48,42 +46,59 @@ content %}
           <td>{{playlist.description}}</td>
           <td>{{playlist.created_at.strftime("%m/%d/%Y")}}</td>
           <td>
-            <a href="{{ url_for('get_edit_playlist', id=playlist.id)}}">Edit</a>
+            <a href="{{ url_for('get_edit_playlist', id=playlist.id)}}"
+              ><button class="icon-btn">
+                {% include "icons/edit.html" %}
+              </button></a
+            >
           </td>
           <td>
             <form
               action="{{ url_for('delete_playlist_by_id', id=playlist.id) }}"
               method="post"
             >
-              <input type="submit" value="Delete" />
+              <button class="icon-btn">
+                {% include "icons/delete.html" %}
+              </button>
             </form>
           </td>
-          {% endfor %}
+        </tr>
+        {% endfor %}
+        <tr>
+          <form method="post" action="/create-playlist">
+            <td>
+              <div class="form-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="title"
+                  name="title"
+                  placeholder="New playlist title"
+                />
+              </div>
+            </td>
+            <td>
+              <div class="form-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="description"
+                  name="description"
+                  placeholder="New playlist description"
+                />
+              </div>
+            </td>
+            <td></td>
+            <td></td>
+            <td>
+              <button type="submit" class="icon-btn-submit">
+                {% include "icons/add.html" %}
+              </button>
+            </td>
+          </form>
         </tr>
       </tbody>
     </table>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-md-12">
-    <h2>Add Playlist</h2>
-    <form method="post" action="/create-playlist">
-      <div class="form-group">
-        <label for="title">Title:</label>
-        <input type="text" class="form-control" id="title" name="title" />
-      </div>
-      <div class="form-group">
-        <label for="description">Description:</label>
-        <input
-          type="text"
-          class="form-control"
-          id="description"
-          name="description"
-        />
-      </div>
-      <button type="submit" class="btn btn-dark">Submit</button>
-    </form>
   </div>
 </div>
 {% endblock %}

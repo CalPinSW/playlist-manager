@@ -1,0 +1,77 @@
+body {
+  background-color: #f6f4f5;
+}
+
+button,
+a.link-button {
+  all: unset;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border-color: #56445d;
+  background-color: #56445d;
+  color: #f6f4f5;
+  cursor: pointer;
+}
+
+button:hover,
+a.link-button:hover {
+  background: #7d6a84;
+  color: #f6f4f5;
+}
+
+button[type="submit"] {
+  background: #0a5c36;
+  border-color: #0a5c36;
+}
+
+button:hover[type="submit"] {
+  background: #1d8d58;
+}
+
+button.icon-btn {
+  all: unset;
+  background-color: #f6f4f5;
+  color: #56445d;
+  cursor: pointer;
+}
+button.icon-btn:hover {
+  color: #7d6a84;
+}
+
+button[type="submit"].icon-btn-submit {
+  all: unset;
+  background-color: #f6f4f5;
+  color: #0a5c36;
+  cursor: pointer;
+}
+
+button[type="submit"].icon-btn-submit:hover {
+  color: #1d8d58;
+}
+
+a {
+  color: #744387;
+}
+
+table.table td {
+  vertical-align: middle;
+}
+
+div.space-between > * {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+div.space-between > *:first-child {
+  margin-left: 0rem;
+}
+div.space-between > *:last-child {
+  margin-right: 0rem;
+}
+
+.jumbotron {
+  background-color: #e2f4cd;
+}
+
+.form-group {
+  margin-bottom: 0;
+}
