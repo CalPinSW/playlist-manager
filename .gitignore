@@ -42,6 +42,9 @@ cover/
 instance/
 .webassets-cache
 
+# NPM stuff:
+node_modules
+
 # Environments
 .env
 .venv

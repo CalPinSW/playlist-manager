@@ -1,0 +1,32 @@
+{
+  "name": "playlist-manager-frontend",
+  "version": "1.0.0",
+  "description": "A place to manage music",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node build/server.mjs",
+    "build": "node build/build.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CalPinSW/playlist-manager.git"
+  },
+  "author": "Calum Pinder",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CalPinSW/playlist-manager/issues"
+  },
+  "homepage": "https://github.com/CalPinSW/playlist-manager#readme",
+  "devDependencies": {
+    "@types/react-dom": "^18.2.18",
+    "esbuild": "0.19.12",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "live-server": "^1.2.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}
