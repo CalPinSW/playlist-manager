@@ -1,4 +1,5 @@
 from flask import Flask, redirect, render_template, request
+from flask_cors import CORS, cross_origin
 from src.data.session_playlists import (
     add_playlist,
     delete_playlist,
@@ -10,19 +11,22 @@ from src.data.session_playlists import (
 from src.flask_config import Config
 
 app = Flask(__name__)
+
 app.config.from_object(Config())
+app.config["CORS_HEADERS"] = "Content-Type"
+
+cors = CORS(app, resources={r"/foo": {"origins": "http://localhost:8080"}})
 
 
 @app.route("/")
+@cross_origin(origin="localhost", headers=["Content- Type", "Authorization"])
 def index():
     playlists = get_playlists()
     sort_by = request.args.get("sort_by")
     desc = request.args.get("desc") == "True"
     if sort_by is not None:
         playlists.sort(key=lambda x: x[sort_by], reverse=desc)
-    return render_template(
-        "index.html", playlists=playlists, sort_by=sort_by, desc=desc
-    )
+    return playlists
 
 
 @app.route("/create-playlist", methods=["POST"])

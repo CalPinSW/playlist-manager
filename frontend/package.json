@@ -4,8 +4,9 @@
   "description": "A place to manage music",
   "main": "index.js",
   "type": "module",
+  "proxies": "http://localhost:5000",
   "scripts": {
-    "start": "node build/server.mjs",
+    "dev": "node build/server.mjs",
     "build": "node build/build.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -25,6 +26,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.17.19",
     "live-server": "^1.2.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

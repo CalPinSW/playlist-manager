@@ -5,7 +5,7 @@ export const buildOptions = {
       process.env.NODE_ENV || "development"
     ),
   },
-  entryPoints: ["src/index.tsx"],
+  entryPoints: ["src/app.tsx"],
   minify: true,
   outfile: "public/bundle.js",
 };
