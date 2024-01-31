@@ -6,6 +6,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+frontend/public/bundle.js
 develop-eggs/
 dist/
 downloads/
@@ -46,6 +47,9 @@ instance/
 .env
 .venv
 .venv/
+
+# npm
+node_modules/
 
 # mypy
 .mypy_cache/
