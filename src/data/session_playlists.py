@@ -84,8 +84,6 @@ def save_playlist(playlist):
         else existing_playlist
         for existing_playlist in existing_playlists
     ]
-    print(updated_playlists)
-
     session["playlists"] = updated_playlists
 
     return playlist
@@ -102,6 +100,4 @@ def delete_playlist(id):
     updated_playlists = [
         playlist for playlist in existing_playlists if playlist["id"] != id
     ]
-
-    print(updated_playlists)
     session["playlists"] = updated_playlists
