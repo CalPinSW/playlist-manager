@@ -3,9 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getPlaylists } from "./api";
 import { Playlist } from "./interfaces/Playlist";
 import Header from "./presentational/Header";
-import PlaylistTable from "./playlistTable/PlaylistTable";
 
-export const Index: FC = () => {
+export const EditPlaylist: FC = () => {
   const { isLoading, error, data } = useQuery<Playlist[]>({
     queryKey: ["playlists"],
     queryFn: () => {
@@ -19,7 +18,7 @@ export const Index: FC = () => {
   return (
     <div>
       <Header />
-      <PlaylistTable playlists={data} />
+      Test
     </div>
   );
 };

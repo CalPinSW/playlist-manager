@@ -10,7 +10,7 @@ const runServer = async () => {
 
   liveServer.start({
     open: true,
-    port: +process.env.PORT || 8080,
+    port: +process.env.PORT || 1234,
     root: "public",
   });
 };

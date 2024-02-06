@@ -1,6 +1,6 @@
-interface Playlist {
+export interface ApiPlaylist {
   id: number;
   title: string;
   description?: string;
-  createdAt: Date;
+  created_at: string;
 }

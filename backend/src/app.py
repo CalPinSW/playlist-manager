@@ -15,7 +15,7 @@ app = Flask(__name__)
 app.config.from_object(Config())
 app.config["CORS_HEADERS"] = "Content-Type"
 
-cors = CORS(app, resources={r"/foo": {"origins": "http://localhost:8080"}})
+cors = CORS(app, resources={r"/foo": {"origins": "http://localhost:3000"}})
 
 
 @app.route("/")
