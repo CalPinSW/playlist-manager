@@ -11,6 +11,15 @@ export const getPlaylists = async (): Promise<Playlist[]> => {
     parsePlaylists(apiPlaylist)
   );
 };
+
+export const getPlaylist = async (id: string): Promise<Playlist> => {
+  const response = await fetch(`http://localhost:5000/edit-playlist/${id}`);
+  const apiResponse = await response
+    .json()
+    .then((data: any) => data as ApiPlaylist);
+  return parsePlaylists(apiResponse);
+};
+
 const parsePlaylists = (apiResult: ApiPlaylist): Playlist => {
   return {
     ...apiResult,

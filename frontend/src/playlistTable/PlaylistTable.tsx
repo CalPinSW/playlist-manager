@@ -48,11 +48,7 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
       sortable: false,
       width: 160,
       renderCell: (gridCellParams: GridCellParams<Playlist>) => {
-        return (
-          <EditPlaylistButton
-            onClick={() => onEditPlaylistClick(gridCellParams.row)}
-          />
-        );
+        return <EditPlaylistButton playlistId={gridCellParams.row.id} />;
       },
     },
     {

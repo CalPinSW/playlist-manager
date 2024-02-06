@@ -1,24 +1,45 @@
 import React, { FC } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getPlaylists } from "./api";
 import { Playlist } from "./interfaces/Playlist";
-import Header from "./presentational/Header";
+import { Link, useLoaderData } from "react-router-dom";
+import Input from "./components/Input";
 
 export const EditPlaylist: FC = () => {
-  const { isLoading, error, data } = useQuery<Playlist[]>({
-    queryKey: ["playlists"],
-    queryFn: () => {
-      return getPlaylists();
-    },
-  });
-  if (isLoading || !data) return "Loading...";
-
-  if (error) return "An error has occurred: " + error.message;
+  const playlist = useLoaderData() as Playlist;
 
   return (
     <div>
-      <Header />
-      Test
+      <div>
+        <div className="m-2">
+          <h2 className="text-6xl">Edit Playlist</h2>
+        </div>
+        <form
+          method="post"
+          action="{{url_for('post_edit_playlist', id=playlist.id)}}"
+        >
+          <div>
+            <label>Title:</label>
+            <Input
+              type="text"
+              id="title"
+              name="title"
+              defaultValue={playlist.title}
+            />
+          </div>
+          <div>
+            <label>Description:</label>
+            <input
+              type="text"
+              id="description"
+              name="description"
+              defaultValue={playlist.description}
+            />
+          </div>
+          <div>
+            <button type="submit">Submit</button>
+            <Link to={`/`}>Back</Link>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

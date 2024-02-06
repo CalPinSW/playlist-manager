@@ -1,16 +1,16 @@
 import { Edit } from "@mui/icons-material";
-import { Button } from "@mui/material";
 import React, { FC } from "react";
+import { Link } from "react-router-dom";
 
 interface IEditPlaylistButton {
-  onClick: () => void;
+  playlistId: number;
 }
 
-const EditPlaylistButton: FC<IEditPlaylistButton> = ({ onClick }) => {
+const EditPlaylistButton: FC<IEditPlaylistButton> = ({ playlistId }) => {
   return (
-    <Button onClick={onClick}>
+    <Link to={`edit/${playlistId}`}>
       <Edit color="primary" />
-    </Button>
+    </Link>
   );
 };
 

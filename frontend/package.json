@@ -6,7 +6,9 @@
   "type": "module",
   "proxies": "http://localhost:1234",
   "scripts": {
-    "dev": "node build/server.mjs",
+    "dev:esbuild": "node build/server.mjs",
+    "dev:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify",
+    "dev": "npm-run-all --parallel dev:*",
     "build": "node build/build.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -23,6 +25,7 @@
   "devDependencies": {
     "@types/react-dom": "^18.2.18",
     "esbuild": "0.19.12",
+    "npm-run-all": "^4.1.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3"
   },
@@ -37,6 +40,7 @@
     "moment": "^2.30.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hook-form": "^7.50.1",
     "react-router-dom": "^6.22.0"
   }
 }
