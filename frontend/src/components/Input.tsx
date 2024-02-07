@@ -1,10 +1,11 @@
+import { Input, InputBaseProps, InputProps } from "@mui/material";
 import React, { FC } from "react";
 
-const Input: FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
-  <input
+const CustomInput: FC<InputProps> = (props) => (
+  <Input
     {...props}
-    className={`m-1 border-solid border-2 border-primary-500`}
-  ></input>
+    className="m-2 border-solid border-2 border-primary-800"
+  ></Input>
 );
 
-export default Input;
+export default CustomInput;

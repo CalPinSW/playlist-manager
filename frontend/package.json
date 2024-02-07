@@ -7,7 +7,7 @@
   "proxies": "http://localhost:1234",
   "scripts": {
     "dev:esbuild": "node build/server.mjs",
-    "dev:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify",
+    "dev:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify --watch",
     "dev": "npm-run-all --parallel dev:*",
     "build": "node build/build.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"

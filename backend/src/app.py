@@ -30,6 +30,7 @@ def index():
 
 
 @app.route("/create-playlist", methods=["POST"])
+@cross_origin(origin="localhost", headers=["Content- Type", "Authorization"])
 def create_playlist():
     title = request.form.get("title")
     description = request.form.get("description")
@@ -38,18 +39,21 @@ def create_playlist():
 
 
 @app.route("/delete-playlist/<int:id>", methods=["POST"])
+@cross_origin(origin="localhost", headers=["Content- Type", "Authorization"])
 def delete_playlist_by_id(id):
     delete_playlist(id)
     return redirect("/")
 
 
 @app.route("/edit-playlist/<int:id>", methods=["GET"])
+@cross_origin(origin="localhost", headers=["Content- Type", "Authorization"])
 def get_edit_playlist(id):
     playlist = get_playlist(id)
-    return render_template("edit_playlist.html", playlist=playlist)
+    return playlist
 
 
 @app.route("/edit-playlist/<int:id>", methods=["POST"])
+@cross_origin(origin="localhost", headers=["Content- Type", "Authorization"])
 def post_edit_playlist(id):
     title = request.form.get("title")
     description = request.form.get("description")

@@ -1,7 +1,6 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import "./index.css";
 import resolveConfig from "tailwindcss/resolveConfig";
 import tailwindConfigModule from "../tailwind.config";
 import * as ReactDOM from "react-dom/client";

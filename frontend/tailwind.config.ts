@@ -1,5 +1,5 @@
 const tailwindConfigModule = {
-  content: ["./src/*.{js,jsx,ts,tsx}", "./public/index.html"],
+  content: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
   theme: {
     colors: {
       primary: {

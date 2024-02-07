@@ -6,7 +6,6 @@ export const buildOptions = {
     ),
   },
   entryPoints: ["src/app.tsx"],
-  minify: true,
   outfile: "public/bundle.js",
 };
 
