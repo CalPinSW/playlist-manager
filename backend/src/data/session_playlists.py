@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import session
 
+# TODO: Workaround https://stackoverflow.com/questions/60766889/flask-session-does-not-hold-any-value-between-requests
 _DEFAULT_PLAYLISTS = [
     {
         "id": 1,
@@ -79,15 +80,14 @@ def save_playlist(playlist):
     """
     existing_playlists = get_playlists()
     updated_playlists = [
-        {**existing_playlist, **playlist}
-        if playlist["id"] == existing_playlist["id"]
-        else existing_playlist
+        (
+            {**existing_playlist, **playlist}
+            if playlist["id"] == existing_playlist["id"]
+            else existing_playlist
+        )
         for existing_playlist in existing_playlists
     ]
-    print(updated_playlists)
-
     session["playlists"] = updated_playlists
-
     return playlist
 
 
@@ -103,5 +103,4 @@ def delete_playlist(id):
         playlist for playlist in existing_playlists if playlist["id"] != id
     ]
 
-    print(updated_playlists)
     session["playlists"] = updated_playlists

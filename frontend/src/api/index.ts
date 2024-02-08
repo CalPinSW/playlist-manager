@@ -20,6 +20,23 @@ export const getPlaylist = async (id: string): Promise<Playlist> => {
   return parsePlaylists(apiResponse);
 };
 
+export const updatePlaylist = async (playlist: Playlist): Promise<Playlist> => {
+  const response = await fetch(
+    `http://localhost:5000/edit-playlist/${playlist.id}`,
+    {
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(playlist),
+    }
+  );
+  const apiResponse = await response
+    .json()
+    .then((data: any) => data as ApiPlaylist);
+  return parsePlaylists(apiResponse);
+};
+
 const parsePlaylists = (apiResult: ApiPlaylist): Playlist => {
   return {
     ...apiResult,

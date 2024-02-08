@@ -4,9 +4,14 @@ import { Link, useLoaderData } from "react-router-dom";
 import Input from "./components/Input";
 import InputLabel from "./components/InputLabel";
 import Button from "./components/Button";
+import { Form, useForm } from "react-hook-form";
+import { updatePlaylist } from "./api";
 
 export const EditPlaylist: FC = () => {
   const playlist = useLoaderData() as Playlist;
+  const { control, register } = useForm({
+    defaultValues: playlist,
+  });
 
   return (
     <div>
@@ -15,15 +20,22 @@ export const EditPlaylist: FC = () => {
           <h2 className="text-xl">Edit Playlist</h2>
         </div>
         <div className="m-2">
-          <form
+          <Form
             method="post"
-            action="{{url_for('post_edit_playlist', id=playlist.id)}}"
+            action={`http://localhost:5000/edit-playlist/${playlist.id}`}
+            control={control}
+            onSuccess={() => {
+              alert("Success");
+            }}
+            onError={() => {
+              alert("error");
+            }}
           >
             <div>
               <InputLabel>Title:</InputLabel>
               <Input
+                register={register("title")}
                 type="text"
-                id="title"
                 name="title"
                 defaultValue={playlist.title}
               />
@@ -31,17 +43,17 @@ export const EditPlaylist: FC = () => {
             <div>
               <InputLabel>Description:</InputLabel>
               <Input
+                register={register("description")}
                 type="text"
-                id="description"
                 name="description"
                 defaultValue={playlist.description}
               />
             </div>
             <div className="space-x-4 justify-stretch">
-              <Button>Submit</Button>
+              <Button type="submit">Submit</Button>
               <Link to={`/`}>Back</Link>
             </div>
-          </form>
+          </Form>
         </div>
       </div>
     </div>

@@ -57,5 +57,6 @@ def get_edit_playlist(id):
 def post_edit_playlist(id):
     title = request.form.get("title")
     description = request.form.get("description")
+    print(description)
     save_playlist({"id": id, "title": title, "description": description})
     return redirect("/")
