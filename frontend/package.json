@@ -4,7 +4,6 @@
   "description": "A place to manage music",
   "main": "index.js",
   "type": "module",
-  "proxies": "http://localhost:1234",
   "scripts": {
     "dev:esbuild": "node build/server.mjs",
     "dev:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify --watch",

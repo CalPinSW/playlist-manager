@@ -15,11 +15,14 @@ app = Flask(__name__)
 app.config.from_object(Config())
 app.config["CORS_HEADERS"] = "Content-Type"
 
-cors = CORS(app, resources={r"/foo": {"origins": "http://localhost:3000"}})
+cors = CORS(
+    app,
+    resources={r"/*": {"origins": "http://127.0.0.1:1234"}},
+    supports_credentials=True,
+)
 
 
 @app.route("/")
-@cross_origin(origin="localhost", headers=["Content- Type", "Authorization"])
 def index():
     playlists = get_playlists()
     sort_by = request.args.get("sort_by")
@@ -30,7 +33,6 @@ def index():
 
 
 @app.route("/create-playlist", methods=["POST"])
-@cross_origin(origin="localhost", headers=["Content- Type", "Authorization"])
 def create_playlist():
     title = request.form.get("title")
     description = request.form.get("description")
@@ -39,21 +41,18 @@ def create_playlist():
 
 
 @app.route("/delete-playlist/<int:id>", methods=["POST"])
-@cross_origin(origin="localhost", headers=["Content- Type", "Authorization"])
 def delete_playlist_by_id(id):
     delete_playlist(id)
     return redirect("/")
 
 
 @app.route("/edit-playlist/<int:id>", methods=["GET"])
-@cross_origin(origin="localhost", headers=["Content- Type", "Authorization"])
 def get_edit_playlist(id):
     playlist = get_playlist(id)
     return playlist
 
 
 @app.route("/edit-playlist/<int:id>", methods=["POST"])
-@cross_origin(origin="localhost", headers=["Content- Type", "Authorization"])
 def post_edit_playlist(id):
     title = request.form.get("title")
     description = request.form.get("description")
