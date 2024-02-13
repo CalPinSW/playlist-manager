@@ -1,30 +1,29 @@
-from flask import Flask, redirect, render_template, request
-from flask_cors import CORS, cross_origin
+from flask import Flask, redirect, request
+from flask_cors import CORS
 from src.data.session_playlists import (
     add_playlist,
     delete_playlist,
-    get_playlist,
-    get_playlists,
-    save_playlist,
 )
-
 from src.flask_config import Config
+from src.spotify import SpotifyClient
 
 app = Flask(__name__)
+app.config.from_pyfile("settings.py")
+spotify = SpotifyClient()
 
 app.config.from_object(Config())
 app.config["CORS_HEADERS"] = "Content-Type"
 
 cors = CORS(
     app,
-    resources={r"/*": {"origins": "http://127.0.0.1:1234"}},
+    resources={r"/*": {"origins": "*"}},
     supports_credentials=True,
 )
 
 
 @app.route("/")
 def index():
-    playlists = get_playlists()
+    playlists = spotify.get_playlists()
     sort_by = request.args.get("sort_by")
     desc = request.args.get("desc") == "True"
     if sort_by is not None:
@@ -40,22 +39,21 @@ def create_playlist():
     return redirect("/")
 
 
-@app.route("/delete-playlist/<int:id>", methods=["POST"])
+@app.route("/delete-playlist/<id>", methods=["POST"])
 def delete_playlist_by_id(id):
     delete_playlist(id)
     return redirect("/")
 
 
-@app.route("/edit-playlist/<int:id>", methods=["GET"])
+@app.route("/edit-playlist/<id>", methods=["GET"])
 def get_edit_playlist(id):
-    playlist = get_playlist(id)
+    playlist = spotify.get_playlist(id)
     return playlist
 
 
-@app.route("/edit-playlist/<int:id>", methods=["POST"])
+@app.route("/edit-playlist/<id>", methods=["POST"])
 def post_edit_playlist(id):
-    title = request.form.get("title")
+    name = request.form.get("name")
     description = request.form.get("description")
-    print(description)
-    save_playlist({"id": id, "title": title, "description": description})
+    spotify.update_playlist(id, name, description)
     return redirect("/")

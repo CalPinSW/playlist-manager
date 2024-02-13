@@ -1,10 +1,5 @@
-import { Input, InputLabel } from "@mui/material";
 import React, { FC } from "react";
-import {
-  FieldValues,
-  UseFormRegister,
-  UseFormRegisterReturn,
-} from "react-hook-form";
+import { UseFormRegisterReturn } from "react-hook-form";
 
 interface CustomInputProps {
   name: string;
@@ -20,7 +15,7 @@ const CustomInput: FC<CustomInputProps> = ({
   type,
 }) => (
   <div>
-    <Input
+    <input
       id={name}
       {...register}
       type={type}

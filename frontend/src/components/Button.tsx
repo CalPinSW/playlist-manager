@@ -1,11 +1,13 @@
-import { Button, ButtonProps, ButtonTypeMap, ExtendButtonBase } from "@mui/material";
 import React, { FC } from "react";
 
-const CustomButton: FC<ButtonProps> = (
-  props
-) => {
+const CustomButton: FC<
+  React.DetailedHTMLProps<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    HTMLButtonElement
+  >
+> = (props) => {
   return (
-    <Button {...props} className={"bg-secondary-600 rounded p-2"}></Button>
+    <button {...props} className={"bg-secondary-600 rounded p-2"}></button>
   );
 };
 
