@@ -33,15 +33,15 @@ def index():
 
 @app.route("/create-playlist", methods=["POST"])
 def create_playlist():
-    title = request.form.get("title")
+    name = request.form.get("name")
     description = request.form.get("description")
-    add_playlist(title, description)
+    spotify.create_playlist(name, description)
     return redirect("/")
 
 
 @app.route("/delete-playlist/<id>", methods=["POST"])
 def delete_playlist_by_id(id):
-    delete_playlist(id)
+    spotify.delete_playlist(id)
     return redirect("/")
 
 

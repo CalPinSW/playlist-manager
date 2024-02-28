@@ -10,6 +10,8 @@ scope = [
     "user-library-read",
     "user-read-currently-playing",
     "user-read-playback-state",
+    "playlist-modify-public",
+    "playlist-modify-private",
     "playlist-read-private",
     "playlist-read-collaborative",
     "playlist-modify-private",
@@ -82,11 +84,24 @@ class SpotifyClient:
         api_playlist = self.client.playlist(playlist_id=id)
         return api_playlist
 
+    def create_playlist(self, name, description):
+        description = None if description == "" else description
+        user = self.client.me()
+
+        return self.client.user_playlist_create(
+            user=user["id"], name=name, description=description
+        )
+
     def update_playlist(self, id: str, name, description):
         description = None if description == "" else description
         return self.client.playlist_change_details(
             playlist_id=id, name=name, description=description
         )
+
+    def delete_playlist(self, id: str):
+        user = self.client.me()
+
+        return self.client.user_playlist_unfollow(user=user["id"], playlist_id=id)
 
     def get_my_current_playback(self) -> PlaybackInfo:
         api_playback = self.client.current_playback()

@@ -10,6 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import PlaylistIcon from "./PlaylistIcon";
+import { deletePlaylist } from "../api";
 
 interface IPlaylistTable {
   playlists: Playlist[];
@@ -17,7 +18,7 @@ interface IPlaylistTable {
 
 const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
   const onDeletePlaylistClick = (playlist: Playlist) => {
-    null;
+    deletePlaylist(playlist);
   };
 
   const columnHelper = createColumnHelper<Playlist>();

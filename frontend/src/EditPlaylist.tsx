@@ -36,7 +36,7 @@ export const EditPlaylist: FC = () => {
               <Input
                 register={register("name")}
                 type="text"
-                name="title"
+                name="name"
                 defaultValue={playlist.name}
               />
             </div>

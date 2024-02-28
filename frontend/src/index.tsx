@@ -4,6 +4,7 @@ import { getPlaylists } from "./api";
 import { Playlist } from "./interfaces/Playlist";
 import PlaylistTable from "./playlistTable/PlaylistTable";
 import Box from "./components/Box";
+import AddPlaylistForm from "./AddPlaylistForm";
 
 export const Index: FC = () => {
   const { isLoading, error, data } = useQuery<Playlist[]>({
@@ -18,8 +19,11 @@ export const Index: FC = () => {
   if (error) return "An error has occurred: " + error.message;
 
   return (
-    <Box>
-      <PlaylistTable playlists={data} />
-    </Box>
+    <div>
+      <AddPlaylistForm />
+      <Box>
+        <PlaylistTable playlists={data} />
+      </Box>
+    </div>
   );
 };
