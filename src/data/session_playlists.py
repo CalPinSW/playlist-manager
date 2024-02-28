@@ -1,8 +1,19 @@
+from datetime import datetime
 from flask import session
 
 _DEFAULT_PLAYLISTS = [
-    {"id": 1, "status": "Not Started", "title": "List saved playlists"},
-    {"id": 2, "status": "Not Started", "title": "Allow new playlists to be added"},
+    {
+        "id": 1,
+        "title": "Playlist 1",
+        "description": "A collection of albums",
+        "created_at": datetime.now(),
+    },
+    {
+        "id": 2,
+        "title": "Playlist 2",
+        "description": "Some more good albums",
+        "created_at": datetime.now(),
+    },
 ]
 
 
@@ -16,7 +27,7 @@ def get_playlists():
     return session.get("playlists", _DEFAULT_PLAYLISTS.copy())
 
 
-def get_playlists(id):
+def get_playlist(id):
     """
     Fetches the saved playlist with the specified ID.
 
@@ -30,7 +41,7 @@ def get_playlists(id):
     return next((playlist for playlist in playlists if playlist["id"] == int(id)), None)
 
 
-def add_playlist(title):
+def add_playlist(title, description):
     """
     Adds a new playlist with the specified title to the session.
 
@@ -45,7 +56,12 @@ def add_playlist(title):
     # Determine the ID for the playlist based on that of the previously added playlist
     id = playlists[-1]["id"] + 1 if playlists else 0
 
-    playlist = {"id": id, "title": title, "status": "Not Started"}
+    playlist = {
+        "id": id,
+        "title": title,
+        "description": description,
+        "created_at": datetime.now(),
+    }
 
     # Add the playlist to the list
     playlists.append(playlist)
@@ -63,10 +79,25 @@ def save_playlist(playlist):
     """
     existing_playlists = get_playlists()
     updated_playlists = [
-        playlist if playlist["id"] == existing_playlist["id"] else existing_playlist
+        {**existing_playlist, **playlist}
+        if playlist["id"] == existing_playlist["id"]
+        else existing_playlist
         for existing_playlist in existing_playlists
     ]
-
     session["playlists"] = updated_playlists
 
     return playlist
+
+
+def delete_playlist(id):
+    """
+    Deletes an existing playlist in the session by id. If no existing playlist matches the specified ID, nothing is deleted.
+
+    Args:
+        playlist: The playlist to delete.
+    """
+    existing_playlists = get_playlists()
+    updated_playlists = [
+        playlist for playlist in existing_playlists if playlist["id"] != id
+    ]
+    session["playlists"] = updated_playlists

@@ -1,5 +1,6 @@
-{% extends "layout.html" %} {% block title %}Playlist Manager App{% endblock %}
-{% block content %}
+{% from 'macros.html' import show_sort_icon_or_nothing %} {% extends
+"layout.html" %} {% block title %}Playlist Manager App{% endblock %} {% block
+content %}
 <div class="jumbotron">
   <h1 class="display-4">Playlist Manager</h1>
   <p class="lead">A space to discover and manage new music.</p>
@@ -7,10 +8,98 @@
 
 <div class="row">
   <div class="col-md-12">
-    <h2>Albums</h2>
-    <ul class="list-group mb-4">
-      <!-- List the playlists here -->
-    </ul>
+    <h2>Playlists</h2>
+    <table class="table" aria-describedby="Table of created playlists">
+      <thead>
+        <tr>
+          <th scope="col">
+            <div>
+              <a
+                href="{{ url_for('index', sort_by='title', desc=sort_by == 'title' and not desc)}}"
+              >
+                Title {{ show_sort_icon_or_nothing(sort_by=='title', desc) }}
+              </a>
+            </div>
+          </th>
+          <th scope="col">
+            <a
+              href="{{ url_for('index', sort_by='description', desc=sort_by == 'description' and not desc)}}"
+              ><span>Description</span>
+              {{ show_sort_icon_or_nothing(sort_by=='description', desc) }}
+            </a>
+          </th>
+          <th scope="col">
+            <a
+              href="{{ url_for('index', sort_by='created_at', desc=sort_by == 'created_at' and not desc)}}"
+              ><span>Created At</span>
+              {{ show_sort_icon_or_nothing(sort_by=='created_at', desc) }}
+            </a>
+          </th>
+          <th scope="col"></th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for playlist in playlists %}
+        <tr>
+          <td>{{playlist.title}}</td>
+          <td>{{playlist.description}}</td>
+          <td>{{playlist.created_at.strftime("%m/%d/%Y")}}</td>
+          <td>
+            <a href="{{ url_for('get_edit_playlist', id=playlist.id)}}"
+              ><button class="icon-btn">
+                {% include "icons/edit.html" %}
+              </button></a
+            >
+          </td>
+          <td>
+            <form
+              action="{{ url_for('delete_playlist_by_id', id=playlist.id) }}"
+              method="post"
+            >
+              <button class="icon-btn">
+                {% include "icons/delete.html" %}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <form method="post" action="/create-playlist">
+            <td>
+              <div class="form-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="title"
+                  name="title"
+                  placeholder="New playlist title"
+                  required
+                />
+              </div>
+            </td>
+            <td>
+              <div class="form-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="description"
+                  name="description"
+                  placeholder="New playlist description"
+                />
+              </div>
+            </td>
+            <td></td>
+            <td></td>
+            <td>
+              <button type="submit" class="icon-btn-submit">
+                {% include "icons/add.html" %}
+              </button>
+            </td>
+          </form>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 {% endblock %}
