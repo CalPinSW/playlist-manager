@@ -24,30 +24,32 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
   const columnHelper = createColumnHelper<Playlist>();
   const defaultColumns = [
     columnHelper.display({
-      size: 20,
       id: "image",
+      size: 100,
       cell: ({ row }) => {
         if (row.original.images[0]?.url) {
-          return <img src={row.original.images[0].url} className="w-40"></img>;
+          return <img src={row.original.images[0].url} className="w-16"></img>;
         }
-        return <PlaylistIcon className="w-24 h-24 fill-primary-500" />;
+        return <PlaylistIcon className="w-16 h-16 fill-primary-500" />;
       },
     }),
     columnHelper.accessor("name", {
-      size: 10,
+      size: 200,
       cell: (info) => info.getValue(),
-      footer: (props) => props.column.id,
     }),
     columnHelper.accessor("description", {
+      size: 200,
       cell: (info) => info.getValue(),
     }),
     columnHelper.display({
+      size: 50,
       id: "edit",
       cell: ({ row }) => {
         return <EditPlaylistButton playlistId={row.original.id} />;
       },
     }),
     columnHelper.display({
+      size: 50,
       id: "delete",
       cell: ({ row }) => {
         return (
@@ -67,12 +69,19 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
 
   return (
     <div>
-      <table>
+      <table style={{ tableLayout: "fixed", width: "100%" }}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="flex">
+            <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <th key={header.id}>
+                <th
+                  key={header.id}
+                  className="text-left"
+                  style={{
+                    width:
+                      header.getSize() !== 150 ? header.getSize() : undefined,
+                  }}
+                >
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -86,31 +95,23 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="h-20">
+            <tr key={row.id} className="h-16">
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id}>
+                <td
+                  key={cell.id}
+                  style={{
+                    width:
+                      cell.column.getSize() !== 150
+                        ? cell.column.getSize()
+                        : undefined,
+                  }}
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
             </tr>
           ))}
         </tbody>
-        <tfoot>
-          {table.getFooterGroups().map((footerGroup) => (
-            <tr key={footerGroup.id}>
-              {footerGroup.headers.map((header) => (
-                <th key={header.id}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.footer,
-                        header.getContext()
-                      )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </tfoot>
       </table>
     </div>
   );

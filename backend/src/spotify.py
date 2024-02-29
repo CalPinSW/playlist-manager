@@ -76,8 +76,8 @@ class SpotifyClient:
             )
         )
 
-    def get_playlists(self):
-        api_playlists = self.client.current_user_playlists()
+    def get_playlists(self, limit=10, offset=0):
+        api_playlists = self.client.current_user_playlists(limit=limit, offset=offset)
         return api_playlists["items"]
 
     def get_playlist(self, id: str):

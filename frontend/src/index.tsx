@@ -20,10 +20,10 @@ export const Index: FC = () => {
 
   return (
     <div>
-      <AddPlaylistForm />
       <Box>
         <PlaylistTable playlists={data} />
       </Box>
+      <AddPlaylistForm />
     </div>
   );
 };
