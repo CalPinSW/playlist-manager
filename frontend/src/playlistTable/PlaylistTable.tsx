@@ -25,12 +25,14 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
   const defaultColumns = [
     columnHelper.display({
       id: "image",
-      size: 100,
+      size: 20,
       cell: ({ row }) => {
         if (row.original.images[0]?.url) {
-          return <img src={row.original.images[0].url} className="w-16"></img>;
+          return (
+            <img src={row.original.images[0].url} className="w-full"></img>
+          );
         }
-        return <PlaylistIcon className="w-16 h-16 fill-primary-500" />;
+        return <PlaylistIcon className="w-full h-full fill-primary-500" />;
       },
     }),
     columnHelper.accessor("name", {

@@ -1,7 +1,14 @@
 import { Playlist } from "../interfaces/Playlist";
 
-export const getPlaylists = async (): Promise<Playlist[]> => {
-  const response = await fetch("http://localhost:5000");
+export const getPlaylists = async (
+  offset: number,
+  limit: number
+): Promise<Playlist[]> => {
+  const response = await fetch(
+    `http://localhost:5000/?limit=${encodeURIComponent(
+      limit
+    )}&offset=${encodeURIComponent(offset)}`
+  );
   const apiResponse = await response
     .json()
     .then((data: any) => data as Playlist[]);

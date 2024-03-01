@@ -23,7 +23,9 @@ cors = CORS(
 
 @app.route("/")
 def index():
-    playlists = spotify.get_playlists()
+    limit = request.args.get("limit")
+    offset = request.args.get("offset")
+    playlists = spotify.get_playlists(limit=limit, offset=offset)
     sort_by = request.args.get("sort_by")
     desc = request.args.get("desc") == "True"
     if sort_by is not None:
