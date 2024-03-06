@@ -16,7 +16,7 @@ app.config["CORS_HEADERS"] = "Content-Type"
 
 cors = CORS(
     app,
-    resources={r"/*": {"origins": "*"}},
+    resources={r"/*": {"origins": ["http://127.0.0.1:1234", "http://localhost:1234"]}},
     supports_credentials=True,
 )
 
