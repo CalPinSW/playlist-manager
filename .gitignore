@@ -5,10 +5,9 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
-frontend/public/bundle.js
 develop-eggs/
-dist/
+frontend/public/bundle.js
+frontend/public/index.css
 downloads/
 eggs/
 .eggs/
@@ -42,6 +41,9 @@ cover/
 # Flask stuff:
 instance/
 .webassets-cache
+
+# NPM stuff:
+node_modules
 
 # Environments
 .env

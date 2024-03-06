@@ -1,4 +1,5 @@
 from flask import Flask, redirect, render_template, request
+from flask_cors import CORS, cross_origin
 from src.data.session_playlists import (
     add_playlist,
     delete_playlist,
@@ -10,7 +11,15 @@ from src.data.session_playlists import (
 from src.flask_config import Config
 
 app = Flask(__name__)
+
 app.config.from_object(Config())
+app.config["CORS_HEADERS"] = "Content-Type"
+
+cors = CORS(
+    app,
+    resources={r"/*": {"origins": "http://127.0.0.1:1234"}},
+    supports_credentials=True,
+)
 
 
 @app.route("/")
@@ -20,9 +29,7 @@ def index():
     desc = request.args.get("desc") == "True"
     if sort_by is not None:
         playlists.sort(key=lambda x: x[sort_by], reverse=desc)
-    return render_template(
-        "index.html", playlists=playlists, sort_by=sort_by, desc=desc
-    )
+    return playlists
 
 
 @app.route("/create-playlist", methods=["POST"])
@@ -42,12 +49,13 @@ def delete_playlist_by_id(id):
 @app.route("/edit-playlist/<int:id>", methods=["GET"])
 def get_edit_playlist(id):
     playlist = get_playlist(id)
-    return render_template("edit_playlist.html", playlist=playlist)
+    return playlist
 
 
 @app.route("/edit-playlist/<int:id>", methods=["POST"])
 def post_edit_playlist(id):
     title = request.form.get("title")
     description = request.form.get("description")
+    print(description)
     save_playlist({"id": id, "title": title, "description": description})
     return redirect("/")
