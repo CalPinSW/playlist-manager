@@ -1,21 +1,15 @@
+from dataclasses import dataclass, field
+from typing import List, Optional
+
+
+@dataclass
 class Album:
-    def __init__(
-        self,
-        artists,
-        title,
-        release_date=None,
-        spotify_id=None,
-        score=None,
-        genres=None,
-        summary=None,
-    ):
-        self.artists = artists
-        self.title = title
-        self.release_date = release_date
-        self.score = score
-        self.genres = genres
-        self.summary = summary
-        self.spotify_id = spotify_id
+    artists: List[str]
+    title: str
+    release_date: Optional[str] = None
+    score: Optional[int] = None
+    genres: List[str] = field(default_factory=list)
+    summary: Optional[str] = None
 
     def get_formatted_artists(self):
         return ", ".join(self.artists)
