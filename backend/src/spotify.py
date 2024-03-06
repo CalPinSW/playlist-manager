@@ -2,9 +2,9 @@ import os
 from typing import List
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-from src.album import Album
+from src.dataclasses.album import Album
+from src.dataclasses.playback_info import PlaybackInfo
 
-from src.text_formatting import format_ms_as_mins_and_secs
 
 scope = [
     "user-library-read",
@@ -17,48 +17,6 @@ scope = [
     "playlist-modify-private",
     "playlist-modify-public",
 ]
-
-
-class PlaybackInfo:
-    def __init__(
-        self,
-        track_title,
-        album_title,
-        track_artists,
-        album_artists,
-        artwork_url,
-        track_progress,
-        track_duration,
-        album_progress,
-        album_duration,
-    ):
-        self.track_title = track_title
-        self.album_title = album_title
-        self.track_artists = track_artists
-        self.album_artists = album_artists
-        self.artwork_url = artwork_url
-        self.track_progress = track_progress
-        self.track_duration = track_duration
-        self.album_progress = album_progress
-        self.album_duration = album_duration
-
-    def get_formatted_artists(self):
-        return ", ".join(self.track_artists)
-
-    def get_formatted_track_progress(self):
-        return (
-            format_ms_as_mins_and_secs(self.track_progress)
-            + " / "
-            + format_ms_as_mins_and_secs(self.track_duration)
-        )
-
-    def get_formatted_album_progress(self):
-        return (
-            format_ms_as_mins_and_secs(self.album_progress)
-            + " / "
-            + format_ms_as_mins_and_secs(self.album_duration)
-            + f" ({(100*self.album_progress/self.album_duration):02.0f}%)"
-        )
 
 
 class SpotifyClient:

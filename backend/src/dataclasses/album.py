@@ -11,5 +11,5 @@ class Album:
     genres: List[str] = field(default_factory=list)
     summary: Optional[str] = None
 
-    def get_formatted_artists(self):
+    def get_formatted_artists(self) -> str:
         return ", ".join(self.artists)
