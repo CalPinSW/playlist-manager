@@ -1,9 +1,5 @@
 from flask import Flask, redirect, request
 from flask_cors import CORS
-from src.data.session_playlists import (
-    add_playlist,
-    delete_playlist,
-)
 from src.flask_config import Config
 from src.spotify import SpotifyClient
 
