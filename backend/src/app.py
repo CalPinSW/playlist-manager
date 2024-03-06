@@ -4,7 +4,6 @@ from src.flask_config import Config
 from src.spotify import SpotifyClient
 
 app = Flask(__name__)
-app.config.from_pyfile("settings.py")
 spotify = SpotifyClient()
 
 app.config.from_object(Config())
