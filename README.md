@@ -1,60 +1,25 @@
-# Playlist Manager
+# playlist-manager
 
-## System Requirements
+## Basic set up
 
-The project uses poetry for Python to create an isolated environment and manage package dependencies. To prepare your system, ensure you have an official distribution of Python version 3.10+ and install Poetry using one of the following commands (as instructed by the [poetry documentation](https://python-poetry.org/docs/#system-requirements)):
+Requirements:
 
-### Poetry installation (Bash)
+- Python
+- Poetry
+- Node & npm
 
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
+`bash install.sh`
 
-### Poetry installation (PowerShell)
+Set up an app registered at <https://developer.spotify.com/dashboard>
 
-```powershell
-(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
-```
+Set a Redirect URL for `http://localhost:1234`.
 
-You can check poetry is installed by running `poetry --version` from a terminal.
+Create a `.env` file in the `backend` folder based on `.env.template`, and set the appropriate missing variables using those from the Spotify dashboard.
 
-**Please note that after installing poetry you may need to restart VSCode and any terminals you are running before poetry will be recognised.**
+## Running it
 
-## Dependencies
+Run the [backend](./backend/README.md) by first navigating to the backend folder with `cd backend` then running `poetry run flask run`
 
-The project uses a virtual environment to isolate package dependencies. To create the virtual environment and install required packages, run the following from your preferred shell:
+Run the [frontend](./frontend/README.md) by first navigating to the frontend folder with `cd frontend` then running `npm run dev`
 
-```bash
-$ poetry install
-```
-
-You'll also need to clone a new `.env` file from the `.env.template` to store local configuration options. This is a one-time operation on first setup:
-
-```bash
-$ cp .env.template .env  # (first time only)
-```
-
-The `.env` file is used by flask to set environment variables when running `flask run`. This enables things like development mode (which also enables features like hot reloading when you make a file change). There's also a [SECRET_KEY](https://flask.palletsprojects.com/en/2.3.x/config/#SECRET_KEY) variable which is used to encrypt the flask session cookie.
-
-## Running the App
-
-Once the all dependencies have been installed, start the Flask app in development mode within the Poetry environment by running:
-
-```bash
-$ poetry run flask run
-```
-
-You should see output similar to the following:
-
-```bash
- * Serving Flask app 'todo_app/app'
- * Debug mode: on
-WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on http://127.0.0.1:5000
-Press CTRL+C to quit
- * Restarting with stat
- * Debugger is active!
- * Debugger PIN: 140-316-129
-```
-
-Now visit [`http://localhost:5000/`](http://localhost:5000/) in your web browser to view the app.
+> Note: You will need to install the requirements in each first.
