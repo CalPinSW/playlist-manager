@@ -50,6 +50,9 @@ node_modules
 .venv
 .venv/
 
+# npm
+node_modules/
+
 # mypy
 .mypy_cache/
 .dmypy.json
