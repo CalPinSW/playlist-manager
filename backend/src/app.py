@@ -1,4 +1,4 @@
-from flask import Flask, redirect, request
+from flask import Flask, redirect, request, jsonify
 from flask_cors import CORS
 from src.flask_config import Config
 from src.spotify import SpotifyClient
@@ -54,3 +54,20 @@ def post_edit_playlist(id):
     description = request.form.get("description")
     spotify.update_playlist(id, name, description)
     return redirect("/")
+
+
+@app.route("/playback", methods=["GET"])
+def get_playback_info():
+    playback_info = spotify.get_my_current_playback()
+    if playback_info is None:
+        return ("", 204)
+    return jsonify(playback_info)
+
+
+@app.route("/playlist_progress", methods=["POST"])
+def get_playlist_progress():
+    api_playback = request.json
+    playlist_progression = spotify.get_playlist_progression(api_playback)
+    if playlist_progression is None:
+        return ("", 204)
+    return jsonify(playlist_progression)

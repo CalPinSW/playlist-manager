@@ -1,10 +1,12 @@
+import datetime
 import os
 from typing import List
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from src.dataclasses.album import Album
-from src.dataclasses.playback_info import PlaybackInfo
-
+from src.dataclasses.api_playback_info import ApiPlaybackInfo
+from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
+from src.dataclasses.playlist_info import PlaylistInfo
 
 scope = [
     "user-library-read",
@@ -38,8 +40,8 @@ class SpotifyClient:
         api_playlists = self.client.current_user_playlists(limit=limit, offset=offset)
         return api_playlists["items"]
 
-    def get_playlist(self, id: str):
-        api_playlist = self.client.playlist(playlist_id=id)
+    def get_playlist(self, id: str, fields=None):
+        api_playlist = self.client.playlist(playlist_id=id, fields=fields)
         return api_playlist
 
     def create_playlist(self, name, description):
@@ -61,8 +63,26 @@ class SpotifyClient:
 
         return self.client.user_playlist_unfollow(user=user["id"], playlist_id=id)
 
-    def get_my_current_playback(self) -> PlaybackInfo:
+    def get_playlist_tracks(self, id: str):
+        playlist_tracks = []
+        offset = 0
+        limit = 100
+        api_tracks_object = self.client.playlist_items(id, limit=limit, offset=offset)
+        while True:
+            playlist_tracks += api_tracks_object["items"]
+            if not api_tracks_object["next"]:
+                return playlist_tracks
+            offset += limit
+            api_tracks_object = self.client.playlist_items(id, limit=100, offset=offset)
+
+    def get_my_current_playback(self) -> PlaybackInfo | None:
         api_playback = self.client.current_playback()
+
+        if api_playback is None:
+            return None
+        context = api_playback["context"]
+        if context["type"] == "playlist":
+            playlist_id = context["uri"]
         album = self.client.album(api_playback["item"]["album"]["id"])
         album_duration = sum(
             [track["duration_ms"] for track in album["tracks"]["items"]]
@@ -72,7 +92,7 @@ class SpotifyClient:
                 [
                     track["duration_ms"]
                     for track in album["tracks"]["items"][
-                        0 : api_playback["item"]["track_number"]
+                        0 : api_playback["item"]["track_number"] - 1
                     ]
                 ]
             )
@@ -80,7 +100,9 @@ class SpotifyClient:
         )
         return PlaybackInfo(
             api_playback["item"]["name"],
+            api_playback["item"]["id"],
             api_playback["item"]["album"]["name"],
+            playlist_id,
             [artist["name"] for artist in api_playback["item"]["artists"]],
             [artist["name"] for artist in api_playback["item"]["album"]["artists"]],
             api_playback["item"]["album"]["images"][0]["url"],
@@ -88,6 +110,18 @@ class SpotifyClient:
             api_playback["item"]["duration_ms"],
             album_progress,
             album_duration,
+        )
+
+    def get_playlist_progression(self, api_playback):
+        playlist_tracks = self.get_playlist_tracks(api_playback["playlist_id"])
+        playlist_info = self.get_playlist(api_playback["playlist_id"], fields="name")
+        playlist_progress = get_playlist_progress(api_playback, playlist_tracks)
+        playlist_duration = get_playlist_duration(playlist_tracks)
+        return PlaylistProgression(
+            api_playback["playlist_id"],
+            playlist_info["name"],
+            playlist_progress,
+            playlist_duration,
         )
 
     def get_my_user_info(self):
@@ -122,3 +156,27 @@ class SpotifyClient:
                 for x in self.client.new_releases(limit=50)["albums"]["items"]
                 if x["album_type"] == "album"
             ]
+
+
+def get_playlist_duration(playlist_info: PlaylistInfo) -> int:
+    return sum(track["track"]["duration_ms"] for track in playlist_info)
+
+
+def get_playlist_progress(api_playback, playlist_info) -> int:
+    current_track_number = next(
+        (
+            i
+            for i, obj in enumerate(playlist_info)
+            if obj["track"]["id"] == api_playback["track_id"]
+        ),
+        None,
+    )
+    return (
+        sum(
+            [
+                track["track"]["duration_ms"]
+                for track in playlist_info[0:current_track_number]
+            ]
+        )
+        + api_playback["track_progress"]
+    )

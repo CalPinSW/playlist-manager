@@ -7,6 +7,7 @@ import Box from "./components/Box";
 import AddPlaylistForm from "./AddPlaylistForm";
 import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 import CustomButton from "./components/Button";
+import PlaybackFooter from "./PlaybackFooter";
 
 interface PaginationState {
   pageIndex: number;
@@ -16,7 +17,7 @@ interface PaginationState {
 export const Index: FC = () => {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize: 8,
   });
 
   const onClickNext = () => {
@@ -60,6 +61,7 @@ export const Index: FC = () => {
         </div>
       </Box>
       <AddPlaylistForm />
+      <PlaybackFooter />
     </div>
   );
 };
