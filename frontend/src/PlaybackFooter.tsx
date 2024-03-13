@@ -10,7 +10,8 @@ const PlaybackFooter: FC = () => {
     queryFn: () => {
       return getPlaybackInfo();
     },
-    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: false,
   });
   const { data: playlistProgress } = useQuery<PlaylistProgress | undefined>({
     queryKey: ["playlistProgress"],
@@ -19,7 +20,8 @@ const PlaybackFooter: FC = () => {
         return getPlaylistProgress(playbackInfo);
       }
     },
-    staleTime: 60000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
     enabled: !!playbackInfo?.playlist_id,
   });
   if (!playbackInfo) return null;
