@@ -14,6 +14,7 @@ python = "^3.10"
 flask = "^3.0.0"
 python-dotenv = "^1.0.0"
 flask-cors = "^4.0.0"
+spotipy = "^2.23.0"
 
 [build-system]
 requires = ["poetry-core"]
