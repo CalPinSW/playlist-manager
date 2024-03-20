@@ -1,6 +1,5 @@
-import { Delete } from "@mui/icons-material";
-import { Button } from "@mui/material";
 import React, { FC } from "react";
+import { MdDelete } from "react-icons/md";
 
 interface IDeletePlaylistButton {
   onClick: () => void;
@@ -8,9 +7,9 @@ interface IDeletePlaylistButton {
 
 const DeletePlaylistButton: FC<IDeletePlaylistButton> = ({ onClick }) => {
   return (
-    <Button onClick={onClick}>
-      <Delete color="primary" />
-    </Button>
+    <button onClick={onClick}>
+      <MdDelete className="w-6 h-6 fill-primary-500" />
+    </button>
   );
 };
 

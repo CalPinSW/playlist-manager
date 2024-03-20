@@ -1,13 +1,18 @@
-import moment from "moment";
 import { Playlist } from "../interfaces/Playlist";
-import { ApiPlaylist } from "./ApiPlaylist";
 
-export const getPlaylists = async (): Promise<Playlist[]> => {
-  const response = await fetch("http://localhost:5000");
+export const getPlaylists = async (
+  offset: number,
+  limit: number
+): Promise<Playlist[]> => {
+  const response = await fetch(
+    `http://localhost:5000/?limit=${encodeURIComponent(
+      limit
+    )}&offset=${encodeURIComponent(offset)}`
+  );
   const apiResponse = await response
     .json()
-    .then((data: any) => data as ApiPlaylist[]);
-  return apiResponse.map((apiPlaylist: ApiPlaylist) =>
+    .then((data: any) => data as Playlist[]);
+  return apiResponse.map((apiPlaylist: Playlist) =>
     parsePlaylists(apiPlaylist)
   );
 };
@@ -16,7 +21,21 @@ export const getPlaylist = async (id: string): Promise<Playlist> => {
   const response = await fetch(`http://localhost:5000/edit-playlist/${id}`);
   const apiResponse = await response
     .json()
-    .then((data: any) => data as ApiPlaylist);
+    .then((data: any) => data as Playlist);
+  return parsePlaylists(apiResponse);
+};
+
+export const addPlaylist = async (playlist: Playlist): Promise<Playlist> => {
+  const response = await fetch(`http://localhost:5000/create-playlist`, {
+    method: "post",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(playlist),
+  });
+  const apiResponse = await response
+    .json()
+    .then((data: any) => data as Playlist);
   return parsePlaylists(apiResponse);
 };
 
@@ -33,13 +52,25 @@ export const updatePlaylist = async (playlist: Playlist): Promise<Playlist> => {
   );
   const apiResponse = await response
     .json()
-    .then((data: any) => data as ApiPlaylist);
+    .then((data: any) => data as Playlist);
   return parsePlaylists(apiResponse);
 };
 
-const parsePlaylists = (apiResult: ApiPlaylist): Playlist => {
+export const deletePlaylist = async (playlist: Playlist): Promise<Response> => {
+  const response = await fetch(
+    `http://localhost:5000/delete-playlist/${playlist.id}`,
+    {
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return response;
+};
+
+const parsePlaylists = (apiResult: Playlist): Playlist => {
   return {
     ...apiResult,
-    createdAt: moment(apiResult.created_at),
   };
 };

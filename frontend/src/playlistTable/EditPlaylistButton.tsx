@@ -1,15 +1,15 @@
-import { Edit } from "@mui/icons-material";
+import { BiEdit } from "react-icons/bi";
 import React, { FC } from "react";
 import { Link } from "react-router-dom";
 
 interface IEditPlaylistButton {
-  playlistId: number;
+  playlistId: string;
 }
 
 const EditPlaylistButton: FC<IEditPlaylistButton> = ({ playlistId }) => {
   return (
     <Link to={`edit/${playlistId}`}>
-      <Edit color="primary" />
+      <BiEdit className="w-6 h-6 fill-primary-500" />
     </Link>
   );
 };

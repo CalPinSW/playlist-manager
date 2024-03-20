@@ -1,9 +1,10 @@
-import { InputLabel, InputLabelProps, InputLabelTypeMap } from "@mui/material";
-import { OverridableComponent } from "@mui/material/OverridableComponent";
 import React, { FC } from "react";
 
-const CustomInputLabel: FC<InputLabelProps> = (props) => (
-  <InputLabel {...props} className="m-2"></InputLabel>
-);
+const CustomInputLabel: FC<
+  React.DetailedHTMLProps<
+    React.LabelHTMLAttributes<HTMLLabelElement>,
+    HTMLLabelElement
+  >
+> = (props) => <label {...props} className="m-2"></label>;
 
 export default CustomInputLabel;

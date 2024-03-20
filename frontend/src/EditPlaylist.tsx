@@ -34,10 +34,10 @@ export const EditPlaylist: FC = () => {
             <div>
               <InputLabel>Title:</InputLabel>
               <Input
-                register={register("title")}
+                register={register("name")}
                 type="text"
-                name="title"
-                defaultValue={playlist.title}
+                name="name"
+                defaultValue={playlist.name}
               />
             </div>
             <div>
