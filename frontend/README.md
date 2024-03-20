@@ -1,4 +1,4 @@
-# Playlist Manager - Fronted
+# Playlist Manager - Frontend
 
 ## System Requirements
 
