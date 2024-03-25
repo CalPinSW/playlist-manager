@@ -20,14 +20,13 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
   const onDeletePlaylistClick = (playlist: Playlist) => {
     deletePlaylist(playlist);
   };
-
   const columnHelper = createColumnHelper<Playlist>();
   const defaultColumns = [
     columnHelper.display({
       id: "image",
       size: 20,
       cell: ({ row }) => {
-        if (row.original.images[0]?.url) {
+        if (row.original.images?.[0]?.url) {
           return (
             <img src={row.original.images[0].url} className="w-full"></img>
           );

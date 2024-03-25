@@ -6,10 +6,11 @@ import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
-import { Index } from ".";
 import { EditPlaylist } from "./EditPlaylist";
 import Layout from "./presentational/Layout";
 import { getPlaylist } from "./api";
+import { Index } from "./Index";
+import { Login } from "./Login";
 
 const router = createBrowserRouter([
   {
@@ -17,6 +18,7 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { index: true, element: <Index /> },
+      { path: "/login", element: <Login /> },
       {
         path: "/edit/:playlistId",
         element: <EditPlaylist />,
