@@ -9,7 +9,7 @@ import { updatePlaylist } from "./api";
 
 export const EditPlaylist: FC = () => {
   const playlist = useLoaderData() as Playlist;
-  const { control, register } = useForm({
+  const { control, register, getValues } = useForm({
     defaultValues: playlist,
   });
 
@@ -21,15 +21,10 @@ export const EditPlaylist: FC = () => {
         </div>
         <div className="m-2">
           <Form
-            method="post"
-            action={`http://localhost:5000/edit-playlist/${playlist.id}`}
+            onSubmit={() => {
+              updatePlaylist(getValues());
+            }}
             control={control}
-            onSuccess={() => {
-              alert("Success");
-            }}
-            onError={() => {
-              alert("error");
-            }}
           >
             <div>
               <InputLabel>Title:</InputLabel>

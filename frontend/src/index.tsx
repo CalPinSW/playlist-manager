@@ -38,6 +38,7 @@ export const Index: FC = () => {
     queryFn: () => {
       return getPlaylists(pagination.pageIndex, pagination.pageSize);
     },
+    retry: false,
   });
 
   if (isLoading || !data) return "Loading...";
@@ -61,7 +62,7 @@ export const Index: FC = () => {
         </div>
       </Box>
       <AddPlaylistForm />
-      <PlaybackFooter />
+      {/* <PlaybackFooter /> */}
     </div>
   );
 };
