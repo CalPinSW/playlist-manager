@@ -44,11 +44,12 @@ export const getPlaylist = async (id: string): Promise<Playlist> => {
 export const addPlaylist = async (playlist: Playlist): Promise<Playlist> => {
   const response = await fetch(`http://localhost:5000/create-playlist`, {
     method: "post",
+    credentials: "include",
+    mode: "cors",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(playlist),
-    credentials: "include",
   });
   const apiResponse = await response
     .json()
