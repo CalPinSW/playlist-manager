@@ -1,4 +1,5 @@
 import datetime
+import json
 import requests
 import base64
 import os
@@ -74,7 +75,6 @@ class SpotifyClient:
         return resp
 
     def get_playlists(self, user_id, access_token, limit=10, offset=0):
-        print(user_id)
         api_playlists = requests.get(
             url=f"https://api.spotify.com/v1/users/{user_id}/playlists",
             params={
@@ -108,28 +108,26 @@ class SpotifyClient:
 
     def create_playlist(self, user_id, access_token, name, description):
         description = None if description == "" else description
-
         return requests.post(
             url=f"https://api.spotify.com/v1/users/{user_id}/playlists",
-            data={
-                "name": name,
-                "description": description,
-            },
+            data=json.dumps(
+                {
+                    "name": name,
+                    "description": description,
+                }
+            ),
             headers={
                 "content-type": "application/json",
             },
             auth=BearerAuth(access_token),
         )
 
-    def update_playlist(self, access_token, id: str, name, description):
-        description = None if description == "" else description
-        print(name)
+    def update_playlist(
+        self, access_token, id: str, name, description
+    ):  # ToDo: Figure out how to set description to empty string
         response = requests.put(
             url=f"https://api.spotify.com/v1/playlists/{id}",
-            data={
-                "name": name,
-                "description": description,
-            },
+            data=json.dumps({"name": name, "description": description, "public": True}),
             headers={
                 "Content-Type": "application/json",
             },

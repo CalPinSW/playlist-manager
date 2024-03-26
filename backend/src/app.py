@@ -59,8 +59,8 @@ def get_current_user():
 def create_playlist():
     user_id = request.cookies.get("user_id")
     access_token = request.cookies.get("spotify_access_token")
-    name = request.form.get("name")
-    description = request.form.get("description")
+    name = request.json.get("name")
+    description = request.json.get("description")
     spotify.create_playlist(
         user_id=user_id, access_token=access_token, name=name, description=description
     )
@@ -86,7 +86,6 @@ def post_edit_playlist(id):
     access_token = request.cookies.get("spotify_access_token")
     name = request.json.get("name")
     description = request.json.get("description")
-    print(name)
     spotify.update_playlist(
         access_token=access_token,
         id=id,
