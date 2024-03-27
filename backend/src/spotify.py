@@ -142,9 +142,9 @@ class SpotifyClient:
         )
 
     def get_playlist_items(self, access_token, id, limit, offset):
-        return requests.get(
+        response = requests.get(
             url=f"https://api.spotify.com/v1/playlists/{id}/tracks",
-            data={
+            params={
                 "limit": limit,
                 "offset": offset,
             },
@@ -153,6 +153,7 @@ class SpotifyClient:
             },
             auth=BearerAuth(access_token),
         )
+        return response.json()
 
     def get_playlist_tracks(self, access_token, id: str):
         playlist_tracks = []
@@ -177,13 +178,13 @@ class SpotifyClient:
                 "content-type": "application/json",
             },
             auth=BearerAuth(access_token),
-        )
+        ).json()
 
     def get_current_playback(self, access_token):
         return requests.get(
             f"https://api.spotify.com/v1/me/player",
             auth=BearerAuth(access_token),
-        )
+        ).json()
 
     def get_my_current_playback(self, access_token) -> PlaybackInfo | None:
         api_playback = self.get_current_playback(access_token=access_token)
@@ -192,7 +193,7 @@ class SpotifyClient:
             return None
         context = api_playback["context"]
         if context["type"] == "playlist":
-            playlist_id = context["uri"]
+            playlist_id = context["uri"].replace("spotify:playlist:", "")
         album = self.get_album(
             access_token=access_token, id=api_playback["item"]["album"]["id"]
         )

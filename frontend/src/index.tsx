@@ -61,7 +61,7 @@ export const Index: FC = () => {
         </div>
       </Box>
       <AddPlaylistForm />
-      {/* <PlaybackFooter /> */}
+      <PlaybackFooter />
     </div>
   );
 };
