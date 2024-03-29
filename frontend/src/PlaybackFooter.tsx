@@ -10,6 +10,7 @@ const PlaybackFooter: FC = () => {
     queryFn: () => {
       return getPlaybackInfo();
     },
+    retry: false,
     refetchInterval: 5000,
     refetchIntervalInBackground: false,
   });
@@ -20,6 +21,7 @@ const PlaybackFooter: FC = () => {
         return getPlaylistProgress(playbackInfo);
       }
     },
+    retry: false,
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     enabled: !!playbackInfo?.playlist_id,

@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 
-@dataclass
-class Image:
+class Image(BaseModel):
     url: str
     height: int
     width: int
