@@ -1,22 +1,20 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 from typing import List, Optional
 from src.text_formatting import format_ms_as_mins_and_secs
 
 
-@dataclass
-class PlaylistProgression:
+class PlaylistProgression(BaseModel):
     playlist_id: str
     playlist_title: str
     playlist_progress: float
     playlist_duration: float
 
 
-@dataclass
-class PlaybackInfo:
+class PlaybackInfo(BaseModel):
     track_title: str
     track_id: str
     album_title: str
-    playlist_id: Optional[str]
+    playlist_id: Optional[str] = None
     track_artists: List[str]
     album_artists: List[str]
     artwork_url: str

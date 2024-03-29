@@ -1,6 +1,8 @@
 from urllib.parse import urlencode
 from flask import Flask, redirect, request, jsonify
 from flask_cors import CORS
+from src.dataclasses.playback_info import PlaybackInfo
+from src.dataclasses.playlist_info import SimplifiedPlaylist
 from src.flask_config import Config
 from src.spotify import SpotifyClient
 
@@ -30,7 +32,7 @@ def index():
     desc = request.args.get("desc") == "True"
     if sort_by is not None:
         playlists.sort(key=lambda x: x[sort_by], reverse=desc)
-    return playlists
+    return [playlist.model_dump() for playlist in playlists]
 
 
 @app.route("/auth/login")
@@ -52,7 +54,8 @@ def auth_redirect():
 @app.route("/get-current_user")
 def get_current_user():
     code = request.args.get("code")
-    return spotify.get_current_user(access_token=code)
+    user = spotify.get_current_user(access_token=code)
+    return user.model_dump()
 
 
 @app.route("/create-playlist", methods=["POST"])
@@ -78,7 +81,7 @@ def delete_playlist_by_id(id):
 def get_edit_playlist(id):
     access_token = request.cookies.get("spotify_access_token")
     playlist = spotify.get_playlist(access_token=access_token, id=id)
-    return playlist
+    return playlist.model_dump()
 
 
 @app.route("/edit-playlist/<id>", methods=["POST"])
@@ -101,16 +104,16 @@ def get_playback_info():
     playback_info = spotify.get_my_current_playback(access_token=access_token)
     if playback_info is None:
         return ("", 204)
-    return jsonify(playback_info)
+    return playback_info.model_dump_json()
 
 
 @app.route("/playlist_progress", methods=["POST"])
 def get_playlist_progress():
     access_token = request.cookies.get("spotify_access_token")
-    api_playback = request.json
+    api_playback = PlaybackInfo.model_validate(request.json)
     playlist_progression = spotify.get_playlist_progression(
         access_token=access_token, api_playback=api_playback
     )
     if playlist_progression is None:
         return ("", 204)
-    return jsonify(playlist_progression)
+    return playlist_progression.model_dump_json()
