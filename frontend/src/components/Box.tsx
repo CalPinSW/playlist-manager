@@ -5,7 +5,7 @@ const Box: FC<
 > = (props) => {
   return (
     <div
-      className="m-4 p-2 rounded border-solid border border-primary-500"
+      className={`m-4 p-2 rounded border-solid border border-primary-500 ${props.className}`}
       {...props}
     >
       {props.children}

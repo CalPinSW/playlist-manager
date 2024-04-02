@@ -24,7 +24,7 @@ class SimplifiedPlaylist(BaseModel):
     id: str
     name: str
     description: str
-    images: List[Image]
+    images: Optional[List[Image]] = None
     tracks: PlaylistInfoTracks
 
 
