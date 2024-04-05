@@ -1,6 +1,8 @@
 - name: Update web servers
   hosts: managed-nodes
   remote_user: ec2-user
+  vars:
+    host: "{{ inventory_hostname }}"
   vars_prompt:
     - name: debug_mode
       prompt: Do you want to run the app in debug mode
@@ -70,12 +72,26 @@
         chdir: "/opt/playlist-manager/frontend"
         cmd: "npm install"
 
-    - name: Setup environment variables
+    - name: Fetch backend environment template
+      run_once: yes
+      fetch:
+        src: /opt/playlist-manager/backend/.env.j2
+        dest: /tmp/backend/.env.j2
+        flat: yes
+
+    - name: Fetch frontend environment template
+      run_once: yes
+      fetch:
+        src: /opt/playlist-manager/frontend/.env.j2
+        dest: /tmp/frontend/.env.j2
+        flat: yes
+
+    - name: Setup backend environment variables
       template:
-        src: .env.j2
+        src: /tmp/backend/.env.j2
         dest: /opt/playlist-manager/backend/.env
 
-    - name: Run the application
+    - name: Setup frontend environment variables
       template:
-        src: .env.j2
-        dest: /opt/playlist-manager/backend/.env
+        src: /tmp/frontend/.env.j2
+        dest: /opt/playlist-manager/frontend/.env
