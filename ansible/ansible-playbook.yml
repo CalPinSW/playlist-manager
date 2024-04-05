@@ -1,0 +1,50 @@
+- name: Update web servers
+  hosts: managed-nodes
+  remote_user: ec2-user
+  tasks:
+    - name: Install Git
+      yum:
+        name: "git"
+        state: "present"
+        update_cache: yes
+      become: yes # Installing git must be run as the root user
+
+    - name: Install Python
+      yum:
+        name: "python3"
+        state: "present"
+        update_cache: yes
+      become: yes # Installing python must be run as the root user
+
+    - name: Install Node
+      yum:
+        name: "nodejs"
+        state: "present"
+        update_cache: yes
+      become: yes # Installing node must be run as the root user
+
+    - name: Install Poetry
+      shell:
+        cmd: "curl -sSL https://install.python-poetry.org | python3 -"
+        creates: "/home/ec2-user/.local/bin/poetry"
+
+    - name: Use most recent Python version for Poetry
+      shell:
+        cmd: "poetry env use python3.10^"
+
+    - name: Create folder for Playlist Manager
+      file:
+        path: /opt/playlist-manager
+        state: directory
+        owner: "ec2-user"
+      become: yes
+
+    - name: Clone Playlist Manager
+      git:
+        repo: "https://github.com/CalPinSW/playlist-manager.git"
+        dest: "/opt/playlist-manager"
+
+    - name: Install Project Dependencies
+      shell:
+        chdir: "/opt/playlist-manager"
+        cmd: ". ./install.sh"
