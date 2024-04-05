@@ -8,6 +8,9 @@
     "dev:esbuild": "node build/server.mjs",
     "dev:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify --watch",
     "dev": "npm-run-all --parallel dev:*",
+    "prod:esbuild": "node build/server.mjs",
+    "prod:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify",
+    "prod": "npm-run-all --parallel prod:*",
     "build": "node build/build.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

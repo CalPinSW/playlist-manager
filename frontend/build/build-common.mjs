@@ -3,11 +3,8 @@ config();
 
 const define = {
   "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
+  "process.env.HOST": JSON.stringify(process.env.HOST || "localhost"),
 };
-
-for (const k in process.env) {
-  define[`process.env.${k}`] = JSON.stringify(process.env[k]);
-}
 
 export const buildOptions = {
   bundle: true,

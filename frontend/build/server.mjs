@@ -6,7 +6,7 @@ const watchDirectories = ["src/*.{ts,tsx}"];
 
 const runServer = async () => {
   const ctx = await esbuild.context(buildOptions);
-  await ctx.watch();
+  // await ctx.watch(); Enable or disable watch based on prod flag
   const port = 1234;
 
   let { host, port: proxyPort } = await ctx.serve({
