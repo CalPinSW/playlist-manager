@@ -11,7 +11,7 @@
 
     - name: Install Python
       yum:
-        name: "python3"
+        name: "python3.11"
         state: "present"
         update_cache: yes
       become: yes # Installing python must be run as the root user
@@ -25,12 +25,8 @@
 
     - name: Install Poetry
       shell:
-        cmd: "curl -sSL https://install.python-poetry.org | python3 -"
+        cmd: "curl -sSL https://install.python-poetry.org | python3.11 -"
         creates: "/home/ec2-user/.local/bin/poetry"
-
-    - name: Use most recent Python version for Poetry
-      shell:
-        cmd: "poetry env use python3.10^"
 
     - name: Create folder for Playlist Manager
       file:
@@ -42,7 +38,13 @@
     - name: Clone Playlist Manager
       git:
         repo: "https://github.com/CalPinSW/playlist-manager.git"
+        version: "add-ansible-configuration"
         dest: "/opt/playlist-manager"
+
+    - name: Use most recent Python version for Poetry
+      shell:
+        cmd: "poetry env use python3.11"
+        chdir: "/opt/playlist-manager/backend"
 
     - name: Install Project Dependencies
       shell:
