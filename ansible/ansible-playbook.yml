@@ -1,6 +1,25 @@
 - name: Update web servers
   hosts: managed-nodes
   remote_user: ec2-user
+  vars_prompt:
+    - name: debug_mode
+      prompt: Do you want to run the app in debug mode
+      default: false
+      private: false
+
+    - name: flask_secret_key
+      prompt: Provide a secret key for the flask app
+      default: "secret_key"
+      private: true
+
+    - name: spotify_client_id
+      prompt: Provide the spotify client id app
+      private: false
+
+    - name: spotify_secret
+      prompt: Provide a secret key for the spotify client
+      private: true
+
   tasks:
     - name: Install Git
       yum:
@@ -41,12 +60,22 @@
         version: "add-ansible-configuration"
         dest: "/opt/playlist-manager"
 
-    - name: Use most recent Python version for Poetry
+    - name: Install Project Backend Dependencies
       shell:
-        cmd: "poetry env use python3.11"
         chdir: "/opt/playlist-manager/backend"
+        cmd: "poetry env use python3.11; poetry install"
 
-    - name: Install Project Dependencies
+    - name: Install Project Frontend Dependencies
       shell:
-        chdir: "/opt/playlist-manager"
-        cmd: ". ./install.sh"
+        chdir: "/opt/playlist-manager/frontend"
+        cmd: "npm install"
+
+    - name: Setup environment variables
+      template:
+        src: .env.j2
+        dest: /opt/playlist-manager/backend/.env
+
+    - name: Run the application
+      template:
+        src: .env.j2
+        dest: /opt/playlist-manager/backend/.env
