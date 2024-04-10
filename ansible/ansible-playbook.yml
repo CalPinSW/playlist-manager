@@ -3,24 +3,8 @@
   remote_user: ec2-user
   vars:
     host: "{{ inventory_hostname }}"
-  vars_prompt:
-    - name: debug_mode
-      prompt: Do you want to run the app in debug mode
-      default: false
-      private: false
-
-    - name: flask_secret_key
-      prompt: Provide a secret key for the flask app
-      default: "secret_key"
-      private: true
-
-    - name: spotify_client_id
-      prompt: Provide the spotify client id app
-      private: false
-
-    - name: spotify_secret
-      prompt: Provide a secret key for the spotify client
-      private: true
+  vars_files:
+    - .ansible-secrets.yml
 
   tasks:
     - name: Install Git
@@ -61,6 +45,7 @@
         repo: "https://github.com/CalPinSW/playlist-manager.git"
         version: "add-ansible-configuration"
         dest: "/opt/playlist-manager"
+        force: true
 
     - name: Install Project Backend Dependencies
       shell:
