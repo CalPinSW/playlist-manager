@@ -9,7 +9,7 @@
         daemon_reload: yes
         state: "stopped"
       become: yes
-    
+
     - name: Stop Playlist Manager Backend
       systemd:
         name: "playlist-manager-backend.service"
