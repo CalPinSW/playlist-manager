@@ -80,3 +80,31 @@
       template:
         src: /tmp/frontend/.env.j2
         dest: /opt/playlist-manager/frontend/.env
+
+    - name: Add backend service to systemd
+      copy:
+        src: /opt/playlist-manager/ansible/resources/playlist-manager-backend.service
+        dest: /etc/systemd/system/playlist-manager-backend.service
+        remote_src: yes
+      become: yes
+
+    - name: Add frontend service to systemd
+      copy:
+        src: /opt/playlist-manager/ansible/resources/playlist-manager-frontend.service
+        dest: /etc/systemd/system/playlist-manager-frontend.service
+        remote_src: yes
+      become: yes
+
+    - name: Start Playlist Manager Frontend
+      systemd:
+        name: "playlist-manager-frontend.service"
+        daemon_reload: yes
+        state: "restarted"
+      become: yes
+
+    - name: Start Playlist Manager Backend
+      systemd:
+        name: "playlist-manager-backend.service"
+        daemon_reload: yes
+        state: "restarted"
+      become: yes

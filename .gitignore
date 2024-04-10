@@ -49,6 +49,7 @@ node_modules
 .env
 .venv
 .venv/
+.ansible-secrets.yml
 
 # npm
 node_modules/
