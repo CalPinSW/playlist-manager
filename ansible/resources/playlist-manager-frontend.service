@@ -4,4 +4,4 @@ Description=Playlist Manager Frontend
 [Service]
 User=ec2-user
 WorkingDirectory=/opt/playlist-manager/frontend
-ExecStart=/usr/bin/npm run dev
+ExecStart=/usr/bin/npm run prod
