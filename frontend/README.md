@@ -21,6 +21,10 @@ The project uses npm to manage package dependencies. To install dependencies loc
 $ npm install
 ```
 
+## Environment Variables
+
+Environment variables are set in a `.env` file and should match the `.env.template` file. Currently the only variable that needs to be set is `HOST`. This can be localhost for local development. It is updated by ansible when provisioning VMs.
+
 ## Running the App
 
 Once the all dependencies have been installed, start the React app in development mode by running:
