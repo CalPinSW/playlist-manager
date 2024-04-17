@@ -29,6 +29,8 @@ scope = [
 
 class BearerAuth(requests.auth.AuthBase):
     def __init__(self, token):
+        if token is None:
+            raise UnauthorizedException
         self.token = token
 
     def __call__(self, r):

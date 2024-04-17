@@ -35,8 +35,6 @@ def handle_unauthorized_exception(_):
 def index():
     user_id = request.cookies.get("user_id")
     access_token = request.cookies.get("spotify_access_token")
-    if access_token is None:
-        raise UnauthorizedException
     limit = request.args.get("limit")
     offset = request.args.get("offset")
     playlists = spotify.get_playlists(
