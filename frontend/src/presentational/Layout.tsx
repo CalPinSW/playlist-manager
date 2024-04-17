@@ -12,7 +12,6 @@ const Header = () => {
       return getCurrentUserDetails();
     },
   });
-  console.log(data);
   return (
     <div className="flex-grow">
       <div className="flex static justify-between top-0 h-20 bg-primary-500">
