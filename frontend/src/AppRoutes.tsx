@@ -1,11 +1,5 @@
 import React, { FC } from "react";
-import {
-  Routes,
-  Route,
-  BrowserRouter,
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { EditPlaylist } from "./EditPlaylist";
 import Layout from "./presentational/Layout";
 import { getPlaylist } from "./api";

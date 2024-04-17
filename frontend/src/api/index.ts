@@ -1,5 +1,6 @@
 import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
 import { Playlist } from "../interfaces/Playlist";
+import { User } from "../interfaces/User";
 
 const openInNewTab = (url: string) => {
   const newWindow = window.open(url, "_self", "noopener,noreferrer");
@@ -13,6 +14,14 @@ export const login = async (): Promise<void> => {
   });
 };
 
+export const getCurrentUserDetails = async (): Promise<User> => {
+  const response = await fetch("http://localhost:5000/current-user", {
+    credentials: "include",
+  });
+  const apiResponse = await response.json().then((data: any) => data as User);
+  return apiResponse;
+};
+
 export const getPlaylists = async (
   offset: number,
   limit: number
@@ -23,6 +32,9 @@ export const getPlaylists = async (
     )}&offset=${encodeURIComponent(offset)}`,
     { credentials: "include" }
   );
+  if (response.status === 401) {
+    openInNewTab("login");
+  }
   const apiResponse = await response
     .json()
     .then((data: any) => data as Playlist[]);
