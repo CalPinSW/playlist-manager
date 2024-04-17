@@ -1,5 +1,6 @@
 from urllib.parse import urlencode
-from flask import Flask, redirect, request, jsonify
+from flask import Flask, redirect, request
+from uuid import uuid4
 from flask_cors import CORS
 from src.dataclasses.playback_info import PlaybackInfo
 from src.dataclasses.playlist_info import SimplifiedPlaylist
@@ -37,7 +38,7 @@ def index():
 
 @app.route("/auth/login")
 def login():
-    state = "thisShouldBeARandomString"
+    state = str(uuid4())
     query_string = spotify.get_login_query_string(state)
     return "https://accounts.spotify.com/authorize?" + query_string
 
