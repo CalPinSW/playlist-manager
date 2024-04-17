@@ -1,6 +1,18 @@
 import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
 import { Playlist } from "../interfaces/Playlist";
 
+const openInNewTab = (url: string) => {
+  const newWindow = window.open(url, "_self", "noopener,noreferrer");
+  if (newWindow) newWindow.opener = null;
+};
+
+export const login = async (): Promise<void> => {
+  return fetch(`http://localhost:5000/auth/login`).then(async (response) => {
+    const redirectUrl = await response.text();
+    openInNewTab(redirectUrl);
+  });
+};
+
 export const getPlaylists = async (
   offset: number,
   limit: number
@@ -8,7 +20,8 @@ export const getPlaylists = async (
   const response = await fetch(
     `http://localhost:5000/?limit=${encodeURIComponent(
       limit
-    )}&offset=${encodeURIComponent(offset)}`
+    )}&offset=${encodeURIComponent(offset)}`,
+    { credentials: "include" }
   );
   const apiResponse = await response
     .json()
@@ -19,7 +32,9 @@ export const getPlaylists = async (
 };
 
 export const getPlaylist = async (id: string): Promise<Playlist> => {
-  const response = await fetch(`http://localhost:5000/edit-playlist/${id}`);
+  const response = await fetch(`http://localhost:5000/edit-playlist/${id}`, {
+    credentials: "include",
+  });
   const apiResponse = await response
     .json()
     .then((data: any) => data as Playlist);
@@ -29,6 +44,8 @@ export const getPlaylist = async (id: string): Promise<Playlist> => {
 export const addPlaylist = async (playlist: Playlist): Promise<Playlist> => {
   const response = await fetch(`http://localhost:5000/create-playlist`, {
     method: "post",
+    credentials: "include",
+    mode: "cors",
     headers: {
       "Content-Type": "application/json",
     },
@@ -45,6 +62,8 @@ export const updatePlaylist = async (playlist: Playlist): Promise<Playlist> => {
     `http://localhost:5000/edit-playlist/${playlist.id}`,
     {
       method: "post",
+      credentials: "include",
+      mode: "cors",
       headers: {
         "Content-Type": "application/json",
       },
@@ -65,13 +84,16 @@ export const deletePlaylist = async (playlist: Playlist): Promise<Response> => {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
     }
   );
   return response;
 };
 
 export const getPlaybackInfo = async (): Promise<any> => {
-  const response = await fetch(`http://localhost:5000/playback`);
+  const response = await fetch(`http://localhost:5000/playback`, {
+    credentials: "include",
+  });
   const apiResponse = await response
     .json()
     .then((data: any) => data as PlaybackInfo);
@@ -88,6 +110,7 @@ export const getPlaylistProgress = async (
       "Content-Type": "application/json",
     },
     body,
+    credentials: "include",
   });
   const apiResponse = await response
     .json()

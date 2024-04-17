@@ -1,8 +1,8 @@
-from dataclasses import dataclass
+from typing import Optional
+from pydantic import BaseModel
 
 
-@dataclass
-class Image:
+class Image(BaseModel):
     url: str
-    height: int
-    width: int
+    height: Optional[int] = None
+    width: Optional[int] = None

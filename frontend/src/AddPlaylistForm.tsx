@@ -4,22 +4,19 @@ import Input from "./components/Input";
 import InputLabel from "./components/InputLabel";
 import Button from "./components/Button";
 import { Form, useForm } from "react-hook-form";
+import { addPlaylist } from "./api";
+import { Playlist } from "./interfaces/Playlist";
 
 const AddPlaylistForm: FC = () => {
-  const { control, register } = useForm({});
+  const { control, register, getValues } = useForm<Playlist>({});
 
   return (
     <div className="m-2">
       <Form
-        method="post"
-        action={`http://localhost:5000/create-playlist`}
+        onSubmit={() => {
+          addPlaylist(getValues());
+        }}
         control={control}
-        onSuccess={() => {
-          alert("Success");
-        }}
-        onError={() => {
-          alert("error");
-        }}
       >
         <div className="flex flex-row space-x-8">
           <div>

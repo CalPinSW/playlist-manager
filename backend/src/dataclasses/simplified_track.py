@@ -1,29 +1,25 @@
-from pydantic import BaseModel
 from typing import List, Optional
-
-from src.dataclasses.album import Album
+from pydantic import BaseModel
 from src.dataclasses.artist import Artist
-from src.dataclasses.external_ids import ExternalIds
 from src.dataclasses.external_urls import ExternalUrls
+from src.dataclasses.linked_from import LinkedFrom
 from src.dataclasses.restrictions import Restrictions
 
 
-class Track(BaseModel):
-    album: Album
+class SimplifiedTrack(BaseModel):
     artists: List[Artist]
     available_markets: List[str]
     disc_number: int
     duration_ms: int
     explicit: bool
-    external_ids: Optional[ExternalIds] = None
     external_urls: ExternalUrls
     href: str
     id: str
     is_playable: Optional[bool] = None
+    linked_from: Optional[LinkedFrom] = None
     restrictions: Optional[Restrictions] = None
     name: str
-    popularity: int
-    preview_url: Optional[str]
+    preview_url: str
     track_number: int
     type: str
     uri: str

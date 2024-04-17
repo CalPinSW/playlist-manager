@@ -1,14 +1,13 @@
-from dataclasses import dataclass
-from typing import List
+from pydantic import BaseModel
+from typing import List, Optional
 
 from src.dataclasses.image import Image
 
 
-@dataclass
-class Artist:
-    genres: List[str]
+class Artist(BaseModel):
+    genres: Optional[List[str]] = None
     id: str
-    images: List[Image]
+    images: Optional[List[Image]] = None
     name: str
-    popularity: int
+    popularity: Optional[int] = None
     uri: str
