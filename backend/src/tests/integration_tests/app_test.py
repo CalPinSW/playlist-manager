@@ -34,8 +34,9 @@ def test_index_page(monkeypatch, client):
 
 
 class StubResponse:
-    def __init__(self, fake_response_data):
+    def __init__(self, fake_response_data, status_code=200):
         self.fake_response_data = fake_response_data
+        self.status_code = status_code
 
     def json(self):
         return self.fake_response_data
@@ -44,6 +45,6 @@ class StubResponse:
 def stub(url, params={}, auth={}):
     if url == f"https://api.spotify.com/v1/users/{user_id}/playlists":
         fake_response_data = current_user_playlists_builder().model_dump()
-        return StubResponse(fake_response_data)
+        return StubResponse(fake_response_data, 200)
 
     raise Exception(f'Integration test did not expect URL "{url}"')

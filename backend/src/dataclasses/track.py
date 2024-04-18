@@ -23,7 +23,7 @@ class Track(BaseModel):
     restrictions: Optional[Restrictions] = None
     name: str
     popularity: int
-    preview_url: str
+    preview_url: Optional[str]
     track_number: int
     type: str
     uri: str

@@ -1,4 +1,4 @@
-import { SPUser } from "./SPUser";
+import { User } from "./User";
 import { PlaylistImage } from "./PlaylistImage";
 
 export interface Playlist {
@@ -11,7 +11,7 @@ export interface Playlist {
   href: string;
   id: string;
   images: PlaylistImage[];
-  owner: SPUser;
+  owner: User;
   public: false;
   snapshot_id: string;
   tracks: {

@@ -1,7 +1,7 @@
 import json
 import requests
 import os
-from typing import List
+from typing import Callable, List
 from flask import make_response, redirect
 from src.dataclasses.album import Album
 from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 
 from src.dataclasses.playlist_tracks import PlaylistTrackObject, PlaylistTracks
 from src.dataclasses.user import User
+from src.exceptions.Unauthorized import UnauthorizedException
 from src.flask_config import Config
 
 scope = [
@@ -29,6 +30,8 @@ scope = [
 
 class BearerAuth(requests.auth.AuthBase):
     def __init__(self, token):
+        if token is None:
+            raise UnauthorizedException
         self.token = token
 
     def __call__(self, r):
@@ -42,6 +45,18 @@ class SpotifyClient:
         self.client_secret = os.getenv("SPOTIFY_SECRET")
         self.redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI")
         self.scope = scope
+
+    def response_handler(self, response: requests.Response, jsonify=True):
+        if response.status_code == 401:
+            raise UnauthorizedException
+        else:
+            if jsonify:
+                if response.status_code == 204:
+                    return None
+                else:
+                    return response.json()
+            else:
+                return response
 
     def get_login_query_string(self, state):
         return urlencode(
@@ -67,7 +82,7 @@ class SpotifyClient:
             },
             auth=(self.client_id, self.client_secret),
         )
-        access_token = response.json()["access_token"]
+        access_token = self.response_handler(response)["access_token"]
         user_info = self.get_current_user(access_token)
 
         resp = make_response(redirect(f"http://{Config().HOST}:1234/"))
@@ -76,27 +91,29 @@ class SpotifyClient:
         return resp
 
     def get_playlists(self, user_id, access_token, limit=10, offset=0):
-        api_playlists = requests.get(
+        response = requests.get(
             url=f"https://api.spotify.com/v1/users/{user_id}/playlists",
             params={
                 "limit": limit,
                 "offset": offset,
             },
             auth=BearerAuth(access_token),
-        ).json()
+        )
+        api_playlists = self.response_handler(response)
         playlists = CurrentUserPlaylists.model_validate(api_playlists)
         return playlists.items
 
     def get_current_user(self, access_token):
-        api_current_user = requests.get(
+        response = requests.get(
             url="https://api.spotify.com/v1/me",
             auth=BearerAuth(access_token),
-        ).json()
+        )
+        api_current_user = self.response_handler(response)
         current_user = User.model_validate(api_current_user)
         return current_user
 
     def get_playlist(self, access_token, id: str, fields=None):
-        api_playlist = requests.get(
+        response = requests.get(
             url=f"https://api.spotify.com/v1/playlists/{id}",
             params={
                 "playlist_id": id,
@@ -106,13 +123,14 @@ class SpotifyClient:
                 "content-type": "application/json",
             },
             auth=BearerAuth(access_token),
-        ).json()
+        )
+        api_playlist = self.response_handler(response)
         playlist = Playlist.model_validate(api_playlist)
         return playlist
 
     def create_playlist(self, user_id, access_token, name, description):
         description = None if description == "" else description
-        return requests.post(
+        response = requests.post(
             url=f"https://api.spotify.com/v1/users/{user_id}/playlists",
             data=json.dumps(
                 {
@@ -125,6 +143,7 @@ class SpotifyClient:
             },
             auth=BearerAuth(access_token),
         )
+        return self.response_handler(response, jsonify=False)
 
     def update_playlist(
         self, access_token, id: str, name, description
@@ -136,15 +155,17 @@ class SpotifyClient:
                 "Content-Type": "application/json",
             },
             auth=BearerAuth(access_token),
-        ).json()
-        playlist = Playlist.model_validate(response)
+        )
+        api_playlist = self.response_handler(response)
+        playlist = Playlist.model_validate(api_playlist)
         return playlist
 
     def delete_playlist(self, access_token, id: str):
-        return requests.delete(
+        response = requests.delete(
             url=f"https://api.spotify.com/v1/playlists/{id}/followers",
             auth=BearerAuth(access_token),
         )
+        return self.response_handler(response, jsonify=False)
 
     def get_playlist_items(self, access_token, id, limit, offset):
         response = requests.get(
@@ -157,8 +178,9 @@ class SpotifyClient:
                 "content-type": "application/json",
             },
             auth=BearerAuth(access_token),
-        ).json()
-        playlist_tracks = PlaylistTracks.model_validate(response)
+        )
+        api_playlist_tracks = self.response_handler(response)
+        playlist_tracks = PlaylistTracks.model_validate(api_playlist_tracks)
         return playlist_tracks
 
     def get_playlist_tracks(self, access_token, id: str):
@@ -184,16 +206,22 @@ class SpotifyClient:
                 "content-type": "application/json",
             },
             auth=BearerAuth(access_token),
-        ).json()
-        album = Album.model_validate(response)
+        )
+        api_album = self.response_handler(response)
+        album = Album.model_validate(api_album)
         return album
 
     def get_current_playback(self, access_token):
         response = requests.get(
             f"https://api.spotify.com/v1/me/player",
             auth=BearerAuth(access_token),
-        ).json()
-        current_playback = PlaybackState.model_validate(response)
+        )
+        api_current_playback = self.response_handler(response)
+        current_playback = (
+            PlaybackState.model_validate(api_current_playback)
+            if api_current_playback
+            else None
+        )
         return current_playback
 
     def get_my_current_playback(self, access_token) -> PlaybackInfo | None:
@@ -257,7 +285,7 @@ class SpotifyClient:
 
     def search_albums(self, access_token, search=None, offset=0) -> List[Album]:
         if search:
-            api_results = requests.get(
+            response = requests.get(
                 f"https://api.spotify.com/v1/albums/{id}",
                 data={"q": search, "type": "album", "limit": 50, "offset": offset},
                 headers={
@@ -265,6 +293,7 @@ class SpotifyClient:
                 },
                 auth=BearerAuth(access_token),
             )
+            api_results = self.response_handler(response)
             return [
                 Album(
                     title=x["name"],

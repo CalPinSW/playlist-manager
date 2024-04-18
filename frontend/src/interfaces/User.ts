@@ -1,4 +1,4 @@
-export interface SPUser {
+export interface User {
   external_urls: {
     spotify: string;
   };
@@ -11,4 +11,9 @@ export interface SPUser {
   type: "user";
   uri: string;
   display_name: string;
+  images?: {
+    url: string;
+    height?: number;
+    width?: number;
+  }[];
 }
