@@ -13,7 +13,7 @@ const runServer = async () => {
   const port = process.env.FRONTEND_PORT;
 
   let { host, port: proxyPort } = await ctx.serve({
-    host: process.env.HOST,
+    host: "localhost",
     servedir: "public",
   });
 
