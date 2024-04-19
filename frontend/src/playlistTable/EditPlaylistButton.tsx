@@ -9,7 +9,7 @@ interface IEditPlaylistButton {
 const EditPlaylistButton: FC<IEditPlaylistButton> = ({ playlistId }) => {
   return (
     <Link to={`edit/${playlistId}`}>
-      <BiEdit className="w-6 h-6 fill-primary-500" />
+      <BiEdit className="w-6 h-6 fill-primary-400 hover:fill-primary-500 cursor-pointer" />
     </Link>
   );
 };

@@ -25,7 +25,7 @@ export const Index: FC = () => {
 
   useEffect(() => {
     const previousIndex = pagination.pageSize * pagination.pageIndex;
-    const pageSize = isMobileView ? 5 : 8;
+    const pageSize = isMobileView ? 8 : 8;
     const newIndex = Math.floor(previousIndex / pageSize);
 
     setPagination({
@@ -59,22 +59,24 @@ export const Index: FC = () => {
   if (error) return "An error has occurred: " + error.message;
 
   return (
-    <div>
+    <div className="py-4 px-2 space-y-2">
       <Box>
         <PlaylistTable playlists={data} />
         <div className="flex justify-between">
-          <CustomButton className="flex" onClick={onClickPrevious}>
-            <GoArrowLeft />
-            Previous
+          <CustomButton className="flex space-x-2" onClick={onClickPrevious}>
+            <GoArrowLeft className="my-auto" />
+            <div>Previous</div>
           </CustomButton>
 
-          <CustomButton className="flex" onClick={onClickNext}>
-            <GoArrowRight />
-            Next
+          <CustomButton className="flex space-x-2" onClick={onClickNext}>
+            <GoArrowRight className="my-auto" />
+            <div>Next</div>
           </CustomButton>
         </div>
       </Box>
-      <AddPlaylistForm />
+      <Box>
+        <AddPlaylistForm />
+      </Box>
     </div>
   );
 };

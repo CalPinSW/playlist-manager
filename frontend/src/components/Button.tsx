@@ -9,7 +9,7 @@ const CustomButton: FC<
   return (
     <button
       {...props}
-      className={`bg-secondary-500 rounded p-2 ${props.className}`}
+      className={`bg-secondary-300 rounded p-2 cursor-pointer hover:bg-secondary-500 ${props.className}`}
     ></button>
   );
 };

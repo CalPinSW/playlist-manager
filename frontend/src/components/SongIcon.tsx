@@ -3,8 +3,6 @@ import React, { FC } from "react";
 const SongIcon: FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg
-      width="unset"
-      height="unset"
       viewBox="0 0 32 32"
       xmlns="http://www.w3.org/2000/svg"
       {...props}

@@ -9,21 +9,21 @@ import { Playlist } from "./interfaces/Playlist";
 
 const AddPlaylistForm: FC = () => {
   const { control, register, getValues } = useForm<Playlist>({});
-
+  const onSubmit = () => {
+    const values = getValues();
+    if (values.name !== "") {
+      addPlaylist(values);
+    }
+  };
   return (
-    <div className="m-2">
-      <Form
-        onSubmit={() => {
-          addPlaylist(getValues());
-        }}
-        control={control}
-      >
-        <div className="flex flex-col sm:flex-row sm:space-x-8">
-          <div>
+    <div className="m-4">
+      <Form onSubmit={onSubmit} control={control}>
+        <div className="flex flex-col w-full sm:flex-row sm:space-x-8">
+          <div className="flex flex-row sm:flex-col justify-between">
             <InputLabel>Title:</InputLabel>
             <Input register={register("name")} type="text" name="name" />
           </div>
-          <div>
+          <div className="flex flex-row sm:flex-col justify-between">
             <InputLabel>Description:</InputLabel>
             <Input
               register={register("description")}
