@@ -18,7 +18,7 @@ const AddPlaylistForm: FC = () => {
         }}
         control={control}
       >
-        <div className="flex flex-row space-x-8">
+        <div className="flex flex-col sm:flex-row sm:space-x-8">
           <div>
             <InputLabel>Title:</InputLabel>
             <Input register={register("name")} type="text" name="name" />

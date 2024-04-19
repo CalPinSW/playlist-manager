@@ -1,6 +1,7 @@
 from http.client import HTTPException
 from urllib.parse import urlencode
-from flask import Flask, make_response, redirect, request
+from uuid import uuid4
+from flask import Flask, make_response, redirect, request, session
 from flask_cors import CORS
 from src.dataclasses.playback_info import PlaybackInfo
 from src.exceptions.Unauthorized import UnauthorizedException
@@ -53,7 +54,8 @@ def create_app():
 
     @app.route("/auth/login")
     def login():
-        state = "thisShouldBeARandomString"
+        state = uuid4()
+        session["SpotifyState"] = state
         query_string = spotify.get_login_query_string(state)
         return "https://accounts.spotify.com/authorize?" + query_string
 
@@ -61,7 +63,7 @@ def create_app():
     def auth_redirect():
         code = request.args.get("code")
         state = request.args.get("state")
-        if state is None:
+        if state != session["SpotifyState"]:
             return redirect("/#" + urlencode({"error": "state_mismatch"}))
         return spotify.request_access_token(code=code)
 

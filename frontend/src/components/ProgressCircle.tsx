@@ -8,9 +8,8 @@ export const ProgressCircle: FC<ProgressCircleProps> = ({
   percentage,
   className,
 }) => {
-  const strokeDashOffset = (1 - percentage) * 0.96;
   return (
-    <div className="relative w-20 h-20">
+    <div className="relative">
       <svg className="w-full h-full" viewBox="0 0 100 100">
         <circle
           className="text-gray-200 stroke-current"
