@@ -33,11 +33,10 @@ const PlaybackFooter: FC = () => {
   });
   if (!playbackInfo) return null;
   return (
-    <div className="w-full h-fit bg-purple-200 px-4 py-2 text-sm sm:text-base">
+    <div className="w-full h-fit bg-primary-300 px-4 py-2 text-sm sm:text-base">
       <div className="flex space-x-4 sm:space-x-6">
         <div className="flex flex-col space-y-2 w-1/5 max-w-48">
           <img src={playbackInfo.artwork_url}></img>
-
           <div>{`Playing: ${playbackInfo.album_artists.join(", ")}`}</div>
         </div>
         <div className="flex flex-col w-4/5 text-sm space-y-2">

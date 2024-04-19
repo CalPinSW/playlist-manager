@@ -33,7 +33,13 @@ export const ProgressCircle: FC<ProgressCircleProps> = ({
           }
         ></circle>
 
-        <text x="50" y="50" textAnchor="middle" alignmentBaseline="middle">
+        <text
+          x="50"
+          y="50"
+          textAnchor="middle"
+          alignmentBaseline="middle"
+          className="stroke-text-primary"
+        >
           {percentage}%
         </text>
       </svg>

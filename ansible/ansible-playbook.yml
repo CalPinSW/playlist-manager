@@ -43,7 +43,6 @@
     - name: Clone Playlist Manager
       git:
         repo: "https://github.com/CalPinSW/playlist-manager.git"
-        version: "optimise-layout-for-mobile"
         dest: "/opt/playlist-manager"
         force: true
 

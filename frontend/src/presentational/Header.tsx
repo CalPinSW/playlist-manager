@@ -13,11 +13,11 @@ const Header = () => {
     },
   });
   return (
-    <div className="flex justify-between top-0 h-16 sm:h-20 bg-primary-500">
-      <Link to="/" className="flex mx-4 my-auto text-lg text-white">
+    <div className="flex justify-between top-0 h-16 sm:h-20 bg-primary-300">
+      <Link to="/" className="flex mx-4 my-auto text-lg">
         Playlist Manager
       </Link>
-      <Box className="flex mx-4 text-white">
+      <Box className="flex mx-4">
         {data ? (
           <div className="flex space-x-4">
             <div className="my-auto">{data.display_name}</div>
