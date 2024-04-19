@@ -6,7 +6,7 @@ export const Login: FC = () => {
   return (
     <div>
       <Box>
-        <button onClick={login}>Test</button>
+        <button onClick={login}>Click to login</button>
       </Box>
     </div>
   );

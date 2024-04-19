@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getPlaylists } from "./api";
 import { Playlist } from "./interfaces/Playlist";
@@ -7,7 +7,8 @@ import Box from "./components/Box";
 import AddPlaylistForm from "./AddPlaylistForm";
 import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 import CustomButton from "./components/Button";
-import PlaybackFooter from "./PlaybackFooter";
+import PlaybackFooter from "./presentational/PlaybackFooter";
+import useWindowSize from "./hooks/useWindowSize";
 
 interface PaginationState {
   pageIndex: number;
@@ -15,10 +16,23 @@ interface PaginationState {
 }
 
 export const Index: FC = () => {
+  const { isMobileView } = useWindowSize();
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 8,
+    pageSize: isMobileView ? 5 : 8,
   });
+
+  useEffect(() => {
+    const previousIndex = pagination.pageSize * pagination.pageIndex;
+    const pageSize = isMobileView ? 8 : 8;
+    const newIndex = Math.floor(previousIndex / pageSize);
+
+    setPagination({
+      pageIndex: newIndex,
+      pageSize: pageSize,
+    });
+  }, [isMobileView]);
 
   const onClickNext = () => {
     setPagination((state) => ({
@@ -45,23 +59,24 @@ export const Index: FC = () => {
   if (error) return "An error has occurred: " + error.message;
 
   return (
-    <div>
+    <div className="py-4 px-2 space-y-2">
       <Box>
         <PlaylistTable playlists={data} />
         <div className="flex justify-between">
-          <CustomButton className="flex" onClick={onClickPrevious}>
-            <GoArrowLeft />
-            Previous
+          <CustomButton className="flex space-x-2" onClick={onClickPrevious}>
+            <GoArrowLeft className="my-auto" />
+            <div>Previous</div>
           </CustomButton>
 
-          <CustomButton className="flex" onClick={onClickNext}>
-            <GoArrowRight />
-            Next
+          <CustomButton className="flex space-x-2" onClick={onClickNext}>
+            <GoArrowRight className="my-auto" />
+            <div>Next</div>
           </CustomButton>
         </div>
       </Box>
-      <AddPlaylistForm />
-      <PlaybackFooter />
+      <Box>
+        <AddPlaylistForm />
+      </Box>
     </div>
   );
 };

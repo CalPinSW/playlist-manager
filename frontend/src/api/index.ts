@@ -10,7 +10,9 @@ const openInNewTab = (url: string) => {
 };
 
 export const login = async (): Promise<void> => {
-  return fetch(`${backendUrl}/auth/login`).then(async (response) => {
+  return fetch(`${backendUrl}/auth/login`, {
+    credentials: "include",
+  }).then(async (response) => {
     const redirectUrl = await response.text();
     openInNewTab(redirectUrl);
   });

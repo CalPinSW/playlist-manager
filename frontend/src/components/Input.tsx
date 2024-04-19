@@ -20,7 +20,7 @@ const CustomInput: FC<CustomInputProps> = ({
       {...register}
       type={type}
       defaultValue={defaultValue}
-      className="m-2 border-solid border-2 border-primary-800"
+      className="m-2 border-solid border border-primary-800 rounded-md"
     />
   </div>
 );

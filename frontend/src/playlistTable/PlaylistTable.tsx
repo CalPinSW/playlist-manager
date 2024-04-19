@@ -11,12 +11,15 @@ import {
 } from "@tanstack/react-table";
 import PlaylistIcon from "./PlaylistIcon";
 import { deletePlaylist } from "../api";
+import useWindowSize from "../hooks/useWindowSize";
 
 interface IPlaylistTable {
   playlists: Playlist[];
 }
 
 const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
+  const { isMobileView } = useWindowSize();
+
   const onDeletePlaylistClick = (playlist: Playlist) => {
     deletePlaylist(playlist);
   };
@@ -38,10 +41,14 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
       size: 200,
       cell: (info) => info.getValue(),
     }),
-    columnHelper.accessor("description", {
-      size: 200,
-      cell: (info) => info.getValue(),
-    }),
+    ...(isMobileView
+      ? []
+      : [
+          columnHelper.accessor("description", {
+            size: 200,
+            cell: (info) => info.getValue(),
+          }),
+        ]),
     columnHelper.display({
       size: 50,
       id: "edit",
