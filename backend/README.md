@@ -60,4 +60,6 @@ Press CTRL+C to quit
 If you now run [the frontend](../frontend/README.md) you should be able to communicate with the backend
 
 
-## Running the App
+## Running Tests
+
+Tests can be run with `poetry run pytest`

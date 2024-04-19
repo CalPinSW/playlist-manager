@@ -3,8 +3,8 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { EditPlaylist } from "./EditPlaylist";
 import Layout from "./presentational/Layout";
 import { getPlaylist } from "./api";
-import { Index } from "./Index";
 import { Login } from "./Login";
+import { Index } from "./MainPage";
 
 const router = createBrowserRouter([
   {

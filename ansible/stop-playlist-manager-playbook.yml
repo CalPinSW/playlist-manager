@@ -1,0 +1,18 @@
+- name: Stop web servers
+  hosts: managed-nodes
+  remote_user: ec2-user
+
+  tasks:
+    - name: Stop Playlist Manager Frontend
+      systemd:
+        name: "playlist-manager-frontend.service"
+        daemon_reload: yes
+        state: "stopped"
+      become: yes
+
+    - name: Stop Playlist Manager Backend
+      systemd:
+        name: "playlist-manager-backend.service"
+        daemon_reload: yes
+        state: "stopped"
+      become: yes

@@ -1,9 +1,8 @@
 from http.client import HTTPException
 from urllib.parse import urlencode
-from flask import Flask, make_response, redirect, request, jsonify
+from flask import Flask, make_response, redirect, request
 from flask_cors import CORS
 from src.dataclasses.playback_info import PlaybackInfo
-from src.dataclasses.playlist_info import SimplifiedPlaylist
 from src.exceptions.Unauthorized import UnauthorizedException
 from src.flask_config import Config
 from src.spotify import SpotifyClient
@@ -15,11 +14,15 @@ def create_app():
 
     app.config.from_object(Config())
     app.config["CORS_HEADERS"] = "Content-Type"
-
     cors = CORS(
         app,
         resources={
-            r"/*": {"origins": ["http://127.0.0.1:1234", "http://localhost:1234"]}
+            r"/*": {
+                "origins": [
+                    f"http://{Config().HOST}:{Config().FRONTEND_PORT}",
+                    f"http://locahost:{Config().FRONTEND_PORT}",
+                ]
+            }
         },
         supports_credentials=True,
     )

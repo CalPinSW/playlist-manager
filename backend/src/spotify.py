@@ -13,6 +13,7 @@ from urllib.parse import urlencode
 from src.dataclasses.playlist_tracks import PlaylistTrackObject, PlaylistTracks
 from src.dataclasses.user import User
 from src.exceptions.Unauthorized import UnauthorizedException
+from src.flask_config import Config
 
 scope = [
     "user-library-read",
@@ -84,7 +85,9 @@ class SpotifyClient:
         access_token = self.response_handler(response)["access_token"]
         user_info = self.get_current_user(access_token)
 
-        resp = make_response(redirect("http://localhost:1234/"))
+        resp = make_response(
+            redirect(f"http://{Config().HOST}:{Config().FRONTEND_PORT}/")
+        )
         resp.set_cookie("spotify_access_token", access_token)
         resp.set_cookie("user_id", user_info.id)
         return resp

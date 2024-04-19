@@ -6,8 +6,11 @@ const watchDirectories = ["src/*.{ts,tsx}"];
 
 const runServer = async () => {
   const ctx = await esbuild.context(buildOptions);
-  await ctx.watch();
-  const port = 1234;
+
+  if (process.env.NODE_ENV == "development") {
+    await ctx.watch();
+  }
+  const port = process.env.FRONTEND_PORT;
 
   let { host, port: proxyPort } = await ctx.serve({
     host: "localhost",
