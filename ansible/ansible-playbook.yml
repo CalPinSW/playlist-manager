@@ -43,7 +43,6 @@
     - name: Clone Playlist Manager
       git:
         repo: "https://github.com/CalPinSW/playlist-manager.git"
-        version: "add-ansible-configuration"
         dest: "/opt/playlist-manager"
         force: true
 
