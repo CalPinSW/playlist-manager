@@ -17,7 +17,12 @@ def create_app():
     cors = CORS(
         app,
         resources={
-            r"/*": {"origins": [f"http://{Config().HOST}:1234", "http://locahost:1234"]}
+            r"/*": {
+                "origins": [
+                    f"http://{Config().HOST}:{Config().FRONTEND_PORT}",
+                    f"http://locahost:{Config().FRONTEND_PORT}",
+                ]
+            }
         },
         supports_credentials=True,
     )

@@ -85,7 +85,9 @@ class SpotifyClient:
         access_token = self.response_handler(response)["access_token"]
         user_info = self.get_current_user(access_token)
 
-        resp = make_response(redirect(f"http://{Config().HOST}:1234/"))
+        resp = make_response(
+            redirect(f"http://{Config().HOST}:{Config().FRONTEND_PORT}/")
+        )
         resp.set_cookie("spotify_access_token", access_token)
         resp.set_cookie("user_id", user_info.id)
         return resp

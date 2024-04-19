@@ -4,6 +4,12 @@ config();
 const define = {
   "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
   "process.env.HOST": JSON.stringify(process.env.HOST || "localhost"),
+  "process.env.FRONTEND_PORT": JSON.stringify(
+    process.env.FRONTEND_PORT || "1234"
+  ),
+  "process.env.BACKEND_PORT": JSON.stringify(
+    process.env.BACKEND_PORT || "5000"
+  ),
 };
 
 export const buildOptions = {
