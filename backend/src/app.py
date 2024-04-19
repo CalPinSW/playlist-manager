@@ -54,7 +54,7 @@ def create_app():
 
     @app.route("/auth/login")
     def login():
-        state = uuid4()
+        state = str(uuid4())
         session["SpotifyState"] = state
         query_string = spotify.get_login_query_string(state)
         return "https://accounts.spotify.com/authorize?" + query_string
