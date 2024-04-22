@@ -33,14 +33,6 @@ class Episode(BaseModel):
     uri: str
     restrictions: Restrictions
     show: Show
-    href: str
-    id: str
-    images: List[Image]
-    is_externally_hosted: bool
-    languages: List[str]
     media_type: str
-    name: str
     publisher: str
-    type: str
-    uri: str
     total_episodes: int

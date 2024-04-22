@@ -6,7 +6,7 @@ from src.dataclasses.playlist_track_object import PlaylistTrackObject
 class PlaylistTracks(BaseModel):
     href: str
     limit: int
-    next: Optional[str]
+    next: Optional[str] = None
     offset: int
     previous: Optional[str] = None
     total: int

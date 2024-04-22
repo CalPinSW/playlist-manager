@@ -1,10 +1,12 @@
+import { Album } from "../interfaces/Album";
 import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
 import { Playlist } from "../interfaces/Playlist";
 import { User } from "../interfaces/User";
+import { backendUrl } from "./jsonRequest";
+import { RequestMethod } from "./jsonRequest";
+import { jsonRequest } from "./jsonRequest";
 
-const backendUrl = `http://${process.env.HOST}:${process.env.BACKEND_PORT}`;
-
-const openInNewTab = (url: string) => {
+export const openInNewTab = (url: string) => {
   const newWindow = window.open(url, "_self", "noopener,noreferrer");
   if (newWindow) newWindow.opener = null;
 };
@@ -19,117 +21,51 @@ export const login = async (): Promise<void> => {
 };
 
 export const getCurrentUserDetails = async (): Promise<User> => {
-  const response = await fetch(`${backendUrl}/current-user`, {
-    credentials: "include",
-  });
-  const apiResponse = await response.json().then((data: any) => data as User);
-  return apiResponse;
+  return jsonRequest(`current-user`, RequestMethod.GET, undefined, false);
 };
 
 export const getPlaylists = async (
   offset: number,
   limit: number
 ): Promise<Playlist[]> => {
-  const response = await fetch(
-    `${backendUrl}/?limit=${encodeURIComponent(
-      limit
-    )}&offset=${encodeURIComponent(offset)}`,
-    { credentials: "include" }
-  );
-  if (response.status === 401) {
-    openInNewTab("login");
-  }
-  const apiResponse = await response
-    .json()
-    .then((data: any) => data as Playlist[]);
-  return apiResponse.map((apiPlaylist: Playlist) =>
-    parsePlaylists(apiPlaylist)
-  );
+  const endpoint = `?limit=${encodeURIComponent(
+    limit
+  )}&offset=${encodeURIComponent(offset)}`;
+  return jsonRequest(endpoint, RequestMethod.GET);
 };
 
 export const getPlaylist = async (id: string): Promise<Playlist> => {
-  const response = await fetch(`${backendUrl}/edit-playlist/${id}`, {
-    credentials: "include",
-  });
-  const apiResponse = await response
-    .json()
-    .then((data: any) => data as Playlist);
-  return parsePlaylists(apiResponse);
+  return jsonRequest(`edit-playlist/${id}`, RequestMethod.GET);
 };
 
 export const addPlaylist = async (playlist: Playlist): Promise<Playlist> => {
-  const response = await fetch(`${backendUrl}/create-playlist`, {
-    method: "post",
-    credentials: "include",
-    mode: "cors",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(playlist),
-  });
-  const apiResponse = await response
-    .json()
-    .then((data: any) => data as Playlist);
-  return parsePlaylists(apiResponse);
+  return jsonRequest("create-playlist", RequestMethod.POST, playlist);
 };
 
 export const updatePlaylist = async (playlist: Playlist): Promise<Playlist> => {
-  const response = await fetch(`${backendUrl}/edit-playlist/${playlist.id}`, {
-    method: "post",
-    credentials: "include",
-    mode: "cors",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(playlist),
-  });
-  const apiResponse = await response
-    .json()
-    .then((data: any) => data as Playlist);
-  return parsePlaylists(apiResponse);
+  return jsonRequest(
+    `edit-playlist/${playlist.id}`,
+    RequestMethod.POST,
+    playlist
+  );
 };
 
 export const deletePlaylist = async (playlist: Playlist): Promise<Response> => {
-  const response = await fetch(`${backendUrl}/delete-playlist/${playlist.id}`, {
-    method: "post",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-  });
-  return response;
+  return jsonRequest(`edit-playlist/${playlist.id}`, RequestMethod.POST);
 };
 
-export const getPlaybackInfo = async (): Promise<any> => {
-  const response = await fetch(`${backendUrl}/playback`, {
-    credentials: "include",
-  });
-  const apiResponse = await response
-    .json()
-    .then((data: any) => data as PlaybackInfo);
-  return apiResponse;
+export const getPlaylistAlbums = async (
+  playlistId: string
+): Promise<Album[]> => {
+  return jsonRequest(`playlist/${playlistId}/albums`, RequestMethod.GET);
+};
+
+export const getPlaybackInfo = async (): Promise<PlaybackInfo> => {
+  return jsonRequest(`playback`, RequestMethod.GET, undefined, false);
 };
 
 export const getPlaylistProgress = async (
   playbackInfo: PlaybackInfo
-): Promise<any> => {
-  const body = JSON.stringify(playbackInfo);
-  const response = await fetch(`${backendUrl}/playlist_progress`, {
-    method: "post",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body,
-    credentials: "include",
-  });
-  const apiResponse = await response
-    .json()
-    .then((data: any) => data as PlaylistProgress);
-  return apiResponse;
-};
-
-const parsePlaylists = (apiResult: Playlist): Playlist => {
-  return {
-    ...apiResult,
-  };
+): Promise<PlaylistProgress> => {
+  return jsonRequest(`playlist_progress`, RequestMethod.POST, playbackInfo);
 };

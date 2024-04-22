@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 from src.dataclasses.followers import Followers
 
@@ -16,7 +16,7 @@ class Playlist(BaseModel):
     followers: Followers
     href: str
     id: str
-    images: List[Image]
+    images: Optional[List[Image]] = None
     name: str
     owner: User
     public: bool

@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { EditPlaylist } from "./EditPlaylist";
+import { PlaylistExplorer } from "./PlaylistExplorer.tsx/PlaylistExplorer";
 import Layout from "./presentational/Layout";
 import { getPlaylist } from "./api";
 import { Login } from "./Login";
@@ -15,7 +15,7 @@ const router = createBrowserRouter([
       { path: "/login", element: <Login /> },
       {
         path: "/edit/:playlistId",
-        element: <EditPlaylist />,
+        element: <PlaylistExplorer />,
         loader: async ({ params: { playlistId } }) => {
           if (!playlistId) {
             throw Error;
