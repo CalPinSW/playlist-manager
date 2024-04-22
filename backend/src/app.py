@@ -112,6 +112,16 @@ def create_app():
         )
         return redirect("/")
 
+    @app.route("/playlist/<id>/albums", methods=["GET"])
+    def get_playlist_album_info(id):
+        access_token = request.cookies.get("spotify_access_token")
+        return [
+            album.model_dump()
+            for album in spotify.get_playlist_album_info(
+                access_token=access_token, id=id
+            )
+        ]
+
     @app.route("/playback", methods=["GET"])
     def get_playback_info():
         access_token = request.cookies.get("spotify_access_token")

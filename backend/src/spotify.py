@@ -128,6 +128,10 @@ class SpotifyClient:
         )
         api_playlist = self.response_handler(response)
         playlist = Playlist.model_validate(api_playlist)
+        if playlist.tracks.next:
+            playlist.tracks.items = self.get_playlist_tracks(
+                access_token=access_token, id=playlist.id
+            )
         return playlist
 
     def create_playlist(self, user_id, access_token, name, description):
@@ -184,6 +188,14 @@ class SpotifyClient:
         api_playlist_tracks = self.response_handler(response)
         playlist_tracks = PlaylistTracks.model_validate(api_playlist_tracks)
         return playlist_tracks
+
+    def get_playlist_album_info(self, access_token, id) -> List[Album]:
+        playlist_tracks = self.get_playlist_tracks(access_token, id)
+        playlist_albums: List[Album] = []
+        for track in playlist_tracks:
+            if track.track.album not in playlist_albums:
+                playlist_albums.append(track.track.album)
+        return playlist_albums
 
     def get_playlist_tracks(self, access_token, id: str):
         playlist_tracks: List[PlaylistTrackObject] = []

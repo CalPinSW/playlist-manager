@@ -1,5 +1,14 @@
 import { User } from "./User";
-import { PlaylistImage } from "./PlaylistImage";
+import { Image } from "./Image";
+import { Track } from "./Track";
+import { Episode } from "./Episode";
+
+export interface PlaylistTrack {
+  added_at: string;
+  added_by?: User;
+  is_local: boolean;
+  track: Track; // | Episode; ToDo: Add frontend episode handling
+}
 
 export interface Playlist {
   collaborative: false;
@@ -10,13 +19,18 @@ export interface Playlist {
   };
   href: string;
   id: string;
-  images: PlaylistImage[];
+  images: Image[];
   owner: User;
   public: false;
   snapshot_id: string;
   tracks: {
     href: string;
-    total: 0;
+    limit: number;
+    next?: string;
+    offset: number;
+    previous?: string;
+    total: number;
+    items: PlaylistTrack[];
   };
   type: string;
   uri: string;

@@ -1,11 +1,12 @@
 import { createThemes } from "tw-colors";
 const tailwindConfigModule = {
   content: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
+
   plugins: [
     createThemes(
       {
         light: {
-          background: "#FFFFFF",
+          background: { DEFAULT: "#FFFFFF", offset: "#E3E3E3" },
           primary: {
             DEFAULT: "#843dff",
             50: "#f3f1ff",
@@ -51,7 +52,7 @@ const tailwindConfigModule = {
           text: { primary: "#24143d" },
         },
         dark: {
-          background: "#1c012b",
+          background: { DEFAULT: "#1c012b", offset: "#360253" },
           primary: {
             DEFAULT: "#10B981",
             50: "#01100B",

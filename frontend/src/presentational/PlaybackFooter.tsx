@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import React, { FC } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { getPlaybackInfo, getPlaylistProgress } from "../api";
 import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
 import { ProgressCircle } from "../components/ProgressCircle";
@@ -10,15 +10,19 @@ import PlaylistIcon from "../components/PlaylistIcon";
 
 const PlaybackFooter: FC = () => {
   const { isMobileView } = useWindowSize();
+  const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(5000);
   const { data: playbackInfo } = useQuery<PlaybackInfo>({
     queryKey: ["playbackInfo"],
     queryFn: () => {
       return getPlaybackInfo();
     },
     retry: false,
-    refetchInterval: 5000,
+    refetchInterval: playbackRefetchInterval,
     refetchIntervalInBackground: false,
   });
+  useEffect(() => {
+    setPlaybackRefetchInterval(playbackInfo ? 5000 : 20000);
+  }, [playbackInfo]);
   const { data: playlistProgress } = useQuery<PlaylistProgress | undefined>({
     queryKey: ["playlistProgress"],
     queryFn: () => {
@@ -37,13 +41,18 @@ const PlaybackFooter: FC = () => {
       <div className="flex space-x-4 sm:space-x-6">
         <div className="flex flex-col space-y-2 w-1/5 max-w-48">
           <img src={playbackInfo.artwork_url}></img>
-          <div>{`Playing: ${playbackInfo.album_artists.join(", ")}`}</div>
+          <div>Playing:</div>
+          <div className="text-balance">
+            {playbackInfo.album_artists.join(", ")}
+          </div>
         </div>
         <div className="flex flex-col w-4/5 text-sm space-y-2">
           <div className="flex flex-row justify-between">
             <div className="flex flex-row space-x-2">
               <SongIcon className="my-auto w-8 h-8" />
-              <div className="my-auto w-48">{playbackInfo.track_title}</div>
+              <div className="my-auto text-balance">
+                {playbackInfo.track_title}
+              </div>
             </div>
             <div className="w-12 h-12 sm:w-20 sm:h-20 my-auto">
               <ProgressCircle
@@ -58,7 +67,9 @@ const PlaybackFooter: FC = () => {
           <div className="flex flex-row justify-between">
             <div className="flex flex-row space-x-2">
               <AlbumIcon className="my-auto w-8 h-8" />
-              <div className="my-auto w-48">{playbackInfo.album_title}</div>
+              <div className="my-auto text-balance">
+                {playbackInfo.album_title}
+              </div>
             </div>
             <div className="w-12 h-12 sm:w-20 sm:h-20 my-auto">
               <ProgressCircle
@@ -78,7 +89,7 @@ const PlaybackFooter: FC = () => {
             >
               <div className="flex flex-row space-x-2">
                 <PlaylistIcon className="my-auto w-8 h-8" />
-                <div className="my-auto w-48">
+                <div className="my-auto text-balance">
                   {playlistProgress?.playlist_title}
                 </div>
               </div>
