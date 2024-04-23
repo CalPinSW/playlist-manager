@@ -29,9 +29,21 @@ export const jsonRequest = async <I, O>(
   }
   const response = await fetch(`${backendUrl}/${endpoint}`, fetchOptions);
   if (response.status === 401 && redirectOnUnauthorized) {
-    openInNewTab(
-      `http://${process.env.HOST}:${process.env.FRONTEND_PORT}/login`
+    const refresh_response = await fetch(
+      `${backendUrl}/auth/refresh-user-code`,
+      { credentials: "include" }
     );
+    if (refresh_response.status != 401) {
+      const retried_response = await fetch(
+        `${backendUrl}/${endpoint}`,
+        fetchOptions
+      );
+      return retried_response.json().then((data: any) => data as O);
+    } else {
+      openInNewTab(
+        `http://${process.env.HOST}:${process.env.FRONTEND_PORT}/login`
+      );
+    }
   }
   const apiResponse = response.json().then((data: any) => data as O);
   return apiResponse;

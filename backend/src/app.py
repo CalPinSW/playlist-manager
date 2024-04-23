@@ -67,6 +67,11 @@ def create_app():
             return redirect("/#" + urlencode({"error": "state_mismatch"}))
         return spotify.request_access_token(code=code)
 
+    @app.route("/auth/refresh-user-code")
+    def auth_refresh():
+        refresh_token = request.cookies.get("spotify_refresh_token")
+        return spotify.refresh_access_token(refresh_token=refresh_token)
+
     @app.route("/current-user")
     def get_current_user():
         access_token = request.cookies.get("spotify_access_token")
