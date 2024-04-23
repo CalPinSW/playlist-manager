@@ -11,6 +11,7 @@ from src.dataclasses.playlist_info import CurrentUserPlaylists, SimplifiedPlayli
 from urllib.parse import urlencode
 
 from src.dataclasses.playlist_tracks import PlaylistTrackObject, PlaylistTracks
+from src.dataclasses.spotify_auth.token_response import TokenResponse
 from src.dataclasses.user import User
 from src.exceptions.Unauthorized import UnauthorizedException
 from src.flask_config import Config
@@ -69,6 +70,33 @@ class SpotifyClient:
             }
         )
 
+    def refresh_access_token(self, refresh_token):
+        if not refresh_token:
+            raise UnauthorizedException
+        response = requests.post(
+            url="https://accounts.spotify.com/api/token",
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token,
+            },
+            headers={
+                "content-type": "application/x-www-form-urlencoded",
+            },
+            auth=(self.client_id, self.client_secret),
+        )
+        if response.status_code == 400:
+            raise UnauthorizedException
+
+        api_response = self.response_handler(response)
+        token_response = TokenResponse.model_validate(api_response)
+        access_token = token_response.access_token
+        user_info = self.get_current_user(access_token)
+
+        resp = make_response()
+        resp.set_cookie("spotify_access_token", access_token)
+        resp.set_cookie("user_id", user_info.id)
+        return resp
+
     def request_access_token(self, code):
         response = requests.post(
             url="https://accounts.spotify.com/api/token",
@@ -82,13 +110,16 @@ class SpotifyClient:
             },
             auth=(self.client_id, self.client_secret),
         )
-        access_token = self.response_handler(response)["access_token"]
+        api_response = self.response_handler(response)
+        token_response = TokenResponse.model_validate(api_response)
+        access_token = token_response.access_token
         user_info = self.get_current_user(access_token)
 
         resp = make_response(
             redirect(f"http://{Config().HOST}:{Config().FRONTEND_PORT}/")
         )
         resp.set_cookie("spotify_access_token", access_token)
+        resp.set_cookie("spotify_refresh_token", token_response.refresh_token)
         resp.set_cookie("user_id", user_info.id)
         return resp
 
