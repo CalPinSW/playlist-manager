@@ -14,6 +14,7 @@ class PlaybackInfo(BaseModel):
     track_title: str
     track_id: str
     album_title: str
+    album_id: str
     playlist_id: Optional[str] = None
     track_artists: List[str]
     album_artists: List[str]

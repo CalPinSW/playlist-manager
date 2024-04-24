@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Album } from "../interfaces/Album";
 import { AlbumList } from "./AlbumList/AlbumList";
 import { TrackList } from "./TrackList/TrackList";
+import { usePlaybackContext } from "../hooks/usePlaybackContext";
 
 enum ViewMode {
   ALBUM = "album",
@@ -30,6 +31,8 @@ export const PlaylistExplorer: FC = () => {
     },
     retry: false,
   });
+
+  const { playbackInfo } = usePlaybackContext()
   return (
     <div className="flex flex-col h-full space-y-1 ">
       <div className="mx-2">
@@ -100,10 +103,10 @@ export const PlaylistExplorer: FC = () => {
           </div>
           <div className="my-2">
             {viewMode == ViewMode.ALBUM && playlistAlbums && (
-              <AlbumList albumList={playlistAlbums} />
+              <AlbumList albumList={playlistAlbums} activeAlbumId={playbackInfo?.album_id} />
             )}
             {viewMode == ViewMode.TRACK && (
-              <TrackList trackList={playlist.tracks.items} />
+              <TrackList trackList={playlist.tracks.items} activeTrackId={playbackInfo?.track_id} />
             )}
           </div>
         </>

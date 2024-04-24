@@ -1,36 +1,44 @@
 import React, { FC, useState } from "react";
 import { Album } from "../../interfaces/Album";
 import PlaylistIcon from "../../components/PlaylistIcon";
+import { RotatingBorderBox } from "../../components/RotatingBorderBox";
+
 interface AlbumContainerProps {
   album: Album;
+  active?: boolean;
 }
-export const AlbumContainer: FC<AlbumContainerProps> = ({ album }) => {
+
+export const AlbumContainer: FC<AlbumContainerProps> = ({ album, active }) => {
   const [showMoreInfo, setShowMoreInfo] = useState(false);
   return (
     <div
+      className={`group max-h-80 max-w-80 [perspective:1000px]`}
       onClick={() => {
         setShowMoreInfo((current) => !current);
       }}
-      className="group max-h-80 max-w-80 [perspective:1000px]"
     >
-      <div
-        className={`relative transition-all duration-500 [transform-style:preserve-3d] ${
-          showMoreInfo && "[transform:rotateY(180deg)]"
-        }`}
-      >
-        <AlbumCover album={album} blur={showMoreInfo} />
-        {showMoreInfo && (
-          <div className="absolute top-0 [transform:rotateY(180deg)] [backface-visibility:hidden]">
-            <div className="flex flex-col space-y-2 m-2">
-              <div>{album.name}</div>
-              <div>{album.artists.map((artist) => artist.name).join(", ")}</div>
-              <div>{album.genres}</div>
-              <div>{album.label}</div>
-              <div>{album.popularity}</div>
+      <RotatingBorderBox active={active}>
+        <div
+          className={`m-1 relative transition-all duration-500 [transform-style:preserve-3d] ${
+            showMoreInfo && "[transform:rotateY(180deg)]"
+          }`}
+        >
+          <AlbumCover album={album} blur={showMoreInfo} />
+          {showMoreInfo && (
+            <div className="absolute top-0 [transform:rotateY(180deg)] [backface-visibility:hidden]">
+              <div className="flex flex-col space-y-2 m-2">
+                <div>{album.name}</div>
+                <div>
+                  {album.artists.map((artist) => artist.name).join(", ")}
+                </div>
+                <div>{album.genres}</div>
+                <div>{album.label}</div>
+                <div>{album.popularity}</div>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </RotatingBorderBox>
     </div>
   );
 };

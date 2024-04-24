@@ -4,11 +4,13 @@ import { TrackContainer } from "./TrackContainer";
 import Box from "../../components/Box";
 import SongIcon from "../../components/SongIcon";
 import ArtistIcon from "../../components/ArtistIcon";
+import { usePlaybackContext } from "../../hooks/usePlaybackContext";
 
 interface TrackListProps {
   trackList: PlaylistTrack[];
+  activeTrackId?: string;
 }
-export const TrackList: FC<TrackListProps> = ({ trackList }) => {
+export const TrackList: FC<TrackListProps> = ({ trackList, activeTrackId }) => {
   return (
     <Box>
       <div className=" sm:mx-24 space-y-1 ">
@@ -26,6 +28,7 @@ export const TrackList: FC<TrackListProps> = ({ trackList }) => {
               index={index + 1}
               track={track.track}
               key={track.track.id}
+              active={track.track.id == activeTrackId}
             />
           ))}
         </div>

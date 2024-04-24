@@ -7,34 +7,12 @@ import useWindowSize from "../hooks/useWindowSize";
 import SongIcon from "../components/SongIcon";
 import AlbumIcon from "../components/AlbumIcon";
 import PlaylistIcon from "../components/PlaylistIcon";
+import { usePlaybackContext } from "../hooks/usePlaybackContext";
 
 const PlaybackFooter: FC = () => {
   const { isMobileView } = useWindowSize();
-  const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(5000);
-  const { data: playbackInfo } = useQuery<PlaybackInfo>({
-    queryKey: ["playbackInfo"],
-    queryFn: () => {
-      return getPlaybackInfo();
-    },
-    retry: false,
-    refetchInterval: playbackRefetchInterval,
-    refetchIntervalInBackground: false,
-  });
-  useEffect(() => {
-    setPlaybackRefetchInterval(playbackInfo ? 5000 : 20000);
-  }, [playbackInfo]);
-  const { data: playlistProgress } = useQuery<PlaylistProgress | undefined>({
-    queryKey: ["playlistProgress"],
-    queryFn: () => {
-      if (playbackInfo?.playlist_id) {
-        return getPlaylistProgress(playbackInfo);
-      }
-    },
-    retry: false,
-    refetchInterval: 60000,
-    refetchIntervalInBackground: false,
-    enabled: !!playbackInfo?.playlist_id,
-  });
+  const { playbackInfo, playlistProgress } = usePlaybackContext();
+
   if (!playbackInfo) return null;
   return (
     <div className="w-full h-fit bg-primary-300 px-4 py-2 text-sm sm:text-base">
