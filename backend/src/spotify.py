@@ -297,6 +297,7 @@ class SpotifyClient:
                 "track_title": api_playback.item.name,
                 "track_id": api_playback.item.id,
                 "album_title": api_playback.item.album.name,
+                "album_id": api_playback.item.album.id, 
                 "playlist_id": playlist_id,
                 "track_artists": [artist.name for artist in api_playback.item.artists],
                 "album_artists": [

@@ -1,7 +1,19 @@
 import { createThemes } from "tw-colors";
 const tailwindConfigModule = {
   content: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
-
+  theme: {
+    extend: {
+      keyframes: {
+        slideDash: {
+          from: { transform: "translateX(-50%)" },
+          to: { transform: "translateX(0%)" },
+        },
+      },
+      animation: {
+        slideDash: "slideDash 4.5s infinite linear",
+      },
+    },
+  },
   plugins: [
     createThemes(
       {

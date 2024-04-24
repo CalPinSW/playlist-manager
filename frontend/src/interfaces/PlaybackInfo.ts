@@ -1,6 +1,8 @@
 export interface PlaybackInfo {
   track_title: string;
+  track_id: string;
   album_title: string;
+  album_id: string;
   playlist_id?: string;
   track_artists: string[];
   album_artists: string[];
