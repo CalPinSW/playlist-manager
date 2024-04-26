@@ -20,8 +20,7 @@ def create_app():
         resources={
             r"/*": {
                 "origins": [
-                    f"http://{Config().HOST}:{Config().FRONTEND_PORT}",
-                    f"http://locahost:{Config().FRONTEND_PORT}",
+                    f"{Config().FRONTEND_URL}",
                 ]
             }
         },

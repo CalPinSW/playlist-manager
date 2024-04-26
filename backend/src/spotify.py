@@ -116,7 +116,7 @@ class SpotifyClient:
         user_info = self.get_current_user(access_token)
 
         resp = make_response(
-            redirect(f"http://{Config().HOST}:{Config().FRONTEND_PORT}/")
+            redirect(f"{Config().FRONTEND_URL}/")
         )
         resp.set_cookie("spotify_access_token", access_token)
         resp.set_cookie("spotify_refresh_token", token_response.refresh_token)
