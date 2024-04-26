@@ -12,4 +12,4 @@ COPY tailwind.config.ts .
 
 EXPOSE 1234
 
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "prod"]

@@ -1,14 +1,19 @@
-FROM python:3.10
+FROM python:3.10 AS os-base
 
-RUN ["pip3", "install", "poetry"]
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/root/.local/bin:$PATH"
+RUN poetry config virtualenvs.create false
+RUN apt-get remove -y curl
 
+FROM os-base AS app-base
+
+COPY ./src ./src
 COPY pyproject.toml .
+COPY gunicorn.conf.py .
+RUN python -m venv /app/venv
 
 RUN ["poetry", "install", "--no-dev"]
 
-COPY ./src ./src
+FROM app-base AS main
 
-EXPOSE 5000
-
-ENTRYPOINT ["poetry", "run", "flask", "run", "--host=0.0.0.0"]
-# ENTRYPOINT ["poetry", "run", 'gunicorn -c gunicorn.conf.py --bind localhost:5000 "src.app:create_app()"']
+ENTRYPOINT exec poetry run gunicorn "src.app:create_app()" -c gunicorn.conf.py --bind 0.0.0.0:5000
