@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: frontend
+    image: frontend:dev
     build:
       context: frontend
       dockerfile: Dockerfile
@@ -9,9 +9,14 @@ services:
     env_file:
       - path: frontend/.env
         required: true
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /frontend/src
 
   backend:
-    image: backend
+    image: backend:dev
     build:
       context: backend
       dockerfile: Dockerfile
@@ -20,3 +25,8 @@ services:
     env_file:
       - path: backend/.env
         required: true
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /src

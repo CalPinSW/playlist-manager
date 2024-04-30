@@ -14,6 +14,10 @@ RUN python -m venv /app/venv
 
 RUN ["poetry", "install", "--no-dev"]
 
-FROM app-base AS main
+FROM app-base AS production
 
 ENTRYPOINT exec poetry run gunicorn "src.app:create_app()" -c gunicorn.conf.py --bind 0.0.0.0:5000
+
+FROM app-base AS development
+
+ENTRYPOINT [ "poetry", "run", "flask", "run", "--host=0.0.0.0" ]

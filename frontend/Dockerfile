@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:18 AS base
 
 COPY package.json frontend/package.json
 WORKDIR /frontend
@@ -12,4 +12,10 @@ COPY tailwind.config.ts .
 
 EXPOSE 1234
 
-CMD ["npm", "run", "prod"]
+FROM base AS production
+
+ENTRYPOINT ["npm", "run", "prod"]
+
+FROM base AS development
+
+ENTRYPOINT ["npm", "run", "dev"]

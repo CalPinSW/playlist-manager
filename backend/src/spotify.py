@@ -114,10 +114,7 @@ class SpotifyClient:
         token_response = TokenResponse.model_validate(api_response)
         access_token = token_response.access_token
         user_info = self.get_current_user(access_token)
-
-        resp = make_response(
-            redirect(f"{Config().FRONTEND_URL}/")
-        )
+        resp = make_response(redirect(f"{Config().FRONTEND_URL}/"))
         resp.set_cookie("spotify_access_token", access_token)
         resp.set_cookie("spotify_refresh_token", token_response.refresh_token)
         resp.set_cookie("user_id", user_info.id)
@@ -297,7 +294,7 @@ class SpotifyClient:
                 "track_title": api_playback.item.name,
                 "track_id": api_playback.item.id,
                 "album_title": api_playback.item.album.name,
-                "album_id": api_playback.item.album.id, 
+                "album_id": api_playback.item.album.id,
                 "playlist_id": playlist_id,
                 "track_artists": [artist.name for artist in api_playback.item.artists],
                 "album_artists": [

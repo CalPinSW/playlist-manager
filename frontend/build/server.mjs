@@ -46,7 +46,6 @@ const runServer = async () => {
       clientReq.pipe(proxy, { end: true });
     })
     .listen(process.env.FRONTEND_URL.split(":").slice(-1)[0]);
-  console.log(process.env.FRONTEND_URL.split(":").slice(-1)[0]);
   console.log(`frontend running on ${process.env.FRONTEND_URL}`);
 };
 
