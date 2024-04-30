@@ -7,12 +7,15 @@ RUN apt-get remove -y curl
 
 FROM os-base AS app-base
 
+WORKDIR /backend
 COPY ./src ./src
 COPY pyproject.toml .
 COPY gunicorn.conf.py .
-RUN python -m venv /app/venv
+RUN python -m venv venv
 
 RUN ["poetry", "install", "--no-dev"]
+
+EXPOSE 5000
 
 FROM app-base AS production
 
@@ -21,3 +24,10 @@ ENTRYPOINT exec poetry run gunicorn "src.app:create_app()" -c gunicorn.conf.py -
 FROM app-base AS development
 
 ENTRYPOINT [ "poetry", "run", "flask", "run", "--host=0.0.0.0" ]
+
+FROM app-base AS test
+
+RUN ["poetry", "install"]
+ENV PYTHONPATH=.
+
+ENTRYPOINT [ "poetry", "run", "pytest" ]

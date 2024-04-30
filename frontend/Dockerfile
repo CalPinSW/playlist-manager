@@ -1,7 +1,8 @@
 FROM node:18 AS base
 
-COPY package.json frontend/package.json
 WORKDIR /frontend
+
+COPY package.json .
 
 RUN npm install
 

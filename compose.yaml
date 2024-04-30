@@ -28,5 +28,16 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./src
-          target: /src
+          path: ./backend/src
+          target: /backend/src
+
+  test:
+    profiles:
+      - test
+    image: backend:test
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    env_file:
+      - path: backend/.env.test
+        required: true
