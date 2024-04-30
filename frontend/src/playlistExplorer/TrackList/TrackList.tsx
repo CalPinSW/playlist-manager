@@ -4,7 +4,6 @@ import { TrackContainer } from "./TrackContainer";
 import Box from "../../components/Box";
 import SongIcon from "../../components/SongIcon";
 import ArtistIcon from "../../components/ArtistIcon";
-import { usePlaybackContext } from "../../hooks/usePlaybackContext";
 
 interface TrackListProps {
   trackList: PlaylistTrack[];
@@ -22,7 +21,7 @@ export const TrackList: FC<TrackListProps> = ({ trackList, activeTrackId }) => {
             <ArtistIcon className="h-12 mx-auto fill-text-primary" />
           </div>
         </div>
-        <div className="h-[50vh] overflow-scroll ">
+        <div className="h-[50vh] overflow-scroll">
           {trackList.map((track, index) => (
             <TrackContainer
               index={index + 1}

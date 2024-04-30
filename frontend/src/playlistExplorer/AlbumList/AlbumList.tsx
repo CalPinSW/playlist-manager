@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, useEffect } from "react";
 import { Album } from "../../interfaces/Album";
 import { AlbumContainer } from "./AlbumContainer";
 import Box from "../../components/Box";

@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import { Album } from "../../interfaces/Album";
 import PlaylistIcon from "../../components/PlaylistIcon";
 import { RotatingBorderBox } from "../../components/RotatingBorderBox";
@@ -9,6 +9,12 @@ interface AlbumContainerProps {
 }
 
 export const AlbumContainer: FC<AlbumContainerProps> = ({ album, active }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (active && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [active]);
   const [showMoreInfo, setShowMoreInfo] = useState(false);
   return (
     <div
@@ -19,6 +25,7 @@ export const AlbumContainer: FC<AlbumContainerProps> = ({ album, active }) => {
     >
       <RotatingBorderBox active={active}>
         <div
+          ref={ref}
           className={`m-1 relative transition-all duration-500 [transform-style:preserve-3d] ${
             showMoreInfo && "[transform:rotateY(180deg)]"
           }`}
