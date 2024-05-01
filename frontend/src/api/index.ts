@@ -69,3 +69,19 @@ export const getPlaylistProgress = async (
 ): Promise<PlaylistProgress> => {
   return jsonRequest(`playlist_progress`, RequestMethod.POST, playbackInfo);
 };
+
+export const findAssociatedPlaylists = async (
+  playlist: Playlist
+): Promise<Playlist[]> => {
+  return jsonRequest(`find_associated_playlists`, RequestMethod.POST, playlist);
+};
+
+export const addAlbumToPlaylist = async (
+  playlistId: string,
+  albumId: string
+): Promise<Response> => {
+  return jsonRequest(`add_album_to_playlist`, RequestMethod.POST, {
+    playlistId,
+    albumId,
+  });
+};
