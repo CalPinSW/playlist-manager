@@ -44,7 +44,7 @@
     - name: Clone Playlist Manager
       git:
         repo: "https://github.com/CalPinSW/playlist-manager.git"
-        version: "containerize-with-docker"
+        version: "main"
         dest: "/opt/playlist-manager"
         force: true
 
