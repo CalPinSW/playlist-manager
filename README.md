@@ -32,11 +32,15 @@ From the project root run `docker compose up`
 
 Build backend docker image with `docker build --target development --tag backend:dev ./backend/`
 
+Build backend tests docker image with `docker build --target test --tag backend:test ./backend/`
+
 Build the frontend docker image with `docker build --tag frontend:dev ./frontend/`
 
 Run backend in development mode from the backend folder with `docker run --env-file .env -p 5000:5000 --mount "type=bind,source=$(pwd)/src,target=/backend/src" backend:dev`
 
 Run frontend in development mode from the backend folder with `docker run -it --init --env-file .env -p 1234:1234 --mount "type=bind,source=$(pwd)/src,target=/frontend/src" frontend:dev --entrypoint=/bin/bash`
+
+Run backend tests docker image from the project root with `docker run --env-file backend/.env backend:test`
 
 ## Provisioning VMs with Ansible
 

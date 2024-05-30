@@ -6,5 +6,6 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - run: echo Hello World
+      - uses: actions/checkout@v2
+      - run: docker build --target test --tag backend:test ./backend/
+      - run: docker run --env-file backend/.env backend:test
