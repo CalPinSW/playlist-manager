@@ -8,6 +8,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: EchoTest
+        run: echo ls
       - name: Build test Docker image
         run: docker build --target test --tag backend:test ./backend
       - name: Run tests
