@@ -6,6 +6,9 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - run: docker build --target test --tag backend:test ./backend
-      - run: docker run --env-file backend/.env backend:test
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Build test Docker image
+        run: docker build --target test --tag backend:test ./backend
+      - name: Run tests
+        run: docker run --env-file backend/.env backend:test
