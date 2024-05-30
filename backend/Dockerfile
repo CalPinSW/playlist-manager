@@ -13,7 +13,7 @@ COPY pyproject.toml .
 COPY gunicorn.conf.py .
 RUN python -m venv venv
 
-RUN ["poetry", "install", "--no-dev"]
+RUN ["poetry", "install", "--only", "main"]
 
 EXPOSE 5000
 

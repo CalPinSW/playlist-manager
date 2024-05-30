@@ -7,5 +7,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: docker build --target test --tag backend:test ./backend/
+      - run: docker build --target test --tag backend:test ./backend
       - run: docker run --env-file backend/.env backend:test
