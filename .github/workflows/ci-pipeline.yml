@@ -8,9 +8,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: EchoTest
-        run: ls ./backend
+      - name: Open backend
+        run: cd ./backend
       - name: Build test Docker image
-        run: docker build --target test --tag backend:test ./backend
+        run: docker build --target test --tag backend:test .
       - name: Run tests
         run: docker run --env-file backend/.env backend:test
