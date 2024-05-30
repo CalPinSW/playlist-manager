@@ -19,6 +19,7 @@ services:
     image: backend:dev
     build:
       context: backend
+      target: development
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
@@ -36,6 +37,7 @@ services:
       - test
     image: backend:test
     build:
+      target: test
       context: backend
       dockerfile: Dockerfile
     env_file:

@@ -30,9 +30,13 @@ Install [Docker](https://www.docker.com/products/docker-desktop/) (Windows insta
 
 From the project root run `docker compose up`
 
-Run backend in development mode with `docker run --env-file .env -p 5000:5000 --mount "type=bind,source=$(pwd)/src,target=/backend/src" backend:dev`
+Build backend docker image with `docker build --target development --tag backend:dev ./backend/`
 
-Run frontend in development mode with `docker run -it --init --env-file .env -p 1234:1234 --mount "type=bind,source=$(pwd)/src,target=/frontend/src" frontend:dev --entrypoint=/bin/bash`
+Build the frontend docker image with `docker build --tag frontend:dev ./frontend/`
+
+Run backend in development mode from the backend folder with `docker run --env-file .env -p 5000:5000 --mount "type=bind,source=$(pwd)/src,target=/backend/src" backend:dev`
+
+Run frontend in development mode from the backend folder with `docker run -it --init --env-file .env -p 1234:1234 --mount "type=bind,source=$(pwd)/src,target=/frontend/src" frontend:dev --entrypoint=/bin/bash`
 
 ## Provisioning VMs with Ansible
 
