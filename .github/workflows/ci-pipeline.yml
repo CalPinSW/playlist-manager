@@ -11,4 +11,4 @@ jobs:
       - name: Build test Docker image
         run: docker build --target test --tag backend:test ./backend
       - name: Run tests
-        run: docker run --env-file backend/.env backend:test
+        run: docker run --env-file backend/.env.test backend:test
