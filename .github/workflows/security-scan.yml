@@ -2,24 +2,34 @@ name: Snyk Security Scan
 on: "push"
 #   schedule:
 #     - cron: "15 * * * *"
+# jobs:
+#   frontend-scan:
+#     name: frontend scan
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@master
+#       - run: cd frontend
+#       - name: Run Snyk to check for vulnerabilities
+#         uses: snyk/actions/node@master
+#         env:
+#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+#   backend-scan:
+#     name: backend scan
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@master
+#       - run: cd backend
+#       - name: Run Snyk to check for vulnerabilities
+#         uses: snyk/actions/python@master
+#         env:
+#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 jobs:
-  frontend-scan:
-    name: "frontend scan"
+  security-scan:
+    name: security scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - run: cd frontend
       - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-  backend-scan:
-    name: "backend scan"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - run: cd frontend
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/python@master
+        uses: snyk/actions@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
