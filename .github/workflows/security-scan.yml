@@ -28,7 +28,8 @@ jobs:
     name: security scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - name: Checkout Repository
+        uses: actions/checkout@v2
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions@master
         env:
