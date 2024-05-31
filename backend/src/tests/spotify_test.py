@@ -46,7 +46,3 @@ def test_get_playlist_duration():
     duration = get_playlist_duration(mock_playlist_track_objects)
 
     assert duration == 620000
-
-
-def test_failing_test():
-    assert False == True
