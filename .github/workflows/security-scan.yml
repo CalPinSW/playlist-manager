@@ -30,10 +30,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - run: cd frontend
-      - run: ls
-        working-directory: frontend
       - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions@master
+        uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
