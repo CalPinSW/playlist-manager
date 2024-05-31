@@ -69,4 +69,4 @@ Currently the backend consists of an auth endpoints and endpoints for communicat
 
 ## CI
 
-Pipelines will run when pull requests are created or commits are pushed to the origin
+Pipelines will run when pull requests are created or commits are pushed to the origin.
