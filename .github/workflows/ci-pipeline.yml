@@ -1,9 +1,9 @@
 name: Continuous Integration
 on:
   push:
-    paths-ignore: ["diagrams/*", "*README.md"]
+    paths-ignore: ["diagrams/*", "**/README.md"]
   pull_request:
-    paths-ignore: ["diagrams/*", "*README.md"]
+    paths-ignore: ["diagrams/*", "**/README.md"]
 
 jobs:
   build:
