@@ -54,18 +54,18 @@ To provision the VMs run `ansible-playbook ansible-playbook.yml -i ansible-inven
 
 ### Context
 
-![Context Diagram](./diagrams/ContextDiagram.png)
+![Context Diagram](./diagrams/ContextDiagram.png)  
 _The application uses the Spotify Api to obtain information on a users playlists and active playback. It presents this information to the user in a way that enhances the functionality of Spotify's mobile and web apps._
 
 ### Containers
 
-![Container Diagram](./diagrams/ContainerDiagram.png)
+![Container Diagram](./diagrams/ContainerDiagram.png)  
 _The application is comprised of a React frontend bundled with esbuild, and a python backend, built using Flask. Each of these is hosted in separate Docker containers. The backend application sits behind a guinicorn server._
 
 ### Components
 
 ![Component Diagram](./diagrams/ComponentDiagram.png)  
-Currently the backend consists of an auth endpoints and endpoints for communicating with the Spotify API.\_
+_Currently the backend consists of an auth endpoints and endpoints for communicating with the Spotify API._
 
 ## CI
 
