@@ -66,3 +66,7 @@ _The application is comprised of a React frontend bundled with esbuild, and a py
 
 ![Component Diagram](./diagrams/ComponentDiagram.png)
 Currently the backend consists of an auth endpoints and endpoints for communicating with the Spotify API.\_
+
+## CI
+
+Pipelines will run when pull requests are created or commits are pushed to the origin
