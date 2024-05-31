@@ -32,6 +32,7 @@ jobs:
         uses: actions/checkout@v2
       - run: cd frontend
       - run: ls
+        working-directory: frontend
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions@master
         env:
