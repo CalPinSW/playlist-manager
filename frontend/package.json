@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.17.19",
-    "@tanstack/react-table": "^8.11.8",
+    "@tanstack/react-table": "^8.16.0",
     "dotenv": "^16.4.5",
     "live-server": "^1.2.2",
     "moment": "^2.30.1",
