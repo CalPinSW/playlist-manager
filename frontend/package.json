@@ -5,10 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev:esbuild": "export NODE_ENV=development; node build/server.mjs",
+    "dev:esbuild": "export NODE_ENV=development; node ./build/server.mjs",
     "dev:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify --watch",
     "dev": "npm-run-all --parallel dev:*",
-    "prod:esbuild": "node build/server.mjs",
+    "prod:esbuild": "node ./build/server.mjs",
     "prod:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify",
     "prod": "npm-run-all --parallel prod:*",
     "build": "node build/build.mjs",

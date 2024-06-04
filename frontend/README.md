@@ -23,7 +23,7 @@ $ npm install
 
 ## Environment Variables
 
-Environment variables are set in a `.env` file and should match the `.env.template` file. Currently the only variable that needs to be set is `HOST`. This can be localhost for local development. It is updated by ansible when provisioning VMs.
+Environment variables are set in a `.env` file and should match the `.env.template` file. Currently the only variables that needs to be set are `FRONTEND_URL` and `BACKEND_URL`. This can be localhost for local development. It is updated by ansible when provisioning VMs.
 
 ## Running the App
 

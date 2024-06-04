@@ -12,7 +12,6 @@ from src.spotify import SpotifyClient
 def create_app():
     app = Flask(__name__)
     spotify = SpotifyClient()
-
     app.config.from_object(Config())
     app.config["CORS_HEADERS"] = "Content-Type"
     cors = CORS(
@@ -20,8 +19,7 @@ def create_app():
         resources={
             r"/*": {
                 "origins": [
-                    f"http://{Config().HOST}:{Config().FRONTEND_PORT}",
-                    f"http://locahost:{Config().FRONTEND_PORT}",
+                    f"{Config().FRONTEND_URL}",
                 ]
             }
         },

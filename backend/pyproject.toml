@@ -16,6 +16,7 @@ python-dotenv = "^1.0.0"
 flask-cors = "^4.0.0"
 pydantic = "^2.6.4"
 requests = "^2.31.0"
+gunicorn = "^22.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"

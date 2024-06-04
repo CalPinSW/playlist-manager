@@ -24,6 +24,16 @@ Run the [frontend](./frontend/README.md) by first navigating to the frontend fol
 
 > Note: You will need to install the requirements in each first.
 
+## Running in Docker
+
+Install [Docker](https://www.docker.com/products/docker-desktop/) (Windows installation instructions can be found [here](https://docs.docker.com/desktop/install/windows-install/)).
+
+From the project root run `docker compose up`
+
+Run backend in development mode with `docker run --env-file .env -p 5000:5000 --mount "type=bind,source=$(pwd)/src,target=/backend/src" backend:dev`
+
+Run frontend in development mode with `docker run -it --init --env-file .env -p 1234:1234 --mount "type=bind,source=$(pwd)/src,target=/frontend/src" frontend:dev --entrypoint=/bin/bash`
+
 ## Provisioning VMs with Ansible
 
 VMs can be prepared and configured with Ansible from the `/ansible` directory. To set up managed nodes, set the IP addresses in `ansible-inventory`. Your control node will need to have SSH access to these nodes (this can be done from a mac, or another VM with the repo installed).

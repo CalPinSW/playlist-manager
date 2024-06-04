@@ -2,7 +2,8 @@
   hosts: managed-nodes
   remote_user: ec2-user
   vars:
-    host: "{{ inventory_hostname }}"
+    frontend_url: "http://{{ inventory_hostname }}:1234"
+    backend_url: "http://{{ inventory_hostname }}:5000"
   vars_files:
     - .ansible-secrets.yml
 
@@ -43,7 +44,7 @@
     - name: Clone Playlist Manager
       git:
         repo: "https://github.com/CalPinSW/playlist-manager.git"
-        version: "main"
+        version: "containerize-with-docker"
         dest: "/opt/playlist-manager"
         force: true
 
