@@ -4,6 +4,7 @@ services:
     build:
       context: frontend
       dockerfile: Dockerfile
+      target: development
     ports:
       - "1234:1234"
     env_file:
@@ -20,6 +21,7 @@ services:
     build:
       context: backend
       dockerfile: Dockerfile
+      target: development
     ports:
       - "5000:5000"
     env_file:
@@ -38,6 +40,7 @@ services:
     build:
       context: backend
       dockerfile: Dockerfile
+      target: test
     env_file:
       - path: backend/.env.test
         required: true

@@ -11,7 +11,6 @@ WORKDIR /backend
 COPY ./src ./src
 COPY pyproject.toml .
 COPY gunicorn.conf.py .
-RUN python -m venv venv
 
 RUN ["poetry", "install", "--no-dev"]
 
