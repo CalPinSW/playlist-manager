@@ -10,7 +10,6 @@ const runServer = async () => {
   if (process.env.NODE_ENV == "development") {
     await ctx.watch();
   }
-  const port = process.env.FRONTEND_PORT;
 
   let { host, port: proxyPort } = await ctx.serve({
     host: "localhost",
@@ -46,8 +45,8 @@ const runServer = async () => {
 
       clientReq.pipe(proxy, { end: true });
     })
-    .listen(port);
-  console.log(`frontend running on http://${host}:${port}`);
+    .listen(process.env.FRONTEND_URL.split(":").slice(-1)[0]);
+  console.log(`frontend running on ${process.env.FRONTEND_URL}`);
 };
 
 runServer();
