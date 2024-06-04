@@ -3,6 +3,7 @@ from src.dataclasses.playback_info import PlaybackInfo
 
 def playback_info_builder(
     track_id="1",
+    album_id="1",
     playlist_id="1",
     track_artists=[],
     album_artists=[],
@@ -15,6 +16,7 @@ def playback_info_builder(
         {
             "track_title": "track title",
             "track_id": track_id,
+            "album_id": album_id,
             "album_title": "album title",
             "playlist_id": playlist_id,
             "track_artists": track_artists,

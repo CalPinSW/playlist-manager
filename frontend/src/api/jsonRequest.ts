@@ -1,6 +1,6 @@
 import { openInNewTab } from ".";
 
-export const backendUrl = `http://${process.env.HOST}:${process.env.BACKEND_PORT}`;
+export const backendUrl = process.env.BACKEND_URL;
 
 export enum RequestMethod {
   GET = "get",
@@ -40,9 +40,7 @@ export const jsonRequest = async <I, O>(
       );
       return retried_response.json().then((data: any) => data as O);
     } else {
-      openInNewTab(
-        `http://${process.env.HOST}:${process.env.FRONTEND_PORT}/login`
-      );
+      openInNewTab(`${process.env.FRONTEND_URL}/login`);
     }
   }
   const apiResponse = response.json().then((data: any) => data as O);
