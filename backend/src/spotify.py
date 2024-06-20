@@ -219,9 +219,7 @@ class SpotifyClient:
             },
             auth=BearerAuth(access_token),
         )
-        api_playlist = self.response_handler(response)
-        playlist = Playlist.model_validate(api_playlist)
-        return playlist
+        return self.response_handler(response, jsonify=False)
 
     def delete_playlist(self, access_token, id: str):
         response = requests.delete(
