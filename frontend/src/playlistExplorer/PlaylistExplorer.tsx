@@ -1,11 +1,15 @@
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { Playlist } from "../interfaces/Playlist";
 import { Link, useLoaderData } from "react-router-dom";
 import Input from "../components/Input";
 import InputLabel from "../components/InputLabel";
 import Button from "../components/Button";
 import { Form, useForm } from "react-hook-form";
-import { getPlaylistAlbums, updatePlaylist } from "../api";
+import {
+  findAssociatedPlaylists,
+  getPlaylistAlbums,
+  updatePlaylist,
+} from "../api";
 import { useQuery } from "@tanstack/react-query";
 import { Album } from "../interfaces/Album";
 import { AlbumList } from "./AlbumList/AlbumList";
@@ -32,7 +36,21 @@ export const PlaylistExplorer: FC = () => {
     retry: false,
   });
 
-  const { playbackInfo } = usePlaybackContext()
+  const [associatedPlaylists, setAssociatedPlaylists] = useState<Playlist[]>(
+    []
+  );
+
+  useEffect(() => {
+    if (playlist.name.slice(0, 10) === "New Albums") {
+      findAssociatedPlaylists(playlist).then(
+        (associatedPlaylists: Playlist[]) => {
+          setAssociatedPlaylists(associatedPlaylists);
+        }
+      );
+    }
+  }, []);
+
+  const { playbackInfo } = usePlaybackContext();
   return (
     <div className="flex flex-col h-full space-y-1 ">
       <div className="mx-2">
@@ -103,10 +121,17 @@ export const PlaylistExplorer: FC = () => {
           </div>
           <div className="my-2">
             {viewMode == ViewMode.ALBUM && playlistAlbums && (
-              <AlbumList albumList={playlistAlbums} activeAlbumId={playbackInfo?.album_id} />
+              <AlbumList
+                albumList={playlistAlbums}
+                activeAlbumId={playbackInfo?.album_id}
+                associatedPlaylists={associatedPlaylists}
+              />
             )}
             {viewMode == ViewMode.TRACK && (
-              <TrackList trackList={playlist.tracks.items} activeTrackId={playbackInfo?.track_id} />
+              <TrackList
+                trackList={playlist.tracks.items}
+                activeTrackId={playbackInfo?.track_id}
+              />
             )}
           </div>
         </>

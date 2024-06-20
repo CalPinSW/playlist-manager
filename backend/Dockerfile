@@ -9,7 +9,6 @@ FROM os-base AS app-base
 
 WORKDIR /backend
 COPY src pyproject.toml gunicorn.conf.py ./
-RUN python -m venv venv
 
 RUN ["poetry", "install", "--no-dev"]
 
