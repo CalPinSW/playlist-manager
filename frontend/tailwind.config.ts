@@ -64,7 +64,7 @@ const tailwindConfigModule = {
           text: { primary: "#24143d" },
         },
         dark: {
-          background: { DEFAULT: "#1c012b", offset: "#360253" },
+          background: { DEFAULT: "#1c012b", offset: "#360253", popover: "#50037B" },
           primary: {
             DEFAULT: "#10B981",
             50: "#01100B",

@@ -28,7 +28,7 @@ def test_index_page(monkeypatch, client):
     # This replaces any call to requests.get with our own function
     monkeypatch.setattr(requests, "get", stub)
 
-    response = client.get("/")
+    response = client.get("/spotify/playlists")
     assert response.status_code == 200
     assert "Playlist 1" in response.data.decode()
 
