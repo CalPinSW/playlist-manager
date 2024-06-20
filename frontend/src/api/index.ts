@@ -21,51 +21,82 @@ export const login = async (): Promise<void> => {
 };
 
 export const getCurrentUserDetails = async (): Promise<User> => {
-  return jsonRequest(`current-user`, RequestMethod.GET, undefined, false);
+  return jsonRequest(
+    `spotify/current-user`,
+    RequestMethod.GET,
+    undefined,
+    false
+  );
 };
 
 export const getPlaylists = async (
   offset: number,
   limit: number
 ): Promise<Playlist[]> => {
-  const endpoint = `?limit=${encodeURIComponent(
+  const endpoint = `spotify/playlists?limit=${encodeURIComponent(
     limit
   )}&offset=${encodeURIComponent(offset)}`;
   return jsonRequest(endpoint, RequestMethod.GET);
 };
 
-export const getPlaylist = async (id: string): Promise<Playlist> => {
-  return jsonRequest(`edit-playlist/${id}`, RequestMethod.GET);
+export const addPlaylist = async (playlist: Playlist): Promise<Playlist> => {
+  return jsonRequest("spotify/create-playlist", RequestMethod.POST, playlist);
 };
 
-export const addPlaylist = async (playlist: Playlist): Promise<Playlist> => {
-  return jsonRequest("create-playlist", RequestMethod.POST, playlist);
+export const getPlaylist = async (id: string): Promise<Playlist> => {
+  return jsonRequest(`spotify/edit-playlist/${id}`, RequestMethod.GET);
 };
 
 export const updatePlaylist = async (playlist: Playlist): Promise<Playlist> => {
   return jsonRequest(
-    `edit-playlist/${playlist.id}`,
+    `spotify/edit-playlist/${playlist.id}`,
     RequestMethod.POST,
     playlist
   );
 };
 
 export const deletePlaylist = async (playlist: Playlist): Promise<Response> => {
-  return jsonRequest(`edit-playlist/${playlist.id}`, RequestMethod.POST);
+  return jsonRequest(
+    `spotify/delete-playlist/${playlist.id}`,
+    RequestMethod.POST
+  );
 };
 
 export const getPlaylistAlbums = async (
   playlistId: string
 ): Promise<Album[]> => {
-  return jsonRequest(`playlist/${playlistId}/albums`, RequestMethod.GET);
+  return jsonRequest(
+    `spotify/playlist/${playlistId}/albums`,
+    RequestMethod.GET
+  );
 };
 
 export const getPlaybackInfo = async (): Promise<PlaybackInfo> => {
-  return jsonRequest(`playback`, RequestMethod.GET, undefined, false);
+  return jsonRequest(`spotify/playback`, RequestMethod.GET, undefined, false);
 };
 
 export const getPlaylistProgress = async (
   playbackInfo: PlaybackInfo
 ): Promise<PlaylistProgress> => {
-  return jsonRequest(`playlist_progress`, RequestMethod.POST, playbackInfo);
+  return jsonRequest(
+    `spotify/playlist_progress`,
+    RequestMethod.POST,
+    playbackInfo
+  );
+};
+
+export const findAssociatedPlaylists = async (
+  playlist: Playlist
+): Promise<Playlist[]> => {
+  return jsonRequest(`find_associated_playlists`, RequestMethod.POST, playlist);
+};
+
+export const addAlbumToPlaylist = async (
+  playlistId: string,
+  albumId: string
+): Promise<Response> => {
+  return jsonRequest(`add_album_to_playlist`, RequestMethod.POST, {
+    playlistId,
+    albumId,
+  });
 };

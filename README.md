@@ -45,3 +45,20 @@ VMs can be prepared and configured with Ansible from the `/ansible` directory. T
 You will also need .env.j2 files set up in both the frontend and backend to correctly match the .env.template file. Any variables referenced in .env.j2 files must be defined in an `.ansible-secrets.yml` file next to `.ansible-secrets.template.yml`.
 
 To provision the VMs run `ansible-playbook ansible-playbook.yml -i ansible-inventory` in the `ansible` directory. This will start up the Playlist Manager on the VMs. To stop the application. You can also run `ansible-playbook stop-playlist-manager-playbook.yml -i ansible-inventory`.
+
+## Application Diagrams
+
+### Context
+
+![Context Diagram](./diagrams/ContextDiagram.png)
+_The application uses the Spotify Api to obtain information on a users playlists and active playback. It presents this information to the user in a way that enhances the functionality of Spotify's mobile and web apps._
+
+### Containers
+
+![Container Diagram](./diagrams/ContainerDiagram.png)
+_The application is comprised of a React frontend bundled with esbuild, and a python backend, built using Flask. Each of these is hosted in separate Docker containers. The backend application sits behind a guinicorn server._
+
+### Components
+
+![Component Diagram](./diagrams/ComponentDiagram.png)
+Currently the backend consists of an auth endpoints and endpoints for communicating with the Spotify API.\_
