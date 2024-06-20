@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { PlaylistExplorer } from "./PlaylistExplorer.tsx/PlaylistExplorer";
+import { PlaylistExplorer } from "./PlaylistExplorer/PlaylistExplorer";
 import Layout from "./presentational/Layout";
 import { getPlaylist } from "./api";
 import { Login } from "./Login";
