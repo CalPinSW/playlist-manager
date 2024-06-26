@@ -30,7 +30,12 @@ jobs:
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
-            - name: Run Snyk to check for vulnerabilities
-              uses: snyk/actions/node@master
+            - uses: snyk/actions/setup@master
+            - name: Snyk monitor
+              run: snyk test
               env:
                   SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+            # - name: Run Snyk to check for vulnerabilities
+            #   uses: snyk/actions/node@master
+            #   env:
+            #       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
