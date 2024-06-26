@@ -2,6 +2,7 @@ from urllib.parse import urlencode
 from uuid import uuid4
 from flask import Blueprint, make_response, redirect, request, session
 from src.dataclasses.playback_info import PlaybackInfo
+from src.dataclasses.playlist import Playlist
 from src.spotify import SpotifyClient
 
 
@@ -98,5 +99,32 @@ def spotify_controller(spotify: SpotifyClient):
         if playlist_progression is None:
             return ("", 204)
         return playlist_progression.model_dump_json()
+
+    @spotify_controller.route("find_associated_playlists", methods=["POST"])
+    def find_associated_playlists():
+        access_token = request.cookies.get("spotify_access_token")
+        user_id = request.cookies.get("user_id")
+        playlist = Playlist.model_validate(request.json)
+        associated_playlists = spotify.find_associated_playlists(
+            user_id=user_id, access_token=access_token, playlist=playlist
+        )
+        return [
+            associated_playlist.model_dump()
+            for associated_playlist in associated_playlists
+        ]
+
+    @spotify_controller.route("add_album_to_playlist", methods=["POST"])
+    def add_album_to_playlist():
+        access_token = request.cookies.get("spotify_access_token")
+        request_body = request.json
+        playlist_id = request_body["playlistId"]
+        album_id = request_body["albumId"]
+        if not playlist_id or not album_id:
+            return make_response(
+                "Invalid request payload. Expected playlistId and albumId.", 400
+            )
+        return spotify.add_album_to_playlist(
+            access_token=access_token, playlist_id=playlist_id, album_id=album_id
+        )
 
     return spotify_controller
