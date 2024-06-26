@@ -11,11 +11,11 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-flask = "^3.0.0"
+flask = "^3.0.3"
 python-dotenv = "^1.0.0"
 flask-cors = "^4.0.0"
 pydantic = "^2.6.4"
-requests = "^2.31.0"
+requests = "^2.32.3"
 gunicorn = "^22.0.0"
 
 [tool.poetry.group.dev.dependencies]
