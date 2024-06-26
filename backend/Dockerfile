@@ -11,7 +11,7 @@ WORKDIR /backend
 COPY src src
 COPY pyproject.toml gunicorn.conf.py ./
 
-RUN ["poetry", "install", "--no-dev"]
+RUN ["poetry", "install", "--only", "main"]
 
 EXPOSE 5000
 

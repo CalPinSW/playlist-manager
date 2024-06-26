@@ -27,9 +27,6 @@ services:
         env_file:
             - path: backend/.env
               required: true
-        # entrypoint: /bin/bash
-        # stdin_open: true # docker run -i
-        # tty: true
         develop:
             watch:
                 - action: sync

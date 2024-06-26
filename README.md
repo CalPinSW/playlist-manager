@@ -34,9 +34,12 @@ From the frontend directory, build the backend in development mode with `docker 
 
 From the backend directory, build the frontend in development mode with `docker build --target development --tag frontend:dev .`
 
-Run backend in development mode with `docker run --env-file .env -p 5000:5000 --mount "type=bind,source=$(pwd)/src,target=/backend/src" backend:dev`
 
-Run frontend in development mode with `docker run -it --init --env-file .env -p 1234:1234 --mount "type=bind,source=$(pwd)/src,target=/frontend/src" frontend:dev` (use --entrypoint /bin/bash for debugging)
+Build backend tests docker image with `docker build --target test --tag backend:test ./backend/`
+
+Run backend in development mode from the backend folder with `docker run --env-file .env -p 5000:5000 --mount "type=bind,source=$(pwd)/src,target=/backend/src" backend:dev`
+
+Run frontend in development mode from the frontend folderwith `docker run -it --init --env-file .env -p 1234:1234 --mount "type=bind,source=$(pwd)/src,target=/frontend/src" frontend:dev` (use --entrypoint /bin/bash for debugging)
 
 ## Provisioning VMs with Ansible
 
@@ -60,5 +63,9 @@ _The application is comprised of a React frontend bundled with esbuild, and a py
 
 ### Components
 
-![Component Diagram](./diagrams/ComponentDiagram.png)
+![Component Diagram](./diagrams/ComponentDiagram.png)  
 Currently the backend consists of an auth endpoints and endpoints for communicating with the Spotify API.\_
+
+## CI
+
+Pipelines will run when pull requests are created or commits are pushed to the origin.
