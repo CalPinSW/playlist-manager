@@ -2,12 +2,8 @@ import React, { FC } from "react";
 
 const ArtistIcon: FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
-    <svg
-      viewBox="0 0 24 25"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <g clip-path="url(#clip0_429_11111)">
+    <svg viewBox="0 0 24 25" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <g clipPath="url(#clip0_429_11111)">
         <circle cx="12" cy="7" r="3" strokeWidth="2.5" />
         <circle
           cx="18"

@@ -28,8 +28,8 @@ def spotify_controller(spotify: SpotifyClient):
         sort_by = request.args.get("sort_by")
         desc = request.args.get("desc") == "True"
         if sort_by is not None:
-            playlists.sort(key=lambda x: x[sort_by], reverse=desc)
-        return [playlist.model_dump() for playlist in playlists]
+            playlists.items.sort(key=lambda x: x[sort_by], reverse=desc)
+        return [playlist.model_dump() for playlist in playlists.items]
 
     @spotify_controller.route("create-playlist", methods=["POST"])
     def create_playlist():

@@ -9,7 +9,7 @@ RUN npm install
 COPY src src
 COPY build build
 COPY public public
-COPY tailwind.config.ts .
+COPY tailwind.config.ts ./
 
 EXPOSE 1234
 

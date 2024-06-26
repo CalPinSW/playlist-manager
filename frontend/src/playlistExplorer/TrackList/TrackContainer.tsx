@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, useEffect, useRef } from "react";
 import { Track } from "../../interfaces/Track";
 
 interface TrackContainerProps {
@@ -12,8 +12,15 @@ export const TrackContainer: FC<TrackContainerProps> = ({
   track,
   active,
 }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (active && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [active]);
   return (
     <div
+      ref={ref}
       className={`flex flex-row text-sm space-x-2 ${
         active ? "text-primary" : ""
       }`}

@@ -1,8 +1,8 @@
 import json
 import requests
 import os
-from typing import Callable, List
-from flask import make_response, redirect
+from typing import List
+from flask import Response, make_response, redirect
 from src.dataclasses.album import Album
 from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
 from src.dataclasses.playback_state import PlaybackState
@@ -18,6 +18,7 @@ from src.flask_config import Config
 
 scope = [
     "user-library-read",
+    "user-library-modify",
     "user-read-currently-playing",
     "user-read-playback-state",
     "playlist-modify-public",
@@ -120,7 +121,9 @@ class SpotifyClient:
         resp.set_cookie("user_id", user_info.id)
         return resp
 
-    def get_playlists(self, user_id, access_token, limit=10, offset=0):
+    def get_playlists(
+        self, user_id, access_token, limit=10, offset=0
+    ) -> CurrentUserPlaylists:
         response = requests.get(
             url=f"https://api.spotify.com/v1/users/{user_id}/playlists",
             params={
@@ -131,7 +134,35 @@ class SpotifyClient:
         )
         api_playlists = self.response_handler(response)
         playlists = CurrentUserPlaylists.model_validate(api_playlists)
-        return playlists.items
+        return playlists
+
+    def get_all_playlists(self, user_id, access_token):
+        playlists: List[SimplifiedPlaylist] = []
+        offset = 0
+        limit = 50
+        api_playlists = self.get_playlists(
+            access_token=access_token, user_id=user_id, limit=limit, offset=offset
+        )
+        while True:
+            playlists += api_playlists.items
+            if not api_playlists.next:
+                return playlists
+            offset += limit
+            api_playlists = self.get_playlists(
+                access_token=access_token, user_id=user_id, limit=limit, offset=offset
+            )
+
+    def find_associated_playlists(self, user_id, access_token, playlist: Playlist):
+        user_playlists = self.get_all_playlists(
+            user_id=user_id, access_token=access_token
+        )
+        associated_playlists = [
+            matchingPlaylist
+            for matchingPlaylist in user_playlists
+            if matchingPlaylist.name[-8:] == playlist.name[-8:]
+            and matchingPlaylist.name != playlist.name
+        ]
+        return associated_playlists
 
     def get_current_user(self, access_token):
         response = requests.get(
@@ -236,7 +267,7 @@ class SpotifyClient:
                 return playlist_tracks
             offset += limit
             api_tracks_object = self.get_playlist_items(
-                access_token, id, limit=100, offset=offset
+                access_token, id, limit=limit, offset=offset
             )
 
     def get_album(self, access_token, id):
@@ -364,6 +395,55 @@ class SpotifyClient:
                 for x in new_releases["albums"]["items"]
                 if x["album_type"] == "album"
             ]
+
+    def save_albums_to_library(self, access_token, album_ids: List[str]) -> Response:
+        response = requests.put(
+            url="https://api.spotify.com/v1/me/albums",
+            data=json.dumps(
+                {
+                    "ids": album_ids,
+                }
+            ),
+            headers={
+                "content-type": "application/json",
+            },
+            auth=BearerAuth(access_token),
+        )
+        return self.response_handler(response, jsonify=False)
+
+    def add_album_to_playlist(self, access_token, playlist_id, album_id) -> Response:
+        album = self.get_album(access_token=access_token, id=album_id)
+        self.save_albums_to_library(access_token=access_token, album_ids=[album.id])
+        track_uris = [item.uri for item in album.tracks.items]
+        if self.is_album_in_playlist(
+            access_token=access_token, album=album, playlist_id=playlist_id
+        ):
+            return make_response("Album already present in playlist", 403)
+        response = requests.post(
+            url=f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks",
+            data=json.dumps(
+                {
+                    "uris": track_uris,
+                }
+            ),
+            headers={
+                "content-type": "application/json",
+            },
+            auth=BearerAuth(access_token),
+        )
+        self.response_handler(response, jsonify=False)
+        if response.status_code == 200:
+            return make_response("Album successfully added to playlist", 200)
+        else:
+            return make_response("Failed to add album to playlist", 400)
+
+    def is_album_in_playlist(self, access_token, playlist_id, album: Album) -> bool:
+        playlist_tracks = self.get_playlist_tracks(
+            access_token=access_token, id=playlist_id
+        )
+        playlist_track_ids = [track.track.id for track in playlist_tracks]
+        album_track_ids = [track.id for track in album.tracks.items]
+        return all(e in playlist_track_ids for e in album_track_ids)
 
 
 def get_playlist_duration(playlist_info: List[PlaylistTrackObject]) -> int:
