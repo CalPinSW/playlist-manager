@@ -121,7 +121,9 @@ class SpotifyClient:
         resp.set_cookie("user_id", user_info.id)
         return resp
 
-    def get_playlists(self, user_id, access_token, limit=10, offset=0):
+    def get_playlists(
+        self, user_id, access_token, limit=10, offset=0
+    ) -> CurrentUserPlaylists:
         response = requests.get(
             url=f"https://api.spotify.com/v1/users/{user_id}/playlists",
             params={

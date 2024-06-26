@@ -8,7 +8,8 @@ RUN apt-get remove -y curl
 FROM os-base AS app-base
 
 WORKDIR /backend
-COPY src pyproject.toml gunicorn.conf.py ./
+COPY src src
+COPY pyproject.toml gunicorn.conf.py ./
 
 RUN ["poetry", "install", "--no-dev"]
 

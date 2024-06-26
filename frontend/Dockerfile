@@ -6,7 +6,10 @@ COPY package.json .
 
 RUN npm install
 
-COPY src build public tailwind.config.ts ./
+COPY src src
+COPY build build
+COPY public public
+COPY tailwind.config.ts ./
 
 EXPOSE 1234
 

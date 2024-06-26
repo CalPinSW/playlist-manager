@@ -4,9 +4,9 @@
 
 Requirements:
 
-- Python
-- Poetry
-- Node & npm
+-   Python
+-   Poetry
+-   Node & npm
 
 `bash install.sh`
 
@@ -36,7 +36,7 @@ From the backend directory, build the frontend in development mode with `docker 
 
 Run backend in development mode with `docker run --env-file .env -p 5000:5000 --mount "type=bind,source=$(pwd)/src,target=/backend/src" backend:dev`
 
-Run frontend in development mode with `docker run -it --init --env-file .env -p 1234:1234 --mount "type=bind,source=$(pwd)/src,target=/frontend/src" frontend:dev --entrypoint=/bin/bash`
+Run frontend in development mode with `docker run -it --init --env-file .env -p 1234:1234 --mount "type=bind,source=$(pwd)/src,target=/frontend/src" frontend:dev` (use --entrypoint /bin/bash for debugging)
 
 ## Provisioning VMs with Ansible
 
