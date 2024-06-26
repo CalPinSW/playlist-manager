@@ -30,6 +30,8 @@ jobs:
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
+            - run: npm install
+              working-directory: frontend
             - uses: snyk/actions/setup@master
             - name: Snyk monitor
               working-directory: frontend
