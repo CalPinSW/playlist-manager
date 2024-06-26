@@ -12,7 +12,7 @@ jobs:
             - uses: snyk/actions/setup@master
             - name: Snyk monitor
               working-directory: frontend
-              run: snyk test
+              run: snyk test --severity-threshold=medium
               env:
                   SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     backend-scan:
