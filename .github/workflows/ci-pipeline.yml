@@ -1,22 +1,22 @@
 name: Continuous Integration
 on:
-  push:
-    paths-ignore:
-      - "diagrams/*"
-      - "**/README.md"
-  pull_request:
-    paths-ignore:
-      - "diagrams/*"
-      - "**/README.md"
+    push:
+        paths-ignore:
+            - "diagrams/*"
+            - "**/README.md"
+    pull_request:
+        paths-ignore:
+            - "diagrams/*"
+            - "**/README.md"
 
 jobs:
-  build:
-    name: Build and test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-      - name: Build test Docker image
-        run: docker build --target test --tag backend:test ./backend
-      - name: Run tests
-        run: docker run --env-file backend/.env.test backend:test
+    build:
+        name: Build and test
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+            - name: Build test Docker image
+              run: docker build --target test --tag backend:test ./backend
+            - name: Run tests
+              run: docker run --env-file backend/.env.test backend:test
