@@ -32,6 +32,7 @@ jobs:
               uses: actions/checkout@v4
             - uses: snyk/actions/setup@master
             - name: Snyk monitor
+              working-directory: frontend
               run: snyk test
               env:
                   SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
