@@ -1,31 +1,8 @@
 name: Snyk Security Scan
 on: "push"
-#   schedule:
-#     - cron: "15 * * * *"
-# jobs:
-#   frontend-scan:
-#     name: frontend scan
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@master
-#       - run: cd frontend
-#       - name: Run Snyk to check for vulnerabilities
-#         uses: snyk/actions/node@master
-#         env:
-#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-#   backend-scan:
-#     name: backend scan
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@master
-#       - run: cd backend
-#       - name: Run Snyk to check for vulnerabilities
-#         uses: snyk/actions/python@master
-#         env:
-#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 jobs:
-    security-scan:
-        name: security scan
+    frontend-scan:
+        name: frontend scan
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Repository
@@ -38,7 +15,17 @@ jobs:
               run: snyk test
               env:
                   SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-            # - name: Run Snyk to check for vulnerabilities
-            #   uses: snyk/actions/node@master
-            #   env:
-            #       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    backend-scan:
+        name: backend scan
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+            - run: poetry install
+              working-directory: backend
+            - uses: snyk/actions/setup@master
+            - name: Snyk monitor
+              working-directory: backend
+              run: snyk test
+              env:
+                  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
