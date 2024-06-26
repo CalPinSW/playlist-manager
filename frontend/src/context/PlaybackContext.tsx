@@ -29,7 +29,7 @@ export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
     queryFn: () => {
       return getPlaybackInfo();
     },
-    retry: false,
+    retryDelay: playbackRefetchInterval,
     refetchInterval: playbackRefetchInterval,
     refetchIntervalInBackground: false,
   });
@@ -43,7 +43,7 @@ export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
         return getPlaylistProgress(playbackInfo);
       }
     },
-    retry: false,
+    retryDelay: playbackRefetchInterval,
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     enabled: !!playbackInfo?.playlist_id,

@@ -30,7 +30,11 @@ Install [Docker](https://www.docker.com/products/docker-desktop/) (Windows insta
 
 From the project root run `docker compose up`
 
-Build backend docker image with `docker build --target development --tag backend:dev ./backend/`
+From the frontend directory, build the backend in development mode with `docker build --target development --tag backend:dev .`
+
+From the backend directory, build the frontend in development mode with `docker build --target development --tag frontend:dev .`
+
+Run backend in development mode with `docker run --env-file .env -p 5000:5000 --mount "type=bind,source=$(pwd)/src,target=/backend/src" backend:dev`
 
 Build backend tests docker image with `docker build --target test --tag backend:test ./backend/`
 

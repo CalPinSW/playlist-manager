@@ -8,6 +8,7 @@ import SongIcon from "../components/SongIcon";
 import AlbumIcon from "../components/AlbumIcon";
 import PlaylistIcon from "../components/PlaylistIcon";
 import { usePlaybackContext } from "../hooks/usePlaybackContext";
+import { Link } from "react-router-dom";
 
 const PlaybackFooter: FC = () => {
   const { isMobileView } = useWindowSize();
@@ -17,7 +18,7 @@ const PlaybackFooter: FC = () => {
   return (
     <div className="w-full h-fit bg-primary-300 px-4 py-2 text-sm sm:text-base">
       <div className="flex space-x-4 sm:space-x-6">
-        <div className="flex flex-col space-y-2 w-1/5 max-w-48">
+        <div className="flex flex-col space-y-2 w-1/5 max-w-32">
           <img src={playbackInfo.artwork_url}></img>
           <div>Playing:</div>
           <div className="text-balance">
@@ -32,7 +33,7 @@ const PlaybackFooter: FC = () => {
                 {playbackInfo.track_title}
               </div>
             </div>
-            <div className="w-12 h-12 sm:w-20 sm:h-20 my-auto">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 my-auto">
               <ProgressCircle
                 percentage={Math.round(
                   (playbackInfo.track_progress / playbackInfo.track_duration) *
@@ -49,7 +50,7 @@ const PlaybackFooter: FC = () => {
                 {playbackInfo.album_title}
               </div>
             </div>
-            <div className="w-12 h-12 sm:w-20 sm:h-20 my-auto">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 my-auto">
               <ProgressCircle
                 percentage={Math.round(
                   (playbackInfo.album_progress / playbackInfo.album_duration) *
@@ -68,10 +69,14 @@ const PlaybackFooter: FC = () => {
               <div className="flex flex-row space-x-2">
                 <PlaylistIcon className="my-auto w-8 h-8" />
                 <div className="my-auto text-balance">
-                  {playlistProgress?.playlist_title}
+                  {playlistProgress && (
+                    <Link to={`edit/${playlistProgress?.playlist_id}`}>
+                      {playlistProgress?.playlist_title}
+                    </Link>
+                  )}
                 </div>
               </div>
-              <div className="w-12 h-12 sm:w-20 sm:h-20 my-auto">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 my-auto">
                 <ProgressCircle
                   percentage={
                     playlistProgress

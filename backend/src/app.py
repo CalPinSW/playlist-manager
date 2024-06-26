@@ -1,10 +1,10 @@
-from http.client import HTTPException
 from urllib.parse import urlencode
 from uuid import uuid4
 from flask import Flask, make_response, redirect, request, session
 from flask_cors import CORS
 from src.controllers.spotify import spotify_controller
 from src.dataclasses.playback_info import PlaybackInfo
+from src.dataclasses.playlist import Playlist
 from src.exceptions.Unauthorized import UnauthorizedException
 from src.flask_config import Config
 from src.spotify import SpotifyClient
