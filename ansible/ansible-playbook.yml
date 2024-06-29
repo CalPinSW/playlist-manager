@@ -2,110 +2,110 @@
   hosts: managed-nodes
   remote_user: ec2-user
   vars:
-    frontend_url: "http://{{ inventory_hostname }}:1234"
-    backend_url: "http://{{ inventory_hostname }}:5000"
+      frontend_url: "http://{{ inventory_hostname }}:8080"
+      backend_url: "http://{{ inventory_hostname }}:5000"
   vars_files:
-    - .ansible-secrets.yml
+      - .ansible-secrets.yml
 
   tasks:
-    - name: Install Git
-      yum:
-        name: "git"
-        state: "present"
-        update_cache: yes
-      become: yes # Installing git must be run as the root user
+      - name: Install Git
+        yum:
+            name: "git"
+            state: "present"
+            update_cache: yes
+        become: yes # Installing git must be run as the root user
 
-    - name: Install Python
-      yum:
-        name: "python3.11"
-        state: "present"
-        update_cache: yes
-      become: yes # Installing python must be run as the root user
+      - name: Install Python
+        yum:
+            name: "python3.11"
+            state: "present"
+            update_cache: yes
+        become: yes # Installing python must be run as the root user
 
-    - name: Install Node
-      yum:
-        name: "nodejs"
-        state: "present"
-        update_cache: yes
-      become: yes # Installing node must be run as the root user
+      - name: Install Node
+        yum:
+            name: "nodejs"
+            state: "present"
+            update_cache: yes
+        become: yes # Installing node must be run as the root user
 
-    - name: Install Poetry
-      shell:
-        cmd: "curl -sSL https://install.python-poetry.org | python3.11 -"
-        creates: "/home/ec2-user/.local/bin/poetry"
+      - name: Install Poetry
+        shell:
+            cmd: "curl -sSL https://install.python-poetry.org | python3.11 -"
+            creates: "/home/ec2-user/.local/bin/poetry"
 
-    - name: Create folder for Playlist Manager
-      file:
-        path: /opt/playlist-manager
-        state: directory
-        owner: "ec2-user"
-      become: yes
+      - name: Create folder for Playlist Manager
+        file:
+            path: /opt/playlist-manager
+            state: directory
+            owner: "ec2-user"
+        become: yes
 
-    - name: Clone Playlist Manager
-      git:
-        repo: "https://github.com/CalPinSW/playlist-manager.git"
-        version: "main"
-        dest: "/opt/playlist-manager"
-        force: true
+      - name: Clone Playlist Manager
+        git:
+            repo: "https://github.com/CalPinSW/playlist-manager.git"
+            version: "main"
+            dest: "/opt/playlist-manager"
+            force: true
 
-    - name: Install Project Backend Dependencies
-      shell:
-        chdir: "/opt/playlist-manager/backend"
-        cmd: "poetry env use python3.11; poetry install"
+      - name: Install Project Backend Dependencies
+        shell:
+            chdir: "/opt/playlist-manager/backend"
+            cmd: "poetry env use python3.11; poetry install"
 
-    - name: Install Project Frontend Dependencies
-      shell:
-        chdir: "/opt/playlist-manager/frontend"
-        cmd: "npm install"
+      - name: Install Project Frontend Dependencies
+        shell:
+            chdir: "/opt/playlist-manager/frontend"
+            cmd: "npm install"
 
-    - name: Fetch backend environment template
-      run_once: yes
-      fetch:
-        src: /opt/playlist-manager/backend/.env.j2
-        dest: /tmp/backend/.env.j2
-        flat: yes
+      - name: Fetch backend environment template
+        run_once: yes
+        fetch:
+            src: /opt/playlist-manager/backend/.env.j2
+            dest: /tmp/backend/.env.j2
+            flat: yes
 
-    - name: Fetch frontend environment template
-      run_once: yes
-      fetch:
-        src: /opt/playlist-manager/frontend/.env.j2
-        dest: /tmp/frontend/.env.j2
-        flat: yes
+      - name: Fetch frontend environment template
+        run_once: yes
+        fetch:
+            src: /opt/playlist-manager/frontend/.env.j2
+            dest: /tmp/frontend/.env.j2
+            flat: yes
 
-    - name: Setup backend environment variables
-      template:
-        src: /tmp/backend/.env.j2
-        dest: /opt/playlist-manager/backend/.env
+      - name: Setup backend environment variables
+        template:
+            src: /tmp/backend/.env.j2
+            dest: /opt/playlist-manager/backend/.env
 
-    - name: Setup frontend environment variables
-      template:
-        src: /tmp/frontend/.env.j2
-        dest: /opt/playlist-manager/frontend/.env
+      - name: Setup frontend environment variables
+        template:
+            src: /tmp/frontend/.env.j2
+            dest: /opt/playlist-manager/frontend/.env
 
-    - name: Add backend service to systemd
-      copy:
-        src: /opt/playlist-manager/ansible/resources/playlist-manager-backend.service
-        dest: /etc/systemd/system/playlist-manager-backend.service
-        remote_src: yes
-      become: yes
+      - name: Add backend service to systemd
+        copy:
+            src: /opt/playlist-manager/ansible/resources/playlist-manager-backend.service
+            dest: /etc/systemd/system/playlist-manager-backend.service
+            remote_src: yes
+        become: yes
 
-    - name: Add frontend service to systemd
-      copy:
-        src: /opt/playlist-manager/ansible/resources/playlist-manager-frontend.service
-        dest: /etc/systemd/system/playlist-manager-frontend.service
-        remote_src: yes
-      become: yes
+      - name: Add frontend service to systemd
+        copy:
+            src: /opt/playlist-manager/ansible/resources/playlist-manager-frontend.service
+            dest: /etc/systemd/system/playlist-manager-frontend.service
+            remote_src: yes
+        become: yes
 
-    - name: Start Playlist Manager Frontend
-      systemd:
-        name: "playlist-manager-frontend.service"
-        daemon_reload: yes
-        state: "restarted"
-      become: yes
+      - name: Start Playlist Manager Frontend
+        systemd:
+            name: "playlist-manager-frontend.service"
+            daemon_reload: yes
+            state: "restarted"
+        become: yes
 
-    - name: Start Playlist Manager Backend
-      systemd:
-        name: "playlist-manager-backend.service"
-        daemon_reload: yes
-        state: "restarted"
-      become: yes
+      - name: Start Playlist Manager Backend
+        systemd:
+            name: "playlist-manager-backend.service"
+            daemon_reload: yes
+            state: "restarted"
+        become: yes

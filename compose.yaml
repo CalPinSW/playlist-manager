@@ -6,7 +6,7 @@ services:
             dockerfile: Dockerfile
             target: development
         ports:
-            - "1234:1234"
+            - "8080:8080"
         env_file:
             - path: frontend/.env
               required: true

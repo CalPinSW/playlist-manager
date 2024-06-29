@@ -1,6 +1,6 @@
 from urllib.parse import urlencode
 from uuid import uuid4
-from flask import Blueprint, redirect, request, session
+from flask import Blueprint, make_response, redirect, request, session
 from src.spotify import SpotifyClient
 
 
@@ -19,9 +19,10 @@ def auth_controller(spotify: SpotifyClient):
     @auth_controller.route("get-user-code")
     def auth_redirect():
         code = request.args.get("code")
-        state = request.args.get("state")
-        if state != session["SpotifyState"]:
-            return redirect("/#" + urlencode({"error": "state_mismatch"}))
+        # state = request.args.get("state")
+        # test = session["SpotifyState"]
+        # if state != test:
+        #     return make_response({"error": test}, 401)
         return spotify.request_access_token(code=code)
 
     @auth_controller.route("refresh-user-code")

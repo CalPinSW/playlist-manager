@@ -94,8 +94,10 @@ class SpotifyClient:
         user_info = self.get_current_user(access_token)
 
         resp = make_response()
-        resp.set_cookie("spotify_access_token", access_token)
-        resp.set_cookie("user_id", user_info.id)
+        resp.set_cookie(
+            "spotify_access_token", access_token, samesite="None", secure=True
+        )
+        resp.set_cookie("user_id", user_info.id, samesite="None", secure=True)
         return resp
 
     def request_access_token(self, code):
@@ -116,9 +118,16 @@ class SpotifyClient:
         access_token = token_response.access_token
         user_info = self.get_current_user(access_token)
         resp = make_response(redirect(f"{Config().FRONTEND_URL}/"))
-        resp.set_cookie("spotify_access_token", access_token)
-        resp.set_cookie("spotify_refresh_token", token_response.refresh_token)
-        resp.set_cookie("user_id", user_info.id)
+        resp.set_cookie(
+            "spotify_access_token", access_token, samesite="None", secure=True
+        )
+        resp.set_cookie(
+            "spotify_refresh_token",
+            token_response.refresh_token,
+            samesite="None",
+            secure=True,
+        )
+        resp.set_cookie("user_id", user_info.id, samesite="None", secure=True)
         return resp
 
     def get_playlists(

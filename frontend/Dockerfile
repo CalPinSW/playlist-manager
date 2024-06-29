@@ -1,4 +1,4 @@
-FROM node:18 AS base
+FROM --platform=linux/amd64 node:18 AS base
 
 WORKDIR /frontend
 
@@ -11,7 +11,7 @@ COPY build build
 COPY public public
 COPY tailwind.config.ts ./
 
-EXPOSE 1234
+EXPOSE 8080
 
 FROM base AS production
 
