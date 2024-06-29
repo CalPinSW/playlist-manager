@@ -68,3 +68,13 @@ Currently the backend consists of an auth endpoints and endpoints for communicat
 ## CI
 
 Pipelines will run when pull requests are created or commits are pushed to the origin.
+
+## Deployment
+
+The frontend and backend applications are deployed to two Azure Web Applications. The frontend can be accessed [here](https://playman.azurewebsites.net/) These can be updated locally by:
+
+1. Building new Docker images with (from the relevant frontend/backend directory) `docker build --target production --tag calpin/playlist-manager-"frontend/backend":prod .`
+2. Pushing the new image to Docker Hub `docker push calpin/playlist-manager-"frontend/backend":prod`
+3. Sending a curl request to the appropriate Webhook url:
+    - Frontend: `curl -dH -X POST "https://\$PlayMan:d17p8pbD0t6xpCdep4tPdetcbsTlZiomZ6kwAwuJB9XaXwjE5hmmgSpBTYqQ@playman.scm.azurewebsites.net/api/registry/webhook"`
+    - Backend: `curl -dH -X POST "https://\$PlayManBackend:aBPc2NHMrYLEHQtmPB1JhQKgtsonxezPjliwxptyx2142STiv91aRxmnmKe6@playmanbackend.scm.azurewebsites.net/api/registry/webhook"`
