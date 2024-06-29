@@ -12,7 +12,7 @@ Requirements:
 
 Set up an app registered at <https://developer.spotify.com/dashboard>
 
-Set a Redirect URL for `http://localhost:1234`.
+Set a Redirect URL for `http://localhost:8080`.
 
 Create a `.env` file in the `backend` folder based on `.env.template`, and set the appropriate missing variables using those from the Spotify dashboard.
 
@@ -34,12 +34,11 @@ From the frontend directory, build the backend in development mode with `docker 
 
 From the backend directory, build the frontend in development mode with `docker build --target development --tag frontend:dev .`
 
-
 Build backend tests docker image with `docker build --target test --tag backend:test ./backend/`
 
 Run backend in development mode from the backend folder with `docker run --env-file .env -p 5000:5000 --mount "type=bind,source=$(pwd)/src,target=/backend/src" backend:dev`
 
-Run frontend in development mode from the frontend folderwith `docker run -it --init --env-file .env -p 1234:1234 --mount "type=bind,source=$(pwd)/src,target=/frontend/src" frontend:dev` (use --entrypoint /bin/bash for debugging)
+Run frontend in development mode from the frontend folderwith `docker run -it --init --env-file .env -p 8080:8080 --mount "type=bind,source=$(pwd)/src,target=/frontend/src" frontend:dev` (use --entrypoint /bin/bash for debugging)
 
 ## Provisioning VMs with Ansible
 
