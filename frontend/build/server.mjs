@@ -16,38 +16,40 @@ const runServer = async () => {
 		servedir: "public",
 	});
 
-	http.createServer((clientReq, clientRes) => {
-		const options = {
-			hostname: host,
-			port: proxyPort,
-			path: clientReq.url,
-			method: clientReq.method,
-			headers: clientReq.headers,
-		};
+	const foo = http
+		.createServer((clientReq, clientRes) => {
+			const options = {
+				hostname: host,
+				port: proxyPort,
+				path: clientReq.url,
+				method: clientReq.method,
+				headers: clientReq.headers,
+			};
 
-		const proxy = http.request(options, res => {
-			if (res.statusCode === 404) {
-				const redirectReq = http.request(
-					{ ...options, path: "/" },
-					proxyRes => {
-						clientRes.writeHead(
-							proxyRes.statusCode,
-							proxyRes.headers,
-						);
-						proxyRes.pipe(clientRes, { end: true });
-					},
-				);
+			const proxy = http.request(options, res => {
+				if (res.statusCode === 404) {
+					const redirectReq = http.request(
+						{ ...options, path: "/" },
+						proxyRes => {
+							clientRes.writeHead(
+								proxyRes.statusCode,
+								proxyRes.headers,
+							);
+							proxyRes.pipe(clientRes, { end: true });
+						},
+					);
 
-				redirectReq.end();
-			} else {
-				clientRes.writeHead(res.statusCode, res.headers);
-				res.pipe(clientRes, { end: true });
-			}
-		});
+					redirectReq.end();
+				} else {
+					clientRes.writeHead(res.statusCode, res.headers);
+					res.pipe(clientRes, { end: true });
+				}
+			});
 
-		clientReq.pipe(proxy, { end: true });
-	}).listen("8080"); //process.env.FRONTEND_URL.split(":").slice(-1)[0]);
-	console.log(`frontend running on ${process.env.FRONTEND_URL}`);
+			clientReq.pipe(proxy, { end: true });
+		})
+		.listen("8080");
+	console.log(`frontend running on port ${foo.address().port}`);
 };
 
 runServer();

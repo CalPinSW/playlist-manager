@@ -19,10 +19,10 @@ def auth_controller(spotify: SpotifyClient):
     @auth_controller.route("get-user-code")
     def auth_redirect():
         code = request.args.get("code")
-        # state = request.args.get("state")
-        # test = session["SpotifyState"]
-        # if state != test:
-        #     return make_response({"error": test}, 401)
+        state = request.args.get("state")
+        test = session["SpotifyState"]
+        if state != test:
+            return make_response({"error": test}, 401)
         return spotify.request_access_token(code=code)
 
     @auth_controller.route("refresh-user-code")
