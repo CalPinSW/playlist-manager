@@ -37,14 +37,14 @@ jobs:
                 
             - name: Build frontend Docker image
               working-directory: frontend 
-              run: docker build --target development --tag calpin/playlist-manager-frontend:prod .
+              run: docker build --target production --tag calpin/playlist-manager-frontend:prod .
             - name: Push frontend Docker image
               working-directory: frontend
               run: docker push calpin/playlist-manager-frontend:prod
 
             - name: Build backend Docker image
               working-directory: backend 
-              run: docker build --target development --tag calpin/playlist-manager-backend:prod .
+              run: docker build --target production --tag calpin/playlist-manager-backend:prod .
             - name: Push backend Docker image
               working-directory: backend
               run: docker push calpin/playlist-manager-backend:prod
