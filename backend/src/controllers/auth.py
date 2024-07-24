@@ -1,6 +1,5 @@
-from urllib.parse import urlencode
 from uuid import uuid4
-from flask import Blueprint, make_response, redirect, request, session
+from flask import Blueprint, make_response, request, session
 from src.spotify import SpotifyClient
 
 

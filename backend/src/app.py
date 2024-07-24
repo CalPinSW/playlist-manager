@@ -1,10 +1,6 @@
-from urllib.parse import urlencode
-from uuid import uuid4
-from flask import Flask, make_response, redirect, request, session
+from flask import Flask, make_response
 from flask_cors import CORS
 from src.controllers.spotify import spotify_controller
-from src.dataclasses.playback_info import PlaybackInfo
-from src.dataclasses.playlist import Playlist
 from src.exceptions.Unauthorized import UnauthorizedException
 from src.flask_config import Config
 from src.spotify import SpotifyClient
@@ -16,7 +12,7 @@ def create_app():
     spotify = SpotifyClient()
     app.config.from_object(Config())
     app.config["CORS_HEADERS"] = "Content-Type"
-    
+
     # Since the backend runs on a different host to the frontend in production,
     # we need to setup cookies to work across the different urls,
     # otherwise they are not sent to the backend in authenticated requests.
