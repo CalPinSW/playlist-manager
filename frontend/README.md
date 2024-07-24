@@ -47,11 +47,11 @@ You should see output similar to the following:
 > playlist-manager-frontend@1.0.0 dev:esbuild
 > node build/server.mjs
 
-frontend running on http://127.0.0.1:1234
+frontend running on http://127.0.0.1:8080
 
 Rebuilding...
 
 Done in 159ms.
 ```
 
-If the [backend](../backend/README.md) is running you should be able to access the site at http://localhost:1234
+If the [backend](../backend/README.md) is running you should be able to access the site at http://localhost:8080

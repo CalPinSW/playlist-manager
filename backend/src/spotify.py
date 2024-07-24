@@ -15,6 +15,7 @@ from src.dataclasses.spotify_auth.token_response import TokenResponse
 from src.dataclasses.user import User
 from src.exceptions.Unauthorized import UnauthorizedException
 from src.flask_config import Config
+from src.utils.response_creator import ResponseCreator
 
 scope = [
     "user-library-read",
@@ -92,10 +93,13 @@ class SpotifyClient:
         token_response = TokenResponse.model_validate(api_response)
         access_token = token_response.access_token
         user_info = self.get_current_user(access_token)
-
-        resp = make_response()
-        resp.set_cookie("spotify_access_token", access_token)
-        resp.set_cookie("user_id", user_info.id)
+        resp = (
+            ResponseCreator()
+            .with_cookies(
+                {"spotify_access_token": access_token, "user_id": user_info.id}
+            )
+            .create()
+        )
         return resp
 
     def request_access_token(self, code):
@@ -115,10 +119,17 @@ class SpotifyClient:
         token_response = TokenResponse.model_validate(api_response)
         access_token = token_response.access_token
         user_info = self.get_current_user(access_token)
-        resp = make_response(redirect(f"{Config().FRONTEND_URL}/"))
-        resp.set_cookie("spotify_access_token", access_token)
-        resp.set_cookie("spotify_refresh_token", token_response.refresh_token)
-        resp.set_cookie("user_id", user_info.id)
+        resp = (
+            ResponseCreator(redirect(f"{Config().FRONTEND_URL}/"))
+            .with_cookies(
+                {
+                    "spotify_access_token": access_token,
+                    "spotify_refresh_token": token_response.refresh_token,
+                    "user_id": user_info.id,
+                }
+            )
+            .create()
+        )
         return resp
 
     def get_playlists(
