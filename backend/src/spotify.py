@@ -469,19 +469,17 @@ class SpotifyClient:
             },
             auth=BearerAuth(access_token),
         )
-        foo = self.response_handler(
+        return self.response_handler(
             make_response("", response.status_code), jsonify=False
         )
-        return foo
 
     def start_playback(
         self, access_token, start_playback_request_body: StartPlaybackRequest = None
     ) -> Response:
-        request_json = start_playback_request_body.model_dump_json(exclude_none=True)
-        if request_json == {}:
+        if not start_playback_request_body:
             data = None
         else:
-            data = request_json
+            data = start_playback_request_body.model_dump_json(exclude_none=True)
 
         response = requests.put(
             url="https://api.spotify.com/v1/me/player/play",
@@ -491,10 +489,16 @@ class SpotifyClient:
             },
             auth=BearerAuth(access_token),
         )
-        foo = self.response_handler(
+        return self.response_handler(
             make_response("", response.status_code), jsonify=False
         )
-        return foo
+
+    def pause_or_start_playback(self, access_token) -> Response:
+        is_playing = self.get_current_playback(access_token).is_playing
+        if is_playing:
+            return self.pause_playback(access_token)
+        else:
+            return self.start_playback(access_token)
 
 
 def get_playlist_duration(playlist_info: List[PlaylistTrackObject]) -> int:

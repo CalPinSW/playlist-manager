@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { FC, useEffect, useState } from "react";
-import { getPlaybackInfo, getPlaylistProgress, pausePlayback, startPlayback } from "../api";
+import { getPlaybackInfo, getPlaylistProgress, pauseOrStartPlayback, pausePlayback, startPlayback } from "../api";
 import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
 import { ProgressCircle } from "../components/ProgressCircle";
 import useWindowSize from "../hooks/useWindowSize";
@@ -12,17 +12,12 @@ import { Link } from "react-router-dom";
 
 const PlaybackFooter: FC = () => {
   const { isMobileView } = useWindowSize();
-  const { playbackInfo, playlistProgress, refetchPlaybackInfo } = usePlaybackContext();
+  const { playbackInfo, playlistProgress } = usePlaybackContext();
 
   if (!playbackInfo) return null;
 
   const handlePausePlayClick = (): void => {
-    if (playbackInfo.is_playing) {
-      pausePlayback()
-    } else {
-      startPlayback()
-    }
-    refetchPlaybackInfo?.()
+    pauseOrStartPlayback()
   }
 
   return (

@@ -122,3 +122,7 @@ export const startPlayback = async (
 		position_ms
 	});
 };
+
+export const pauseOrStartPlayback = async (): Promise<Response> => {
+	return jsonRequest(`spotify/pause_or_start_playback`, RequestMethod.PUT);
+};

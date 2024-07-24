@@ -6,12 +6,11 @@ import React, {
   useState,
 } from "react";
 import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
-import { QueryObserverResult, RefetchOptions, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getPlaybackInfo, getPlaylistProgress } from "../api";
 
 interface PlaybackContext {
   playbackInfo?: PlaybackInfo;
-  refetchPlaybackInfo?: (options?: RefetchOptions) => Promise<QueryObserverResult<PlaybackInfo, Error>>
   playlistProgress?: PlaylistProgress;
 }
 
@@ -25,7 +24,7 @@ export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
   children,
 }) => {
   const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(5000);
-  const { data: playbackInfo, refetch: refetchPlaybackInfo } = useQuery<PlaybackInfo>({
+  const { data: playbackInfo } = useQuery<PlaybackInfo>({
     queryKey: ["playbackInfo"],
     queryFn: () => {
       return getPlaybackInfo();
@@ -51,7 +50,7 @@ export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
   });
 
   return (
-    <PlaybackContext.Provider value={{ playbackInfo, playlistProgress, refetchPlaybackInfo }}>
+    <PlaybackContext.Provider value={{ playbackInfo, playlistProgress }}>
       {children}
     </PlaybackContext.Provider>
   );
