@@ -16,6 +16,10 @@ def create_app():
     spotify = SpotifyClient()
     app.config.from_object(Config())
     app.config["CORS_HEADERS"] = "Content-Type"
+    
+    # Since the backend runs on a different host to the frontend in production,
+    # we need to setup cookies to work across the different urls,
+    # otherwise they are not sent to the backend in authenticated requests.
     app.config.update(
         SESSION_COOKIE_SAMESITE="None",
         SESSION_COOKIE_SECURE="True",
