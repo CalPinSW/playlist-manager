@@ -23,6 +23,7 @@ class PlaybackInfo(BaseModel):
     track_duration: float
     album_progress: float
     album_duration: float
+    is_playing: bool
 
     def get_formatted_artists(self) -> str:
         return ", ".join(self.track_artists)

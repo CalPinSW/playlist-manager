@@ -5,6 +5,7 @@ from typing import List
 from flask import Response, make_response, redirect
 from src.dataclasses.album import Album
 from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
+from src.dataclasses.playback_request import StartPlaybackRequest
 from src.dataclasses.playback_state import PlaybackState
 from src.dataclasses.playlist import Playlist
 from src.dataclasses.playlist_info import CurrentUserPlaylists, SimplifiedPlaylist
@@ -28,6 +29,7 @@ scope = [
     "playlist-read-collaborative",
     "playlist-modify-private",
     "playlist-modify-public",
+    "user-modify-playback-state",
 ]
 
 
@@ -293,7 +295,7 @@ class SpotifyClient:
         album = Album.model_validate(api_album)
         return album
 
-    def get_current_playback(self, access_token):
+    def get_current_playback(self, access_token) -> PlaybackState | None:
         response = requests.get(
             f"https://api.spotify.com/v1/me/player",
             auth=BearerAuth(access_token),
@@ -345,6 +347,7 @@ class SpotifyClient:
                 "track_duration": api_playback.item.duration_ms,
                 "album_progress": album_progress,
                 "album_duration": album_duration,
+                "is_playing": api_playback.is_playing,
             }
         )
 
@@ -366,11 +369,13 @@ class SpotifyClient:
             }
         )
 
-    def search_albums(self, access_token, search=None, offset=0) -> List[Album]:
+    def search_albums(
+        self, access_token, search=None, offset=0, limit=50
+    ) -> List[Album]:
         if search:
             response = requests.get(
                 f"https://api.spotify.com/v1/albums/{id}",
-                data={"q": search, "type": "album", "limit": 50, "offset": offset},
+                data={"q": search, "type": "album", "limit": limit, "offset": offset},
                 headers={
                     "content-type": "application/json",
                 },
@@ -455,6 +460,41 @@ class SpotifyClient:
         playlist_track_ids = [track.track.id for track in playlist_tracks]
         album_track_ids = [track.id for track in album.tracks.items]
         return all(e in playlist_track_ids for e in album_track_ids)
+
+    def pause_playback(self, access_token) -> Response:
+        response = requests.put(
+            url="https://api.spotify.com/v1/me/player/pause",
+            headers={
+                "content-type": "application/json",
+            },
+            auth=BearerAuth(access_token),
+        )
+        foo = self.response_handler(
+            make_response("", response.status_code), jsonify=False
+        )
+        return foo
+
+    def start_playback(
+        self, access_token, start_playback_request_body: StartPlaybackRequest = None
+    ) -> Response:
+        request_json = start_playback_request_body.model_dump_json(exclude_none=True)
+        if request_json == {}:
+            data = None
+        else:
+            data = request_json
+
+        response = requests.put(
+            url="https://api.spotify.com/v1/me/player/play",
+            data=data,
+            headers={
+                "content-type": "application/json",
+            },
+            auth=BearerAuth(access_token),
+        )
+        foo = self.response_handler(
+            make_response("", response.status_code), jsonify=False
+        )
+        return foo
 
 
 def get_playlist_duration(playlist_info: List[PlaylistTrackObject]) -> int:

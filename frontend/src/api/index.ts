@@ -104,3 +104,21 @@ export const addAlbumToPlaylist = async (
 		albumId,
 	});
 };
+
+export const pausePlayback = async (): Promise<Response> => {
+	return jsonRequest(`spotify/pause_playback`, RequestMethod.PUT);
+};
+
+export const startPlayback = async (
+	context_uri?: string, 
+	uris?: string[], 
+	offset?: {position: number} | {uri: string}, 
+	position_ms?: number
+): Promise<Response> => {
+	return jsonRequest(`spotify/start_playback`, RequestMethod.PUT, {
+		context_uri,
+		uris,
+		offset,
+		position_ms
+	});
+};

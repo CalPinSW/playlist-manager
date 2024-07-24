@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { FC, useEffect, useState } from "react";
-import { getPlaybackInfo, getPlaylistProgress } from "../api";
+import { getPlaybackInfo, getPlaylistProgress, pausePlayback, startPlayback } from "../api";
 import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
 import { ProgressCircle } from "../components/ProgressCircle";
 import useWindowSize from "../hooks/useWindowSize";
@@ -12,14 +12,26 @@ import { Link } from "react-router-dom";
 
 const PlaybackFooter: FC = () => {
   const { isMobileView } = useWindowSize();
-  const { playbackInfo, playlistProgress } = usePlaybackContext();
+  const { playbackInfo, playlistProgress, refetchPlaybackInfo } = usePlaybackContext();
 
   if (!playbackInfo) return null;
+
+  const handlePausePlayClick = (): void => {
+    if (playbackInfo.is_playing) {
+      pausePlayback()
+    } else {
+      startPlayback()
+    }
+    refetchPlaybackInfo?.()
+  }
+
   return (
     <div className="w-full h-fit bg-primary-300 px-4 py-2 text-sm sm:text-base">
       <div className="flex space-x-4 sm:space-x-6">
         <div className="flex flex-col space-y-2 w-1/5 max-w-32">
-          <img src={playbackInfo.artwork_url}></img>
+          <button className="opacity-80 w-full h-full" onClick={handlePausePlayClick}>
+            <img src={playbackInfo.artwork_url}></img>
+          </button>
           <div>Playing:</div>
           <div className="text-balance">
             {playbackInfo.album_artists.join(", ")}

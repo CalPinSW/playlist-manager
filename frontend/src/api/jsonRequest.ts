@@ -5,6 +5,7 @@ export const backendUrl = process.env.BACKEND_URL;
 export enum RequestMethod {
 	GET = "get",
 	POST = "post",
+	PUT = "put",
 }
 
 export const jsonRequest = async <I, O>(
@@ -16,6 +17,7 @@ export const jsonRequest = async <I, O>(
 	let fetchOptions: RequestInit = { credentials: "include" };
 	switch (method) {
 		case RequestMethod.POST:
+		case RequestMethod.PUT:
 			fetchOptions = {
 				...fetchOptions,
 				method: method,

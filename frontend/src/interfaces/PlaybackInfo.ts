@@ -11,6 +11,7 @@ export interface PlaybackInfo {
   track_duration: number;
   album_progress: number;
   album_duration: number;
+  is_playing: boolean;
 }
 
 export interface PlaylistProgress {
