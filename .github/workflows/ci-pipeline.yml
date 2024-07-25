@@ -4,10 +4,6 @@ on:
         paths-ignore:
             - "diagrams/*"
             - "**/README.md"
-    pull_request:
-        paths-ignore:
-            - "diagrams/*"
-            - "**/README.md"
 
 jobs:
     build:
