@@ -35,7 +35,7 @@ const PlaybackFooter: FC = () => {
         <div className="flex flex-col w-4/5 text-sm space-y-2">
           <div className="flex flex-row justify-between">
             <div className="flex flex-row space-x-2">
-              <SongIcon className="my-auto w-8 h-8" />
+              <SongIcon className={`my-auto w-8 h-8 ${playbackInfo.is_playing && "animate-bounce"}`} />
               <div className="my-auto text-balance">
                 {playbackInfo.track_title}
               </div>
