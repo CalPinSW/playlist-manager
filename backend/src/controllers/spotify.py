@@ -1,5 +1,6 @@
 from flask import Blueprint, make_response, request
 from src.dataclasses.playback_info import PlaybackInfo
+from src.dataclasses.playback_request import StartPlaybackRequest
 from src.dataclasses.playlist import Playlist
 from src.spotify import SpotifyClient
 
@@ -124,5 +125,24 @@ def spotify_controller(spotify: SpotifyClient):
         return spotify.add_album_to_playlist(
             access_token=access_token, playlist_id=playlist_id, album_id=album_id
         )
+
+    @spotify_controller.route("pause_playback", methods=["PUT"])
+    def pause_playback():
+        access_token = request.cookies.get("spotify_access_token")
+        return spotify.pause_playback(access_token)
+
+    @spotify_controller.route("start_playback", methods=["PUT"])
+    def start_playback():
+        access_token = request.cookies.get("spotify_access_token")
+        request_body = request.json
+        start_playback_request_body = (
+            StartPlaybackRequest.model_validate(request_body) if request_body else None
+        )
+        return spotify.start_playback(access_token, start_playback_request_body)
+
+    @spotify_controller.route("pause_or_start_playback", methods=["PUT"])
+    def pause_or_start_playback():
+        access_token = request.cookies.get("spotify_access_token")
+        return spotify.pause_or_start_playback(access_token)
 
     return spotify_controller

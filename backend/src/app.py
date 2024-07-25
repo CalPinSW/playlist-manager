@@ -20,6 +20,7 @@ def create_app():
         SESSION_COOKIE_SAMESITE="None",
         SESSION_COOKIE_SECURE="True",
     )
+
     cors = CORS(
         app,
         resources={
