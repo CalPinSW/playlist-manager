@@ -11,6 +11,7 @@ def playback_info_builder(
     track_duration=180000,
     album_progress=1000000,
     album_duration=18000000,
+    is_playing=True,
 ):
     return PlaybackInfo.model_validate(
         {
@@ -26,5 +27,6 @@ def playback_info_builder(
             "track_duration": track_duration,
             "album_progress": album_progress,
             "album_duration": album_duration,
+            "is_playing": is_playing,
         }
     )
