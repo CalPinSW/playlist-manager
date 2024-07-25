@@ -135,7 +135,9 @@ def spotify_controller(spotify: SpotifyClient):
     def start_playback():
         access_token = request.cookies.get("spotify_access_token")
         request_body = request.json
-        start_playback_request_body = StartPlaybackRequest.model_validate(request_body) if request_body else None
+        start_playback_request_body = (
+            StartPlaybackRequest.model_validate(request_body) if request_body else None
+        )
         return spotify.start_playback(access_token, start_playback_request_body)
 
     @spotify_controller.route("pause_or_start_playback", methods=["PUT"])
