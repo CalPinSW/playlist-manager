@@ -1,11 +1,14 @@
 import json
 import requests
 import os
-from typing import List
+from typing import List, Optional
 from flask import Response, make_response, redirect
 from src.dataclasses.album import Album
 from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
-from src.dataclasses.playback_request import StartPlaybackRequest
+from src.dataclasses.playback_request import (
+    StartPlaybackRequest,
+    StartPlaybackRequestUriOffset,
+)
 from src.dataclasses.playback_state import PlaybackState
 from src.dataclasses.playlist import Playlist
 from src.dataclasses.playlist_info import CurrentUserPlaylists, SimplifiedPlaylist
@@ -468,11 +471,28 @@ class SpotifyClient:
         )
 
     def start_playback(
-        self, access_token, start_playback_request_body: StartPlaybackRequest = None
+        self,
+        access_token,
+        start_playback_request_body: Optional[StartPlaybackRequest] = None,
     ) -> Response:
         if not start_playback_request_body:
             data = None
         else:
+            if start_playback_request_body.offset.album_id:
+                track_offset = StartPlaybackRequestUriOffset.model_validate(
+                    {
+                        "uri": (
+                            self.get_album(
+                                access_token=access_token,
+                                id=start_playback_request_body.offset.album_id,
+                            )
+                            .tracks.items[0]
+                            .uri
+                        )
+                    }
+                )
+
+                start_playback_request_body.offset = track_offset
             data = start_playback_request_body.model_dump_json(exclude_none=True)
 
         response = requests.put(

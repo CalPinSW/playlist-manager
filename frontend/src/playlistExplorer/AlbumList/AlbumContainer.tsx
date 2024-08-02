@@ -4,18 +4,20 @@ import PlaylistIcon from "../../components/PlaylistIcon";
 import { RotatingBorderBox } from "../../components/RotatingBorderBox";
 import Modal from "../../components/Modal";
 import { Playlist } from "../../interfaces/Playlist";
-import { addAlbumToPlaylist } from "../../api";
+import { addAlbumToPlaylist, startPlayback } from "../../api";
 import { useModal } from "../../hooks/useModal";
 import Button from "../../components/Button";
 
 interface AlbumContainerProps {
   album: Album;
+  contextPlaylist: Playlist
   associatedPlaylists: Playlist[];
   active?: boolean;
 }
 
 export const AlbumContainer: FC<AlbumContainerProps> = ({
   album,
+  contextPlaylist,
   associatedPlaylists,
   active,
 }) => {
@@ -31,6 +33,7 @@ export const AlbumContainer: FC<AlbumContainerProps> = ({
     <>
       <Modal isModalOpen={isModalOpen} closeModal={closeModal}>
         <AlbumActionsModalContent
+          contextPlaylist={contextPlaylist}
           associatedPlaylists={associatedPlaylists}
           album={album}
           closeModal={closeModal}
@@ -80,11 +83,13 @@ export const AlbumContainer: FC<AlbumContainerProps> = ({
 
 interface AlbumActionsModalContentProps {
   album: Album;
+  contextPlaylist: Playlist
   associatedPlaylists: Playlist[];
   closeModal: () => void;
 }
 const AlbumActionsModalContent: FC<AlbumActionsModalContentProps> = ({
   album,
+  contextPlaylist,
   associatedPlaylists,
   closeModal,
 }) => {
@@ -98,7 +103,7 @@ const AlbumActionsModalContent: FC<AlbumActionsModalContentProps> = ({
         <h2 className="my-auto text-m">Actions:</h2>
         <button onClick={closeModal}>X</button>
       </div>
-      <div className="my-2 space-y-2">
+      <div className="flex flex-col my-2 space-y-2">
         {associatedPlaylists.map((associatedPlaylist) => (
           <Button
             onClick={() => addAlbumToAssociatedPlaylist(associatedPlaylist)}
@@ -107,6 +112,11 @@ const AlbumActionsModalContent: FC<AlbumActionsModalContentProps> = ({
             Add to {associatedPlaylist.name}
           </Button>
         ))}
+        <Button
+            onClick={() => (startPlayback({context_uri: contextPlaylist.uri, offset: {album_id: album.id} }))}
+          >
+            Play Album
+          </Button>
       </div>
     </div>
   );

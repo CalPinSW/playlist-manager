@@ -109,18 +109,16 @@ export const pausePlayback = async (): Promise<Response> => {
 	return jsonRequest(`spotify/pause_playback`, RequestMethod.PUT);
 };
 
-export const startPlayback = async (
+interface StartPlaybackRequest {
 	context_uri?: string, 
 	uris?: string[], 
-	offset?: {position: number} | {uri: string}, 
+	offset?: {position: number} | {uri: string} | {album_id: string}, 
 	position_ms?: number
+}
+
+export const startPlayback = async (requestBody?: StartPlaybackRequest
 ): Promise<Response> => {
-	return jsonRequest(`spotify/start_playback`, RequestMethod.PUT, {
-		context_uri,
-		uris,
-		offset,
-		position_ms
-	});
+	return jsonRequest(`spotify/start_playback`, RequestMethod.PUT, requestBody);
 };
 
 export const pauseOrStartPlayback = async (): Promise<Response> => {
