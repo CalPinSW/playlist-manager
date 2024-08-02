@@ -51,6 +51,7 @@ export const PlaylistExplorer: FC = () => {
   }, []);
 
   const { playbackInfo } = usePlaybackContext();
+
   return (
     <div className="flex flex-col h-full space-y-1 ">
       <div className="mx-2">
@@ -124,6 +125,7 @@ export const PlaylistExplorer: FC = () => {
               <AlbumList
                 albumList={playlistAlbums}
                 activeAlbumId={playbackInfo?.album_id}
+                contextPlaylist={playlist}
                 associatedPlaylists={associatedPlaylists}
               />
             )}

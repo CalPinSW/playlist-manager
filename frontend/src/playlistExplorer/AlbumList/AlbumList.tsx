@@ -6,11 +6,13 @@ import { Playlist } from "../../interfaces/Playlist";
 
 interface AlbumListProps {
   albumList: Album[];
+  contextPlaylist: Playlist;
   associatedPlaylists: Playlist[];
   activeAlbumId?: string;
 }
 export const AlbumList: FC<AlbumListProps> = ({
   albumList,
+  contextPlaylist,
   associatedPlaylists,
   activeAlbumId,
 }) => {
@@ -21,6 +23,7 @@ export const AlbumList: FC<AlbumListProps> = ({
           <AlbumContainer
             album={album}
             key={album.id}
+            contextPlaylist={contextPlaylist}
             associatedPlaylists={associatedPlaylists}
             active={album.id == activeAlbumId}
           />
