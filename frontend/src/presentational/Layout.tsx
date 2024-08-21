@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import PlaybackFooter from "./PlaybackFooter";
-import Header from "./Header";
+import Header from "./Header/Header";
 
 const Layout = () => {
   return (

@@ -1,13 +1,13 @@
 import React, { FC } from "react";
-import Box from "./components/Box";
 import { login } from "./api";
+import Button from "./components/Button";
 
 export const Login: FC = () => {
   return (
-    <div>
-      <Box>
-        <button onClick={login}>Click to login</button>
-      </Box>
+    <div className="w-full flex">
+      <Button className="w-1/3 mx-auto mt-12" onClick={login}>
+        Click to login
+      </Button>
     </div>
   );
 };

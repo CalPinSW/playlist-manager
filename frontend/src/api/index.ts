@@ -20,6 +20,16 @@ export const login = async (): Promise<void> => {
 	});
 };
 
+export const logout = async (): Promise<void> => {
+	return fetch(`${backendUrl}/auth/logout`, {
+		credentials: "include",
+	}).then(async response => {
+		const redirectUrl = await response.text();
+		console.log(redirectUrl)
+		window.open("/", "_self");
+	});
+}
+
 export const getCurrentUserDetails = async (): Promise<User> => {
 	return jsonRequest(
 		`spotify/current-user`,
