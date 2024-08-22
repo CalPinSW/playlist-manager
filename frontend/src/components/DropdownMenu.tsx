@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useEffect, useRef, useState } from "react";
+import React, { FC, ReactNode, useEffect, useRef } from "react";
 
 interface ModalProps {
   children: ReactNode;
@@ -10,7 +10,7 @@ interface ModalProps {
 const DropdownMenu: FC<ModalProps> = ({ children, trigger, isMenuOpen, closeMenu }) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        function handleClickOutside({target}: MouseEvent) {
+        const handleClickOutside = ({target}: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(target as Node)) {
                 closeMenu();
             }

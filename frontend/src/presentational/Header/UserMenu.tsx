@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useState } from "react";
+import React, { FC, useState } from "react";
 import DropdownMenu from "../../components/DropdownMenu";
 import { User } from "../../interfaces/User";
 import Button from "../../components/Button";

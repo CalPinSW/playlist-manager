@@ -1,5 +1,4 @@
 import React, { FC } from "react";
-import { Link } from "react-router-dom";
 import Input from "./components/Input";
 import InputLabel from "./components/InputLabel";
 import Button from "./components/Button";
@@ -15,6 +14,7 @@ const AddPlaylistForm: FC = () => {
       addPlaylist(values);
     }
   };
+
   return (
     <div className="m-4">
       <Form onSubmit={onSubmit} control={control}>
