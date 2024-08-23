@@ -1,5 +1,6 @@
 from uuid import uuid4
-from flask import Blueprint, make_response, request, session
+from flask import Blueprint, make_response, redirect, request, session
+from src.flask_config import Config
 from src.spotify import SpotifyClient
 
 
@@ -14,6 +15,15 @@ def auth_controller(spotify: SpotifyClient):
         session["SpotifyState"] = state
         query_string = spotify.get_login_query_string(state)
         return "https://accounts.spotify.com/authorize?" + query_string
+
+    @auth_controller.route("logout")
+    def logout():
+        resp = make_response("Logged out")
+        resp.delete_cookie("spotify_access_token")
+        resp.delete_cookie("spotify_refresh_token")
+        resp.delete_cookie("user_id")
+        resp.delete_cookie("session")
+        return resp
 
     @auth_controller.route("get-user-code")
     def auth_redirect():

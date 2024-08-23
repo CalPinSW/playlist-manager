@@ -1,9 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import React, { FC, useEffect, useState } from "react";
-import { getPlaybackInfo, getPlaylistProgress, pauseOrStartPlayback, pausePlayback, startPlayback } from "../api";
-import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
+import React, { FC } from "react";
+import { pauseOrStartPlayback } from "../api";
 import { ProgressCircle } from "../components/ProgressCircle";
-import useWindowSize from "../hooks/useWindowSize";
 import SongIcon from "../components/SongIcon";
 import AlbumIcon from "../components/AlbumIcon";
 import PlaylistIcon from "../components/PlaylistIcon";
@@ -11,7 +8,6 @@ import { usePlaybackContext } from "../hooks/usePlaybackContext";
 import { Link } from "react-router-dom";
 
 const PlaybackFooter: FC = () => {
-  const { isMobileView } = useWindowSize();
   const { playbackInfo, playlistProgress } = usePlaybackContext();
 
   if (!playbackInfo) return null;

@@ -4,7 +4,6 @@ import { TrackContainer } from "./TrackContainer";
 import Box from "../../components/Box";
 import SongIcon from "../../components/SongIcon";
 import ArtistIcon from "../../components/ArtistIcon";
-import { usePlaybackContext } from "../../hooks/usePlaybackContext";
 
 interface TrackListProps {
 	trackList: PlaylistTrack[];

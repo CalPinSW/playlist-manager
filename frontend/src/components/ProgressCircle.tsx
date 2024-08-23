@@ -6,7 +6,6 @@ interface ProgressCircleProps {
 }
 export const ProgressCircle: FC<ProgressCircleProps> = ({
   percentage,
-  className,
 }) => {
   return (
     <div className="relative">

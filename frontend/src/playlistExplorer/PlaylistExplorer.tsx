@@ -26,7 +26,7 @@ export const PlaylistExplorer: FC = () => {
   const { control, register, getValues } = useForm({
     defaultValues: playlist,
   });
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.TRACK);
+  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.ALBUM);
 
   const { data: playlistAlbums } = useQuery<Album[]>({
     queryKey: ["playlist albums info", playlist.id],

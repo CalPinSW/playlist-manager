@@ -1,6 +1,5 @@
 import { Album } from "./Album";
 import { Artist } from "./Artist";
-import { Image } from "./Image";
 
 export interface Track {
   album: Album;

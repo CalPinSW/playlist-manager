@@ -1,7 +1,6 @@
 import { User } from "./User";
 import { Image } from "./Image";
 import { Track } from "./Track";
-import { Episode } from "./Episode";
 
 export interface PlaylistTrack {
   added_at: string;

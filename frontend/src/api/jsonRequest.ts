@@ -40,11 +40,11 @@ export const jsonRequest = async <I, O>(
 				`${backendUrl}/${endpoint}`,
 				fetchOptions,
 			);
-			return retried_response.json().then((data: any) => data as O);
+			return retried_response.json().then((data) => data as O);
 		} else {
 			openInNewTab(`/login`);
 		}
 	}
-	const apiResponse = response.json().then((data: any) => data as O);
+	const apiResponse = response.json().then((data) => data as O);
 	return apiResponse;
 };
