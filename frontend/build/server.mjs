@@ -2,8 +2,6 @@ import * as esbuild from "esbuild";
 import { buildOptions } from "./build-common.mjs";
 import http from "node:http";
 
-const watchDirectories = ["src/*.{ts,tsx}"];
-
 const runServer = async () => {
 	const ctx = await esbuild.context(buildOptions);
 

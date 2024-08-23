@@ -4,15 +4,16 @@ import tseslint from "typescript-eslint";
 import pluginReact from "eslint-plugin-react";
 
 export default [
-
   {
-    languageOptions: { globals: globals.browser }
+    languageOptions: { globals: {...globals.browser, ...globals.node}, },
   },
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
   {
-    files: ["src/**/*.js"],
-    ignores: ["**/*.tsx"],
+    rules: {"unused-imports/no-unused-imports": "error"}
+  },
+  {
+    ignores: ["public/bundle.js"],
   },
 ];
