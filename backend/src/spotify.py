@@ -146,7 +146,7 @@ class SpotifyClient:
         playlists = CurrentUserPlaylists.model_validate(api_playlists)
         return playlists
 
-    def get_all_playlists(self, user_id, access_token):
+    def get_all_playlists(self, user_id, access_token) -> List[SimplifiedPlaylist]:
         playlists: List[SimplifiedPlaylist] = []
         offset = 0
         limit = 50
