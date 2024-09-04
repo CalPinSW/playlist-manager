@@ -140,7 +140,7 @@ def populate_album_genres_by_user_id(
     for idx, db_album in enumerate(albums):
         print("\033[A                             \033[A")
         print(f"processing album {idx} of {len(albums)}, skipped {skip_count}")
-        if get_album_genres(db_album) != []:
+        if get_album_genres(db_album.id) != []:
             skip_count += 1
             continue
         album_artists = get_album_artists(db_album)

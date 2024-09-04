@@ -4,6 +4,7 @@ import os
 import urllib.parse
 from typing import List, Optional
 from flask import Response, make_response, redirect
+from src.database.crud.album import get_album_genres
 from src.dataclasses.album import Album
 from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
 from src.dataclasses.playback_request import (
@@ -263,6 +264,8 @@ class SpotifyClient:
         for track in playlist_tracks:
             if track.track.album not in playlist_albums:
                 playlist_albums.append(track.track.album)
+        for album in playlist_albums:
+            album.genres = [genre.name for genre in get_album_genres(album.id)]
         return playlist_albums
 
     def get_playlist_tracks(self, access_token, id: str):

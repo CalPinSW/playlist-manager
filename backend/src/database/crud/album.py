@@ -59,12 +59,12 @@ def update_album(album: Album):
     return album
 
 
-def get_album_genres(album: DbAlbum) -> List[str]:
+def get_album_genres(album_id: str) -> List[str]:
     query = (
         DbGenre.select()
         .join(AlbumGenreRelationship)
         .join(DbAlbum)
-        .where(DbAlbum.id == album.id)
+        .where(DbAlbum.id == album_id)
     )
     return list(query)
 
