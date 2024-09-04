@@ -5,11 +5,14 @@ from src.dataclasses.musicbrainz.release_group_response import ReleaseGroupRespo
 from src.exceptions.Unauthorized import UnauthorizedException
 from time import sleep
 
+from src.flask_config import Config
 
+
+### Musicbrainz requests must be followed by a 1 second sleep if being sent in bulk to avoid rate limiting
 class MusicbrainzClient:
     request_headers = {
         "Accept": "application/json",
-        "User-Agent": "Application PlaylistManager/1.0 - Hobby project (calpinsw@gmail.com)",
+        "User-Agent": Config().MUSICBRAINZ_USER_AGENT,
     }
 
     def response_handler(self, response: requests.Response, jsonify=True):
@@ -30,7 +33,7 @@ class MusicbrainzClient:
         else:
             query = f"?limit={limit}&offset={offset}"
         response = requests.get(
-            url="https://musicbrainz.org/ws/2/genre/all" + query,
+            url=Config().MUSICBRAINZ_URL + "/genre/all" + query,
             headers=self.request_headers,
         )
         data = response.json()
@@ -38,7 +41,7 @@ class MusicbrainzClient:
         if genre_list == []:
             return []
         else:
-            sleep(2)  # Needed to avoid rate limiting
+            sleep(1)
             return genre_list + self.get_genre_list(limit, offset + limit)
 
     def get_album_genres(self, artist_name: str, album_title: str) -> List[str]:
@@ -46,7 +49,7 @@ class MusicbrainzClient:
             f'artistname:"{artist_name}" AND releasegroup:"{album_title}"'
         )
         response = requests.get(
-            url="https://musicbrainz.org/ws/2/release-group?query=" + query,
+            url=Config().MUSICBRAINZ_URL + "/release-group?query=" + query,
             headers=self.request_headers,
         )
         data = response.json()
