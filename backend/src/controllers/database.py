@@ -107,13 +107,20 @@ def database_controller(spotify: SpotifyClient, musicbrainz: MusicbrainzClient):
                 )
                 update_album(db_album)
 
-        return make_response("Playlist data populated", 201)
+        return make_response("Playlist details populated", 201)
 
     @database_controller.route("populate_universal_genre_list", methods=["GET"])
     def populate_universal_genre_list():
         genre_list = musicbrainz.get_genre_list()
         [create_genre(genre) for genre in genre_list]
-        return make_response("Playlist data populated", 201)
+        return make_response("Genre data populated", 201)
+
+    @database_controller.route("populate_user_album_genres", methods=["GET"])
+    def populate_user_album_genres():
+        access_token = request.cookies.get("spotify_access_token")
+        user = spotify.get_current_user(access_token)
+        populate_album_genres_by_user_id(user.id, musicbrainz)
+        return make_response("User album genres populated", 201)
 
     return database_controller
 
@@ -124,7 +131,9 @@ def split_list(input_list, max_length=20):
     ]
 
 
-def populate_user_album_genres(user_id: str):
+def populate_album_genres_by_user_id(
+    user_id: str, musicbrainz: MusicbrainzClient = MusicbrainzClient()
+):
     albums = get_user_albums(user_id=user_id)
     print(f"processing album {0} of {len(albums)}")
     skip_count = 0
@@ -135,7 +144,7 @@ def populate_user_album_genres(user_id: str):
             skip_count += 1
             continue
         album_artists = get_album_artists(db_album)
-        genres = MusicbrainzClient().get_album_genres(
+        genres = musicbrainz.get_album_genres(
             artist_name=album_artists[0].name, album_title=db_album.name
         )
         add_genres_to_album(db_album, genres)

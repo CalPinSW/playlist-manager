@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { ButtonWithLoadingState } from "./PopulateUserDatabaseButton";
-import { populateAdditionalAlbumDetails, populateUniversalGenreList, populateUserData } from "../api";
+import { populateAdditionalAlbumDetails, populateUniversalGenreList, populateUserAlbumGenres, populateUserData } from "../api";
 
 export const SettingsPage: FC = () => {
   return (
@@ -10,6 +10,7 @@ export const SettingsPage: FC = () => {
           <ButtonWithLoadingState text="Populate user data" actionCallback={populateUserData} />
           <ButtonWithLoadingState text="Populate additional album details" actionCallback={populateAdditionalAlbumDetails} />
           <ButtonWithLoadingState text="Populate universal genre list" actionCallback={populateUniversalGenreList} />
+          <ButtonWithLoadingState text="Populate user album genres" actionCallback={populateUserAlbumGenres} />
         </div>
     </div>
   );

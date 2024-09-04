@@ -146,3 +146,7 @@ export const populateAdditionalAlbumDetails = async (): Promise<Response> => {
 export const populateUniversalGenreList = async (): Promise<Response> => {
 	return request('database/populate_universal_genre_list', RequestMethod.GET)
 }
+
+export const populateUserAlbumGenres = async (): Promise<Response> => {
+	return request('database/populate_user_album_genres', RequestMethod.GET)
+}
