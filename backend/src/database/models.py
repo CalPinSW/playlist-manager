@@ -31,7 +31,7 @@ class DbPlaylist(BaseModel):
     description = CharField()
     image_url = CharField(null=True)
     name = CharField()
-    owner = DbUser()
+    user = ForeignKeyField(DbUser, backref="owner", to_field="id")
     snapshot_id = CharField()
     uri = CharField()
 
@@ -89,7 +89,7 @@ class AlbumArtistRelationship(BaseModel):
 
 class AlbumGenreRelationship(BaseModel):
     album = ForeignKeyField(DbAlbum, backref="genres")
-    genre = ForeignKeyField(DbArtist, backref="albums")
+    genre = ForeignKeyField(DbGenre, backref="albums")
 
     class Meta:
         indexes = ((("album", "genre"), True),)

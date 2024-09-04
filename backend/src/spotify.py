@@ -1,6 +1,7 @@
 import json
 import requests
 import os
+import urllib.parse
 from typing import List, Optional
 from flask import Response, make_response, redirect
 from src.dataclasses.album import Album
@@ -291,6 +292,19 @@ class SpotifyClient:
         api_album = self.response_handler(response)
         album = Album.model_validate(api_album)
         return album
+
+    def get_multiple_albums(self, access_token, ids: List[str]) -> List[Album]:
+        encoded_ids = urllib.parse.quote_plus(",".join(ids))
+        response = requests.get(
+            f"https://api.spotify.com/v1/albums?ids={encoded_ids}",
+            headers={
+                "content-type": "application/json",
+            },
+            auth=BearerAuth(access_token),
+        )
+        api_albums = self.response_handler(response)
+        albums = [Album.model_validate(api_album) for api_album in api_albums["albums"]]
+        return albums
 
     def get_current_playback(self, access_token) -> PlaybackState | None:
         response = requests.get(

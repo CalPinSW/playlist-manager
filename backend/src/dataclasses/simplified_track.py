@@ -19,7 +19,7 @@ class SimplifiedTrack(BaseModel):
     linked_from: Optional[LinkedFrom] = None
     restrictions: Optional[Restrictions] = None
     name: str
-    preview_url: str
+    preview_url: Optional[str] = None
     track_number: int
     type: str
     uri: str

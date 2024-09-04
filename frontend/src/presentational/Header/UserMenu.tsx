@@ -3,6 +3,7 @@ import DropdownMenu from "../../components/DropdownMenu";
 import { User } from "../../interfaces/User";
 import Button from "../../components/Button";
 import { logout } from "../../api";
+import LinkButton from "../../components/LinkButton";
 
 interface UserMenuProps {
     userData: User;
@@ -23,7 +24,8 @@ const UserMenu: FC<UserMenuProps> = ({userData}) => {
         </button>
         }
       >
-        <Button className={"w-full"} onClick={logout}>Logout</Button>
+        <LinkButton className={"flex w-full"} href={'/settings'}>Settings</LinkButton>
+        <Button className={"flex w-full"} onClick={logout}>Logout</Button>
       </DropdownMenu>)
 }
 
