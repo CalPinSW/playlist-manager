@@ -29,9 +29,9 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
       id: "image",
       size: 20,
       cell: ({ row }) => {
-        if (row.original.images?.[0]?.url) {
+        if (row.original.image_url) {
           return (
-            <img src={row.original.images[0].url} className="w-full"></img>
+            <img src={row.original.image_url} className="w-full"></img>
           );
         }
         return <PlaylistIcon className="w-full h-full fill-primary-500" />;

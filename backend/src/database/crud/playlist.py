@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from src.database.crud.album import create_album_or_none
 from src.database.models import DbAlbum, DbPlaylist, DbUser, PlaylistAlbumRelationship
 from src.dataclasses.album import Album
@@ -46,8 +46,36 @@ def update_playlist(playlist: Playlist, albums: List[Album]):
     return playlist
 
 
-def get_user_playlists(user_id: str) -> List[DbPlaylist]:
-    return DbPlaylist.select().where(DbPlaylist.user == user_id).execute()
+def get_user_playlists(
+    user_id: str,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+    search: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    desc: bool = True,
+    as_dicts: bool = False,
+) -> List[DbPlaylist]:
+    query = DbPlaylist.select().where(DbPlaylist.user == user_id)
+
+    if search:
+        query = query.where(DbPlaylist.name.contains(search))
+
+    if sort_by:
+        sort_field = getattr(DbPlaylist, sort_by)
+        if desc:
+            query = query.order_by(sort_field.desc())
+        else:
+            query = query.order_by(sort_field.asc())
+
+    if limit is not None:
+        query = query.limit(limit)
+    if offset is not None:
+        query = query.offset(offset)
+
+    if as_dicts:
+        return list(query.dicts())
+    else:
+        return list(query.execute())
 
 
 def get_playlist_albums(playlist_id: str) -> List[DbAlbum]:

@@ -2,6 +2,7 @@ from flask import Flask, make_response
 from flask_cors import CORS
 from src.controllers.database import database_controller
 from src.controllers.spotify import spotify_controller
+from src.controllers.music_data import music_controller
 from src.exceptions.Unauthorized import UnauthorizedException
 from src.flask_config import Config
 from src.musicbrainz import MusicbrainzClient
@@ -48,6 +49,7 @@ def create_app():
 
     app.register_blueprint(auth_controller(spotify=spotify))
     app.register_blueprint(spotify_controller(spotify=spotify))
+    app.register_blueprint(music_controller(spotify=spotify))
     app.register_blueprint(
         database_controller(spotify=spotify, musicbrainz=musicbrainz)
     )

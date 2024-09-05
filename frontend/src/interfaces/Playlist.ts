@@ -18,7 +18,7 @@ export interface Playlist {
   };
   href: string;
   id: string;
-  images: Image[];
+  image_url: string;
   owner: User;
   public: false;
   snapshot_id: string;

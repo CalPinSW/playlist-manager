@@ -43,7 +43,7 @@ export const getPlaylists = async (
 	offset: number,
 	limit: number,
 ): Promise<Playlist[]> => {
-	const endpoint = `spotify/playlists?limit=${encodeURIComponent(
+	const endpoint = `music/playlists?limit=${encodeURIComponent(
 		limit,
 	)}&offset=${encodeURIComponent(offset)}`;
 	return jsonRequest(endpoint, RequestMethod.GET);
@@ -54,7 +54,7 @@ export const addPlaylist = async (playlist: Playlist): Promise<Playlist> => {
 };
 
 export const getPlaylist = async (id: string): Promise<Playlist> => {
-	return jsonRequest(`spotify/edit-playlist/${id}`, RequestMethod.GET);
+	return jsonRequest(`music/playlist/${id}`, RequestMethod.GET);
 };
 
 export const updatePlaylist = async (playlist: Playlist): Promise<Playlist> => {
@@ -76,7 +76,7 @@ export const getPlaylistAlbums = async (
 	playlistId: string,
 ): Promise<Album[]> => {
 	return jsonRequest(
-		`spotify/playlist/${playlistId}/albums`,
+		`music/playlist/${playlistId}/albums`,
 		RequestMethod.GET,
 	);
 };
