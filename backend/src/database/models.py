@@ -10,6 +10,8 @@ from src.flask_config import Config
 
 database = PostgresqlDatabase(Config().DB_CONNECTION_STRING)
 
+def peewee_model_to_dict(model_instance):
+    return {field: getattr(model_instance, field) for field in model_instance._meta.fields}
 
 class BaseModel(Model):
     class Meta:

@@ -13,7 +13,7 @@ from src.database.crud.playlist import (
     get_playlist_albums,
     get_playlist_by_id_or_none,
     get_user_playlists,
-    update_playlist,
+    update_playlist_with_albums,
 )
 from src.database.crud.user import get_or_create_user
 from src.musicbrainz import MusicbrainzClient
@@ -59,7 +59,7 @@ def database_controller(spotify: SpotifyClient, musicbrainz: MusicbrainzClient):
                                 access_token=access_token, id=simplified_playlist.id
                             ),
                         ]
-                        update_playlist(playlist, albums)
+                        update_playlist_with_albums(playlist, albums)
 
         return make_response("Playlist data populated", 201)
 

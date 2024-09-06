@@ -1,5 +1,4 @@
 import { Artist } from "./Artist";
-import { Image } from "./Image";
 
 export interface Album {
   album_type: string;
@@ -7,7 +6,7 @@ export interface Album {
   available_markets: string[];
   href: string;
   id: string;
-  images: Image[];
+  image_url: string;
   name: string;
   release_date: string;
   release_date_precision: string;

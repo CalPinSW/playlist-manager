@@ -3,7 +3,7 @@ import Button from "../components/Button";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 interface ButtonWithLoadingStateProps {
-    actionCallback: () => Promise<any>;
+    actionCallback: () => Promise<Response>;
     text: string;
 }
 

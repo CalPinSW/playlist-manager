@@ -145,10 +145,10 @@ interface AlbumCoverProps {
 }
 
 export const AlbumCover: FC<AlbumCoverProps> = ({ album, blur }) => {
-  if (album.images[0].url) {
+  if (album.image_url) {
     return (
       <img
-        src={album.images[0].url}
+        src={album.image_url}
         title={album.name}
         className={`w-full transition-all duration-500 ${
           blur && "opacity-70 blur-[2px]"
@@ -156,5 +156,5 @@ export const AlbumCover: FC<AlbumCoverProps> = ({ album, blur }) => {
       ></img>
     );
   }
-  return <PlaylistIcon className="w-full h-full fill-primary-500" />;
+  return <PlaylistIcon className="w-full h-full fill-primary" />;
 };

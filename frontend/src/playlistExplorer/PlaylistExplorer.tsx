@@ -106,14 +106,14 @@ export const PlaylistExplorer: FC = () => {
             >
               <h2
                 className={`p-2 flex grow ${
-                  viewMode === ViewMode.TRACK ? "bg-primary-200" : ""
+                  viewMode === ViewMode.TRACK ? "bg-primary-darker" : ""
                 }`}
               >
                 Track View
               </h2>
               <h2
                 className={`p-2 flex grow text-right ${
-                  viewMode === ViewMode.ALBUM ? "bg-primary-200" : ""
+                  viewMode === ViewMode.ALBUM ? "bg-primary-darker" : ""
                 } ${!playlistAlbums ? "opacity-50 disabled" : ""}`}
               >
                 Album View

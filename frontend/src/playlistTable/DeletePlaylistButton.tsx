@@ -8,7 +8,7 @@ interface IDeletePlaylistButton {
 const DeletePlaylistButton: FC<IDeletePlaylistButton> = ({ onClick }) => {
   return (
     <button onClick={onClick}>
-      <MdDelete className="w-6 h-6 fill-primary-400 hover:fill-primary-500 cursor-pointer" />
+      <MdDelete className="w-6 h-6 fill-primary-darker hover:fill-primary cursor-pointer" />
     </button>
   );
 };

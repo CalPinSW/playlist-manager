@@ -17,7 +17,7 @@ const PlaybackFooter: FC = () => {
   }
 
   return (
-    <div className="w-full h-fit bg-primary-300 px-4 py-2 text-sm sm:text-base">
+    <div className="w-full h-fit absolute bottom-0 bg-background-offset px-4 py-2 text-sm sm:text-base">
       <div className="flex space-x-4 sm:space-x-6">
         <div className="flex flex-col space-y-2 w-1/5 max-w-32">
           <button className="opacity-80 w-full h-full" onClick={handlePausePlayClick}>
@@ -31,7 +31,7 @@ const PlaybackFooter: FC = () => {
         <div className="flex flex-col w-4/5 text-sm space-y-2">
           <div className="flex flex-row justify-between">
             <div className="flex flex-row space-x-2">
-              <SongIcon className={`my-auto w-8 h-8 ${playbackInfo.is_playing && "animate-bounce"}`} />
+              <SongIcon className={`my-auto w-8 h-8 fill-primary-darker ${playbackInfo.is_playing && "animate-bounce"}`} />
               <div className="my-auto text-balance">
                 {playbackInfo.track_title}
               </div>
@@ -48,7 +48,7 @@ const PlaybackFooter: FC = () => {
 
           <div className="flex flex-row justify-between">
             <div className="flex flex-row space-x-2">
-              <AlbumIcon className="my-auto w-8 h-8" />
+              <AlbumIcon className="my-auto w-8 h-8 stroke-primary-darker" />
               <div className="my-auto text-balance">
                 {playbackInfo.album_title}
               </div>
@@ -70,7 +70,7 @@ const PlaybackFooter: FC = () => {
               }`}
             >
               <div className="flex flex-row space-x-2">
-                <PlaylistIcon className="my-auto w-8 h-8" />
+                <PlaylistIcon className="my-auto w-8 h-8 fill-primary-darker" />
                 <div className="my-auto text-balance">
                   {playlistProgress && (
                     <Link to={`edit/${playlistProgress?.playlist_id}`}>

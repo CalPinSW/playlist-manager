@@ -12,12 +12,14 @@ import {
 import PlaylistIcon from "./PlaylistIcon";
 import { deletePlaylist } from "../api";
 import useWindowSize from "../hooks/useWindowSize";
+import { UseQueryResult } from "@tanstack/react-query";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 interface IPlaylistTable {
-  playlists: Playlist[];
+  playlistsQuery: UseQueryResult<Playlist[], Error>
 }
 
-const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
+const PlaylistTable: FC<IPlaylistTable> = ({ playlistsQuery }) => {
   const { isMobileView } = useWindowSize();
 
   const onDeletePlaylistClick = (playlist: Playlist) => {
@@ -27,25 +29,25 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
   const defaultColumns = [
     columnHelper.display({
       id: "image",
-      size: 20,
+      size: 50,
       cell: ({ row }) => {
         if (row.original.image_url) {
           return (
             <img src={row.original.image_url} className="w-full"></img>
           );
         }
-        return <PlaylistIcon className="w-full h-full fill-primary-500" />;
+        return <PlaylistIcon className="w-full h-full fill-primary" />;
       },
     }),
     columnHelper.accessor("name", {
-      size: 200,
+      size: 150,
       cell: (info) => info.getValue(),
     }),
     ...(isMobileView
       ? []
       : [
           columnHelper.accessor("description", {
-            size: 200,
+            size: 150,
             cell: (info) => info.getValue(),
           }),
         ]),
@@ -71,13 +73,13 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
 
   const table = useReactTable<Playlist>({
     columns: defaultColumns,
-    data: playlists,
+    data: playlistsQuery.data ?? [],
     getCoreRowModel: getCoreRowModel(),
   });
 
   return (
     <div>
-      <table style={{ tableLayout: "fixed", width: "100%" }}>
+      <table style={{ tableLayout: "fixed", width: "100%"}}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -102,7 +104,8 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlists }) => {
           ))}
         </thead>
         <tbody>
-          {table.getRowModel().rows.map((row) => (
+          {playlistsQuery.isLoading ? <div className="m-auto"><LoadingSpinner /></div> :
+          table.getRowModel().rows.map((row) => (
             <tr key={row.id} className="h-16">
               {row.getVisibleCells().map((cell) => (
                 <td

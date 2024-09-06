@@ -1,5 +1,4 @@
 import { User } from "./User";
-import { Image } from "./Image";
 import { Track } from "./Track";
 
 export interface PlaylistTrack {

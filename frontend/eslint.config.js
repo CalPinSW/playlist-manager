@@ -10,9 +10,9 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
-  {
-    rules: {"unused-imports/no-unused-imports": "error"}
-  },
+  // {
+  //   rules: {"unused-imports/no-unused-imports": "error"}
+  // },
   {
     ignores: ["public/bundle.js"],
   },

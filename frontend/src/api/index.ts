@@ -39,13 +39,31 @@ export const getCurrentUserDetails = async (): Promise<User> => {
 	);
 };
 
-export const getPlaylists = async (
+export const getRecentPlaylists = async (
+	search: string,
 	offset: number,
 	limit: number,
 ): Promise<Playlist[]> => {
-	const endpoint = `music/playlists?limit=${encodeURIComponent(
-		limit,
-	)}&offset=${encodeURIComponent(offset)}`;
+	const searchParams = new URLSearchParams();
+	searchParams.append("limit", String(limit));
+	searchParams.append("offset", String(offset));
+	if (search !== "") {searchParams.append("search", search);}
+	searchParams.toString(); // "type=all&query=coins"
+	const endpoint = `music/playlists/recent?${searchParams.toString()}`;
+	return jsonRequest(endpoint, RequestMethod.GET);
+};
+
+export const getPlaylists = async (
+	search: string,
+	offset: number,
+	limit: number,
+): Promise<Playlist[]> => {
+	const searchParams = new URLSearchParams();
+	searchParams.append("limit", String(limit));
+	searchParams.append("offset", String(offset));
+	if (search !== "") {searchParams.append("search", search);}
+	searchParams.toString(); // "type=all&query=coins"
+	const endpoint = `music/playlists?${searchParams.toString()}`;
 	return jsonRequest(endpoint, RequestMethod.GET);
 };
 
@@ -59,7 +77,7 @@ export const getPlaylist = async (id: string): Promise<Playlist> => {
 
 export const updatePlaylist = async (playlist: Playlist): Promise<Playlist> => {
 	return jsonRequest(
-		`spotify/edit-playlist/${playlist.id}`,
+		`music/playlist/${playlist.id}`,
 		RequestMethod.POST,
 		playlist,
 	);
