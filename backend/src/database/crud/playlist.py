@@ -7,15 +7,15 @@ from src.database.models import (
     DbArtist,
     DbGenre,
     DbPlaylist,
+    DbTrack,
     DbUser,
     PlaylistAlbumRelationship,
-    peewee_model_to_dict,
+    TrackArtistRelationship,
 )
 from src.dataclasses.album import Album
 from src.dataclasses.playlist import Playlist
 from peewee import fn
-import re
-from datetime import datetime
+from playhouse.shortcuts import model_to_dict
 
 
 def get_playlist_by_id_or_none(id: str):
@@ -180,6 +180,7 @@ def get_playlist_albums_with_genres(playlist_id: str) -> List[dict]:
         )
         .join(DbPlaylist, on=(PlaylistAlbumRelationship.playlist == DbPlaylist.id))
         .where(DbPlaylist.id == playlist_id)
+        .order_by(PlaylistAlbumRelationship.album_index.asc())
     )
 
     # Step 2: Retrieve genres and artists for each album
@@ -211,8 +212,124 @@ def get_playlist_albums_with_genres(playlist_id: str) -> List[dict]:
             "release_date": album.release_date,
             "total_tracks": album.total_tracks,
             "genres": [genre.name for genre in genres],
-            "artists": [peewee_model_to_dict(artist) for artist in artists],
+            "artists": [model_to_dict(artist) for artist in artists],
         }
         albums_with_details.append(album_details)
 
     return albums_with_details
+
+
+def add_playlist_album_index(album_id: str, playlist_id: str, index: int):
+    query = PlaylistAlbumRelationship.update(album_index=index).where(
+        PlaylistAlbumRelationship.album == album_id,
+        PlaylistAlbumRelationship.playlist == playlist_id,
+    )
+    query.execute()
+
+
+def playlist_has_null_album_indexes(playlist_id: str):
+    query = PlaylistAlbumRelationship.select().where(
+        (PlaylistAlbumRelationship.playlist_id == playlist_id)
+        & (PlaylistAlbumRelationship.album_index.is_null(True))
+    )
+
+    return query.exists()
+
+
+def get_playlist_track_list(playlist_id: str):
+    query = (
+        DbTrack.select(DbTrack, DbAlbum, PlaylistAlbumRelationship.album_index)
+        .join(DbAlbum, on=(DbTrack.album == DbAlbum.id))
+        .join(
+            PlaylistAlbumRelationship,
+            on=(PlaylistAlbumRelationship.album == DbAlbum.id),
+        )
+        .where(PlaylistAlbumRelationship.playlist == playlist_id)
+        .order_by(
+            PlaylistAlbumRelationship.album_index.asc(),
+            DbTrack.disc_number.asc(),
+            DbTrack.track_number.asc(),
+        )
+    )
+
+    # Preparing the result as a list of dictionaries
+    results = []
+    for track in query:
+        track_dict = model_to_dict(track, recurse=False)
+        album_dict = model_to_dict(track.album, recurse=False)
+
+        # Fetch all artists related to this track
+        artists_query = (
+            DbArtist.select()
+            .join(
+                TrackArtistRelationship,
+                on=(DbArtist.id == TrackArtistRelationship.artist),
+            )
+            .where(TrackArtistRelationship.track == track.id)
+        )
+
+        # Serialize the artists as a list of dictionaries
+        artists_list = [
+            model_to_dict(artist, recurse=False) for artist in artists_query
+        ]
+
+        # Adding the album and artist information to the track
+        track_dict["album"] = album_dict
+        track_dict["artists"] = artists_list
+
+        # Accessing the album_index from the PlaylistAlbumRelationship
+        track_dict["album_index"] = track.album.playlistalbumrelationship.album_index
+
+        results.append(track_dict)
+
+    # Returning the results as JSON
+    return results
+
+
+def get_playlist_duration(playlist_id):
+    # Subquery to get all albums associated with the playlist
+    albums_in_playlist = PlaylistAlbumRelationship.select(
+        PlaylistAlbumRelationship.album
+    ).where(PlaylistAlbumRelationship.playlist == playlist_id)
+
+    # Query to sum the duration of all tracks in the albums from the playlist
+    total_duration = (
+        DbTrack.select(fn.SUM(DbTrack.duration_ms))
+        .where(DbTrack.album.in_(albums_in_playlist))
+        .scalar()
+    )  # .scalar() to get the result directly as a number
+
+    # If no tracks are found, return 0
+    return total_duration or 0
+
+
+def get_playlist_duration_up_to_track(playlist_id, track_id):
+    # Subquery to get albums in the playlist ordered by album_index
+    albums_in_playlist = (
+        PlaylistAlbumRelationship.select(PlaylistAlbumRelationship.album)
+        .where(PlaylistAlbumRelationship.playlist == playlist_id)
+        .order_by(PlaylistAlbumRelationship.album_index)
+    )
+
+    # Query to get all tracks in those albums, ordered by album_index, disc_number, and track_number
+    tracks_in_playlist = (
+        DbTrack.select(DbTrack.id, DbTrack.duration_ms)
+        .join(DbAlbum)
+        .where(DbTrack.album.in_(albums_in_playlist))
+        .order_by(
+            PlaylistAlbumRelationship.album_index,
+            DbTrack.disc_number,
+            DbTrack.track_number,
+        )
+    )
+
+    # Variable to accumulate total duration
+    total_duration = 0
+
+    # Loop through tracks and sum duration until we reach the given track_id
+    for track in tracks_in_playlist:
+        total_duration += track.duration_ms
+        if track.id == track_id:
+            break
+
+    return total_duration

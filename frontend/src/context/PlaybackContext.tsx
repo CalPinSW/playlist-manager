@@ -23,7 +23,7 @@ interface PlaybackContextProviderProps {
 export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
   children,
 }) => {
-  const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(5000);
+  const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(10000);
   const { data: playbackInfo } = useQuery<PlaybackInfo>({
     queryKey: ["playbackInfo"],
     queryFn: () => {
@@ -34,7 +34,7 @@ export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
     refetchIntervalInBackground: false,
   });
   useEffect(() => {
-    setPlaybackRefetchInterval(playbackInfo ? 5000 : 20000);
+    setPlaybackRefetchInterval(playbackInfo ? 10000 : 20000);
   }, [playbackInfo]);
   const { data: playlistProgress } = useQuery<PlaylistProgress | undefined>({
     queryKey: ["playlistProgress"],

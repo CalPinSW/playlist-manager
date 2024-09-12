@@ -10,9 +10,6 @@ from src.flask_config import Config
 
 database = PostgresqlDatabase(Config().DB_CONNECTION_STRING)
 
-def peewee_model_to_dict(model_instance):
-    return {field: getattr(model_instance, field) for field in model_instance._meta.fields}
-
 class BaseModel(Model):
     class Meta:
         database = database
@@ -73,12 +70,29 @@ class DbGenre(BaseModel):
         db_table = "genre"
 
 
+class DbTrack(BaseModel):
+    id = CharField(primary_key=True)
+    name = CharField()
+    album = ForeignKeyField(DbAlbum, backref="album", to_field="id")
+    disc_number = IntegerField()
+    track_number = IntegerField()
+    duration_ms = IntegerField()
+    uri = CharField()
+
+    class Meta:
+        db_table = "track"
+
+
 class PlaylistAlbumRelationship(BaseModel):
     playlist = ForeignKeyField(DbPlaylist, backref="albums")
     album = ForeignKeyField(DbAlbum, backref="playlistsContaining")
+    album_index = IntegerField(null=True)  # New column added
 
     class Meta:
-        indexes = ((("playlist", "album"), True),)
+        indexes = (
+            (("playlist", "album"), True),
+            (("playlist", "albumIndex"), True),
+        )
 
 
 class AlbumArtistRelationship(BaseModel):
@@ -95,3 +109,11 @@ class AlbumGenreRelationship(BaseModel):
 
     class Meta:
         indexes = ((("album", "genre"), True),)
+
+
+class TrackArtistRelationship(BaseModel):
+    track = ForeignKeyField(DbTrack, backref="artists")
+    artist = ForeignKeyField(DbArtist, backref="tracks")
+
+    class Meta:
+        indexes = ((("track", "artist"), True),)

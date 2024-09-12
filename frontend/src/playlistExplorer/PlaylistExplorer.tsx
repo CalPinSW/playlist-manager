@@ -131,7 +131,7 @@ export const PlaylistExplorer: FC = () => {
             )}
             {viewMode == ViewMode.TRACK && (
               <TrackList
-                trackList={playlist.tracks.items}
+                trackList={playlist.tracks}
                 activeTrackId={playbackInfo?.track_id}
               />
             )}

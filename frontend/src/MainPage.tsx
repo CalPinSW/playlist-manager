@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getPlaylists, getRecentPlaylists } from "./api";
 import { Playlist } from "./interfaces/Playlist";
@@ -16,22 +16,12 @@ interface PaginationState {
 
 export const Index: FC = () => {
   const { isMobileView } = useWindowSize();
+  const [searchRecent, setSearchRecent] = useState<string>("")
   const [search, setSearch] = useState<string>("")
-  const [pagination, setPagination] = useState<PaginationState>({
+  const [pagination, ] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: isMobileView ? 5 : 8,
+    pageSize: isMobileView ? 8 : 8,
   });
-
-  useEffect(() => {
-    const previousIndex = pagination.pageSize * pagination.pageIndex;
-    const pageSize = isMobileView ? 10 : 10;
-    const newIndex = Math.floor(previousIndex / pageSize);
-
-    setPagination({
-      pageIndex: newIndex,
-      pageSize: pageSize,
-    });
-  }, [isMobileView]);
 
 
   const recentQuery = useQuery<Playlist[]>({
@@ -51,11 +41,12 @@ export const Index: FC = () => {
   return (
     <div className="py-4 px-2 space-y-2">
       <Box className="space-y-2">
-        <SearchBar search={search} setSearch={setSearch}/>
-        {recentQuery.data && <Carousel slides={recentQuery.data.map(PlaylistSlide)} />}
+        <SearchBar search={searchRecent} setSearch={setSearchRecent}/>
+        <Carousel slides={(recentQuery.data ?? createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />  
       </Box>
-      <Box>
-      {allQuery.data && <Carousel slides={allQuery.data.map(PlaylistSlide)} />}
+      <Box className="space-y-2">
+      <SearchBar search={search} setSearch={setSearch}/>
+      <Carousel slides={(allQuery.data ??  createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />
       </Box>
       <Box>
         <AddPlaylistForm />
@@ -63,3 +54,7 @@ export const Index: FC = () => {
     </div>
   );
 };
+
+const createUndefinedArray = (length: number): undefined[] =>{
+  return Array.from({ length }, () => undefined);
+}

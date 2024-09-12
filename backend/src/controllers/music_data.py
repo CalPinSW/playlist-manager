@@ -1,19 +1,17 @@
-from logging import Logger
 from flask import Blueprint, jsonify, make_response, request
 from src.database.crud.playlist import (
-    get_playlist_albums,
     get_playlist_albums_with_genres,
     get_playlist_by_id_or_none,
+    get_playlist_duration,
+    get_playlist_duration_up_to_track,
+    get_playlist_track_list,
     get_recent_user_playlists,
     get_user_playlists,
     update_playlist_info,
-    update_playlist_with_albums,
 )
-from src.dataclasses.playback_info import PlaybackInfo
-from src.dataclasses.playback_request import StartPlaybackRequest
+from src.dataclasses.playback_info import PlaylistProgression
 from src.dataclasses.playlist import Playlist
 from src.spotify import SpotifyClient
-import sys
 
 
 def music_controller(spotify: SpotifyClient):
@@ -50,10 +48,7 @@ def music_controller(spotify: SpotifyClient):
 
         return jsonify(
             get_recent_user_playlists(
-                user_id=user_id,
-                limit=limit,
-                offset=offset,
-                search=search
+                user_id=user_id, limit=limit, offset=offset, search=search
             )
         )
 
@@ -61,7 +56,14 @@ def music_controller(spotify: SpotifyClient):
     def get_playlist(id):
         db_playlist = get_playlist_by_id_or_none(id)
         if db_playlist is not None:
-            return jsonify(db_playlist.__data__)
+            playlist_data = db_playlist.__data__
+            tracks_data = get_playlist_track_list(id)
+            return jsonify(
+                {
+                    **playlist_data,
+                    "tracks": tracks_data,
+                }
+            )
         else:
             access_token = request.cookies.get("spotify_access_token")
             playlist = spotify.get_playlist(access_token=access_token, id=id)
@@ -96,6 +98,21 @@ def music_controller(spotify: SpotifyClient):
                 )
             ]
 
+    @music_controller.route("playlist/<id>/tracks", methods=["GET"])
+    def get_playlist_tracks(id):
+        db_playlist = get_playlist_by_id_or_none(id)
+        if db_playlist is not None:
+            track_list = get_playlist_track_list(id)
+            return jsonify(track_list)
+        else:
+            access_token = request.cookies.get("spotify_access_token")
+            return [
+                album.model_dump()
+                for album in spotify.get_playlist_album_info(
+                    access_token=access_token, id=id
+                )
+            ]
+
     @music_controller.route("find_associated_playlists", methods=["POST"])
     def find_associated_playlists():
         access_token = request.cookies.get("spotify_access_token")
@@ -108,5 +125,25 @@ def music_controller(spotify: SpotifyClient):
             associated_playlist.model_dump()
             for associated_playlist in associated_playlists
         ]
+    
+    @music_controller.route("playback", methods=["GET"])
+    def get_playback_info():
+        access_token = request.cookies.get("spotify_access_token")
+        playback_info = spotify.get_my_current_playback(access_token=access_token)
+        if playback_info is None:
+            return ("", 204)
+        if playback_info.playlist_id is not None:
+            playlist_duration = get_playlist_duration(playback_info.playlist_id)
+            playlist_progress = get_playlist_duration_up_to_track(playback_info.playlist_id, playback_info.track_id) + playback_info.track_progress
+        return PlaylistProgression.model_validate(
+            {
+                "playlist_id": playback_info.playlist_id,
+                "playlist_title": playback_info.name,
+                "playlist_progress": playlist_progress,
+                "playlist_duration": playlist_duration,
+            }
+        )
+        
+        return playback_info.model_dump_json()
 
     return music_controller

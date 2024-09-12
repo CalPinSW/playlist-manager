@@ -117,7 +117,7 @@ export const findAssociatedPlaylists = async (
 	playlist: Playlist,
 ): Promise<Playlist[]> => {
 	return jsonRequest(
-		`spotify/find_associated_playlists`,
+		`spotify/find_associated_playlists/${playlist.id}`,
 		RequestMethod.POST,
 		playlist,
 	);
@@ -167,4 +167,17 @@ export const populateUniversalGenreList = async (): Promise<Response> => {
 
 export const populateUserAlbumGenres = async (): Promise<Response> => {
 	return request('database/populate_user_album_genres', RequestMethod.GET)
+}
+
+export const populateAlbumTracks = async (): Promise<Response> => {
+	return request('database/populate_album_tracks', RequestMethod.GET)
+}
+
+export const populatePlaylistAlbumTracks = async (): Promise<Response> => {
+	return request('database/populate_playlist_album_indexes', RequestMethod.GET)
+}
+
+
+export const populateTrackArtists = async (): Promise<Response> => {
+	return request('database/populate_track_artists', RequestMethod.GET)
 }

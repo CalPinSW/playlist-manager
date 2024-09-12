@@ -164,15 +164,16 @@ class SpotifyClient:
                 access_token=access_token, user_id=user_id, limit=limit, offset=offset
             )
 
-    def find_associated_playlists(self, user_id, access_token, playlist: Playlist):
-        user_playlists = self.get_all_playlists(
-            user_id=user_id, access_token=access_token
-        )
+    def find_associated_playlists(self, user_id, access_token, playlist_id: str):
+        [playlist_name, user_playlists] = [
+            self.get_playlist(access_token=access_token, id=playlist_id).name,
+            self.get_all_playlists(user_id=user_id, access_token=access_token),
+        ]
         associated_playlists = [
             matchingPlaylist
             for matchingPlaylist in user_playlists
-            if matchingPlaylist.name[-8:] == playlist.name[-8:]
-            and matchingPlaylist.name != playlist.name
+            if matchingPlaylist.name[-8:] == playlist_name[-8:]
+            and matchingPlaylist.name != playlist_name
         ]
         return associated_playlists
 
