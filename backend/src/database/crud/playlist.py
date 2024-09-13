@@ -300,7 +300,6 @@ def get_playlist_duration(playlist_id):
 
 
 def get_playlist_duration_up_to_track(playlist_id, track_id):
-    print(playlist_id)
     # Query to get all tracks in the albums of the playlist, with proper joins and ordering
     tracks_in_playlist = (
         DbTrack.select(DbTrack.id, DbTrack.duration_ms)
@@ -327,5 +326,4 @@ def get_playlist_duration_up_to_track(playlist_id, track_id):
         total_duration += track.duration_ms
         if track.id == track_id:
             break
-    print(total_duration)
     return total_duration

@@ -8,7 +8,7 @@ import { usePlaybackContext } from "../hooks/usePlaybackContext";
 import { Link } from "react-router-dom";
 
 const PlaybackFooter: FC = () => {
-  const { playbackInfo, playlistProgress } = usePlaybackContext();
+  const { playbackInfo } = usePlaybackContext();
 
   if (!playbackInfo) return null;
 
@@ -63,18 +63,18 @@ const PlaybackFooter: FC = () => {
             </div>
           </div>
 
-          {playbackInfo?.playlist_id && (
+          {playbackInfo.playlist?.id && (
             <div
               className={`flex flex-row justify-between ${
-                playlistProgress ? "" : "opacity-0"
+                playbackInfo.playlist ? "" : "opacity-0"
               }`}
             >
               <div className="flex flex-row space-x-2">
                 <PlaylistIcon className="my-auto w-8 h-8 fill-primary-darker" />
                 <div className="my-auto text-balance">
-                  {playlistProgress && (
-                    <Link to={`edit/${playlistProgress?.playlist_id}`}>
-                      {playlistProgress?.playlist_title}
+                  {playbackInfo.playlist && (
+                    <Link to={`edit/${playbackInfo.playlist?.id}`}>
+                      {playbackInfo.playlist?.title}
                     </Link>
                   )}
                 </div>
@@ -82,10 +82,10 @@ const PlaybackFooter: FC = () => {
               <div className="w-12 h-12 sm:w-16 sm:h-16 my-auto">
                 <ProgressCircle
                   percentage={
-                    playlistProgress
+                    playbackInfo.playlist
                       ? Math.round(
-                          (playlistProgress.playlist_progress /
-                            playlistProgress.playlist_duration) *
+                          (playbackInfo.playlist.progress /
+                            playbackInfo.playlist.duration) *
                             100
                         )
                       : 0

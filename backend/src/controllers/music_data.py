@@ -133,6 +133,7 @@ def music_controller(spotify: SpotifyClient):
         if playback_info is None:
             return ("", 204)
         if playback_info.playlist_id is not None:
+            playlist_name = get_playlist_by_id_or_none(playback_info.playlist_id).name
             playlist_duration = get_playlist_duration(playback_info.playlist_id)
             playlist_progress = (
                 get_playlist_duration_up_to_track(
@@ -140,14 +141,15 @@ def music_controller(spotify: SpotifyClient):
                 )
                 + playback_info.track_progress
             )
-        return PlaylistProgression.model_validate(
-            {
-                "playlist_id": playback_info.playlist_id,
-                "playlist_title": "test",
-                "playlist_progress": playlist_progress,
-                "playlist_duration": playlist_duration,
+
+            playback_info_with_playlist = playback_info.model_dump()
+            playback_info_with_playlist["playlist"] = {
+                "id": playback_info.playlist_id,
+                "title": playlist_name,
+                "progress": playlist_progress,
+                "duration": playlist_duration,
             }
-        )
+            return playback_info_with_playlist
 
         return playback_info.model_dump_json()
 

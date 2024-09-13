@@ -1,5 +1,5 @@
 import { Album } from "../interfaces/Album";
-import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
+import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { Playlist } from "../interfaces/Playlist";
 import { User } from "../interfaces/User";
 import { backendUrl, request } from "./jsonRequest";
@@ -100,17 +100,7 @@ export const getPlaylistAlbums = async (
 };
 
 export const getPlaybackInfo = async (): Promise<PlaybackInfo> => {
-	return jsonRequest(`spotify/playback`, RequestMethod.GET, undefined, false);
-};
-
-export const getPlaylistProgress = async (
-	playbackInfo: PlaybackInfo,
-): Promise<PlaylistProgress> => {
-	return jsonRequest(
-		`spotify/playlist_progress`,
-		RequestMethod.POST,
-		playbackInfo,
-	);
+	return jsonRequest(`music/playback`, RequestMethod.GET, undefined, false);
 };
 
 export const findAssociatedPlaylists = async (
