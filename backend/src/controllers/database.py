@@ -34,11 +34,7 @@ def database_controller(spotify: SpotifyClient, musicbrainz: MusicbrainzClient):
         )
 
         for simplified_playlist in simplified_playlists:
-            if (
-                "Albums" in simplified_playlist.name
-                and "New Albums 06/09/24" in simplified_playlist.name
-            ):
-                delete_playlist("0ubqg4akSDebHReJIG8sbd")
+            if "Albums" in simplified_playlist.name:
                 db_playlist = get_playlist_by_id_or_none(simplified_playlist.id)
                 if (
                     db_playlist is None
