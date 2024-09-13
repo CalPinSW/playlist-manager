@@ -1,6 +1,7 @@
 import { Album } from "../interfaces/Album";
 import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { Playlist } from "../interfaces/Playlist";
+import { Track } from "../interfaces/Track";
 import { User } from "../interfaces/User";
 import { backendUrl, request } from "./jsonRequest";
 import { RequestMethod } from "./jsonRequest";
@@ -95,6 +96,16 @@ export const getPlaylistAlbums = async (
 ): Promise<Album[]> => {
 	return jsonRequest(
 		`music/playlist/${playlistId}/albums`,
+		RequestMethod.GET,
+	);
+};
+
+
+export const getPlaylistTracks = async (
+	playlistId: string,
+): Promise<Track[]> => {
+	return jsonRequest(
+		`music/playlist/${playlistId}/tracks`,
 		RequestMethod.GET,
 	);
 };

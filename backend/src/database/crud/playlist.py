@@ -15,8 +15,9 @@ from src.database.models import (
 )
 from src.dataclasses.album import Album
 from src.dataclasses.playlist import Playlist
-from peewee import fn
+from peewee import fn, prefetch
 from playhouse.shortcuts import model_to_dict
+import time
 
 
 def get_playlist_by_id_or_none(id: str):
@@ -167,9 +168,8 @@ def get_playlist_albums(playlist_id: str) -> List[DbAlbum]:
 
 
 def get_playlist_albums_with_genres(playlist_id: str) -> List[dict]:
-    # Step 1: Retrieve all albums associated with the given playlist
     albums_query = (
-        DbAlbum.select()
+        DbAlbum.select(DbAlbum.id, DbAlbum.name, DbAlbum.image_url)
         .join(
             PlaylistAlbumRelationship,
             on=(PlaylistAlbumRelationship.album == DbAlbum.id),
@@ -179,37 +179,23 @@ def get_playlist_albums_with_genres(playlist_id: str) -> List[dict]:
         .order_by(PlaylistAlbumRelationship.album_index.asc())
     )
 
-    # Step 2: Retrieve genres and artists for each album
-    albums_with_details = []
-    for album in albums_query:
-        genres = (
-            DbGenre.select(DbGenre.name)
-            .join(
-                AlbumGenreRelationship, on=(AlbumGenreRelationship.genre == DbGenre.id)
-            )
-            .where(AlbumGenreRelationship.album == album.id)
-            .execute()
-        )
+    albums_with_genres_and_artists = prefetch(
+        albums_query, AlbumGenreRelationship, DbGenre, AlbumArtistRelationship, DbArtist
+    )
 
-        artists = (
-            DbArtist.select()
-            .join(
-                AlbumArtistRelationship,
-                on=(AlbumArtistRelationship.artist == DbArtist.id),
-            )
-            .where(AlbumArtistRelationship.album == album.id)
-        )
+    albums_with_details = []
+    for album in albums_with_genres_and_artists:
+        genres = [genre_rel.genre.name for genre_rel in album.genres]
+        artists = [{"name": artist_rel.artist.name} for artist_rel in album.artists]
 
         album_details = {
             "id": album.id,
             "name": album.name,
-            "uri": album.uri,
             "image_url": album.image_url,
-            "release_date": album.release_date,
-            "total_tracks": album.total_tracks,
-            "genres": [genre.name for genre in genres],
-            "artists": [model_to_dict(artist) for artist in artists],
+            "genres": genres,
+            "artists": artists,
         }
+
         albums_with_details.append(album_details)
 
     return albums_with_details
@@ -234,52 +220,42 @@ def playlist_has_null_album_indexes(playlist_id: str):
 
 def get_playlist_track_list(playlist_id: str):
     query = (
-        DbTrack.select(DbTrack, DbAlbum, PlaylistAlbumRelationship.album_index)
-        .join(DbAlbum, on=(DbTrack.album == DbAlbum.id))
+        DbTrack.select(
+            DbTrack.name,
+            DbTrack.id,
+            DbAlbum.name,
+            PlaylistAlbumRelationship.album_index,
+        )
+        .join(DbAlbum)
         .join(
             PlaylistAlbumRelationship,
-            on=(PlaylistAlbumRelationship.album == DbAlbum.id),
+            on=(DbTrack.album == PlaylistAlbumRelationship.album),
         )
         .where(PlaylistAlbumRelationship.playlist == playlist_id)
         .order_by(
-            PlaylistAlbumRelationship.album_index.asc(),
-            DbTrack.disc_number.asc(),
-            DbTrack.track_number.asc(),
+            PlaylistAlbumRelationship.album_index,
+            DbTrack.disc_number,
+            DbTrack.track_number,
         )
     )
 
-    # Preparing the result as a list of dictionaries
-    results = []
-    for track in query:
-        track_dict = model_to_dict(track, recurse=False)
-        album_dict = model_to_dict(track.album, recurse=False)
+    tracks_with_artists = prefetch(query, TrackArtistRelationship, DbArtist)
 
-        # Fetch all artists related to this track
-        artists_query = (
-            DbArtist.select()
-            .join(
-                TrackArtistRelationship,
-                on=(DbArtist.id == TrackArtistRelationship.artist),
-            )
-            .where(TrackArtistRelationship.track == track.id)
+    result = []
+    for track in tracks_with_artists:
+        artists = [{"name": rel.artist.name for rel in track.artists}]
+        result.append(
+            {
+                "id": track.id,
+                "name": track.name,
+                "album": {
+                    "name": track.album.name,
+                },
+                "artists": artists,
+            }
         )
 
-        # Serialize the artists as a list of dictionaries
-        artists_list = [
-            model_to_dict(artist, recurse=False) for artist in artists_query
-        ]
-
-        # Adding the album and artist information to the track
-        track_dict["album"] = album_dict
-        track_dict["artists"] = artists_list
-
-        # Accessing the album_index from the PlaylistAlbumRelationship
-        track_dict["album_index"] = track.album.playlistalbumrelationship.album_index
-
-        results.append(track_dict)
-
-    # Returning the results as JSON
-    return results
+    return result
 
 
 def get_playlist_duration(playlist_id):

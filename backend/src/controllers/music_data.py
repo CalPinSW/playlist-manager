@@ -9,7 +9,6 @@ from src.database.crud.playlist import (
     get_user_playlists,
     update_playlist_info,
 )
-from src.dataclasses.playback_info import PlaylistProgression
 from src.dataclasses.playlist import Playlist
 from src.spotify import SpotifyClient
 
@@ -56,14 +55,7 @@ def music_controller(spotify: SpotifyClient):
     def get_playlist(id):
         db_playlist = get_playlist_by_id_or_none(id)
         if db_playlist is not None:
-            playlist_data = db_playlist.__data__
-            tracks_data = get_playlist_track_list(id)
-            return jsonify(
-                {
-                    **playlist_data,
-                    "tracks": tracks_data,
-                }
-            )
+            return db_playlist.__data__
         else:
             access_token = request.cookies.get("spotify_access_token")
             playlist = spotify.get_playlist(access_token=access_token, id=id)

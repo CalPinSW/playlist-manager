@@ -8,6 +8,7 @@ import { Form, useForm } from "react-hook-form";
 import {
   findAssociatedPlaylists,
   getPlaylistAlbums,
+  getPlaylistTracks,
   updatePlaylist,
 } from "../api";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import { Album } from "../interfaces/Album";
 import { AlbumList } from "./AlbumList/AlbumList";
 import { TrackList } from "./TrackList/TrackList";
 import { usePlaybackContext } from "../hooks/usePlaybackContext";
+import { Track } from "../interfaces/Track";
 
 enum ViewMode {
   ALBUM = "album",
@@ -32,6 +34,15 @@ export const PlaylistExplorer: FC = () => {
     queryKey: ["playlist albums info", playlist.id],
     queryFn: () => {
       return getPlaylistAlbums(playlist.id);
+    },
+    retry: false,
+  });
+
+  
+  const { data: playlistTracks } = useQuery<Track[]>({
+    queryKey: ["playlist track info", playlist.id],
+    queryFn: () => {
+      return getPlaylistTracks(playlist.id);
     },
     retry: false,
   });
@@ -129,9 +140,9 @@ export const PlaylistExplorer: FC = () => {
                 associatedPlaylists={associatedPlaylists}
               />
             )}
-            {viewMode == ViewMode.TRACK && (
+            {viewMode == ViewMode.TRACK &&  playlistTracks &&(
               <TrackList
-                trackList={playlist.tracks}
+                trackList={playlistTracks}
                 activeTrackId={playbackInfo?.track_id}
               />
             )}
