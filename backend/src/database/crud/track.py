@@ -11,13 +11,25 @@ from src.database.models import (
 )
 from peewee import JOIN, fn
 from playhouse.shortcuts import model_to_dict
+from src.dataclasses.track import Track
 
 
-def create_track_or_none(track: SimplifiedTrack, album: DbAlbum):
-
+def create_track_or_none(track: Track):
+    if DbTrack.get_or_none(DbTrack.id == track.id):
+        return
+    db_track = DbTrack.create(
+        id=track.id,
+        name=track.name,
+        album=track.album.id,
+        disc_number=track.disc_number,
+        track_number=track.track_number,
+        duration_ms=track.duration_ms,
+        uri=track.uri,
+    )
     for artist in track.artists:
         create_or_update_artist(artist)
         TrackArtistRelationship.get_or_create(track=track.id, artist=artist.id)
+    return db_track
 
 
 def add_track_artists(track: SimplifiedTrack):

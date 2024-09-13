@@ -1,4 +1,5 @@
 import json
+from time import sleep
 import requests
 import os
 import urllib.parse
@@ -58,6 +59,7 @@ class SpotifyClient:
 
     def response_handler(self, response: requests.Response, jsonify=True):
         if response.status_code == 401:
+            print(response.reason)
             raise UnauthorizedException
         else:
             if jsonify:
@@ -277,6 +279,7 @@ class SpotifyClient:
             access_token=access_token, id=id, limit=limit, offset=offset
         )
         while True:
+            sleep(0.5)
             playlist_tracks += api_tracks_object.items
             if not api_tracks_object.next:
                 return playlist_tracks

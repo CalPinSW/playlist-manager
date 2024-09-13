@@ -1,5 +1,6 @@
 from typing import List, Optional
 from src.database.crud.album import create_album_or_none
+from src.database.crud.track import create_track_or_none
 from src.database.models import (
     AlbumArtistRelationship,
     AlbumGenreRelationship,
@@ -22,8 +23,8 @@ def get_playlist_by_id_or_none(id: str):
     return DbPlaylist.get_or_none(DbPlaylist.id == id)
 
 
-def create_playlist(playlist: Playlist, albums: List[Album], user: DbUser):
-    playlist = DbPlaylist.create(
+def create_playlist(playlist: Playlist, user: DbUser):
+    db_playlist = DbPlaylist.create(
         id=playlist.id,
         description=playlist.description,
         image_url=playlist.images[0].url if playlist.images else None,
@@ -33,11 +34,25 @@ def create_playlist(playlist: Playlist, albums: List[Album], user: DbUser):
         uri=playlist.uri,
     )
 
-    for album in albums:
-        create_album_or_none(album)
-        PlaylistAlbumRelationship.create(playlist=playlist.id, album=album.id)
+    album_index = 0
+    for track in playlist.tracks.items:
+        create_album_or_none(track.track.album, ignore_tracks=True)
+        if PlaylistAlbumRelationship.get_or_create(
+            playlist=playlist.id,
+            album=track.track.album.id,
+            defaults={"album_index": album_index},
+        )[1]:
+            album_index += 1
+        create_track_or_none(track.track)
+    return db_playlist
 
-    return playlist
+
+def delete_playlist(playlist_id: str):
+    query = PlaylistAlbumRelationship.delete().where(
+        PlaylistAlbumRelationship.playlist == playlist_id
+    )
+    query.execute()
+    DbPlaylist.delete_by_id(playlist_id)
 
 
 def update_playlist_info(
@@ -65,25 +80,6 @@ def update_playlist_info(
         return updated_playlist
 
     return None
-
-
-def update_playlist_with_albums(playlist: Playlist, albums: List[Album]):
-    playlist = DbPlaylist.update(
-        id=playlist.id,
-        description=playlist.description,
-        image_url=playlist.images[0].url if playlist.images else None,
-        name=playlist.name,
-        user_id=playlist.owner.id,
-        snapshot_id=playlist.snapshot_id,
-        uri=playlist.uri,
-    )
-    PlaylistAlbumRelationship.delete().where(playlist=playlist.id)
-
-    for album in albums:
-        create_album_or_none(album)
-        PlaylistAlbumRelationship.create(playlist=playlist.id, album=album.id)
-
-    return playlist
 
 
 def get_user_playlists(
@@ -304,18 +300,18 @@ def get_playlist_duration(playlist_id):
 
 
 def get_playlist_duration_up_to_track(playlist_id, track_id):
-    # Subquery to get albums in the playlist ordered by album_index
-    albums_in_playlist = (
-        PlaylistAlbumRelationship.select(PlaylistAlbumRelationship.album)
-        .where(PlaylistAlbumRelationship.playlist == playlist_id)
-        .order_by(PlaylistAlbumRelationship.album_index)
-    )
-
-    # Query to get all tracks in those albums, ordered by album_index, disc_number, and track_number
+    print(playlist_id)
+    # Query to get all tracks in the albums of the playlist, with proper joins and ordering
     tracks_in_playlist = (
         DbTrack.select(DbTrack.id, DbTrack.duration_ms)
-        .join(DbAlbum)
-        .where(DbTrack.album.in_(albums_in_playlist))
+        .join(DbAlbum, on=(DbTrack.album == DbAlbum.id))  # Join track with album
+        .join(
+            PlaylistAlbumRelationship,
+            on=(DbTrack.album == PlaylistAlbumRelationship.album),
+        )  # Join to get album_index
+        .where(
+            PlaylistAlbumRelationship.playlist == playlist_id
+        )  # Ensure we're only querying tracks in the specific playlist
         .order_by(
             PlaylistAlbumRelationship.album_index,
             DbTrack.disc_number,
@@ -331,5 +327,5 @@ def get_playlist_duration_up_to_track(playlist_id, track_id):
         total_duration += track.duration_ms
         if track.id == track_id:
             break
-
+    print(total_duration)
     return total_duration

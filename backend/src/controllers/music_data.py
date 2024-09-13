@@ -125,7 +125,7 @@ def music_controller(spotify: SpotifyClient):
             associated_playlist.model_dump()
             for associated_playlist in associated_playlists
         ]
-    
+
     @music_controller.route("playback", methods=["GET"])
     def get_playback_info():
         access_token = request.cookies.get("spotify_access_token")
@@ -134,16 +134,21 @@ def music_controller(spotify: SpotifyClient):
             return ("", 204)
         if playback_info.playlist_id is not None:
             playlist_duration = get_playlist_duration(playback_info.playlist_id)
-            playlist_progress = get_playlist_duration_up_to_track(playback_info.playlist_id, playback_info.track_id) + playback_info.track_progress
+            playlist_progress = (
+                get_playlist_duration_up_to_track(
+                    playback_info.playlist_id, playback_info.track_id
+                )
+                + playback_info.track_progress
+            )
         return PlaylistProgression.model_validate(
             {
                 "playlist_id": playback_info.playlist_id,
-                "playlist_title": playback_info.name,
+                "playlist_title": "test",
                 "playlist_progress": playlist_progress,
                 "playlist_duration": playlist_duration,
             }
         )
-        
+
         return playback_info.model_dump_json()
 
     return music_controller

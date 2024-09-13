@@ -8,20 +8,10 @@ from src.database.crud.album import (
     update_album,
 )
 from src.database.crud.genre import create_genre
-from src.database.crud.track import (
-    all_tracks_have_artists,
-    create_track_or_none,
-    get_album_tracks,
-    get_user_albums_with_no_tracks,
-)
 from src.database.crud.playlist import (
-    add_playlist_album_index,
     create_playlist,
-    get_playlist_albums,
+    delete_playlist,
     get_playlist_by_id_or_none,
-    get_user_playlists,
-    playlist_has_null_album_indexes,
-    update_playlist_with_albums,
 )
 from src.database.crud.user import get_or_create_user
 from src.musicbrainz import MusicbrainzClient
@@ -38,60 +28,28 @@ def database_controller(spotify: SpotifyClient, musicbrainz: MusicbrainzClient):
     def populate_user():
         access_token = request.cookies.get("spotify_access_token")
         user = spotify.get_current_user(access_token)
+        (db_user, _) = get_or_create_user(user)
         simplified_playlists = spotify.get_all_playlists(
             user_id=user.id, access_token=access_token
         )
-        (db_user,) = get_or_create_user(user)
 
         for simplified_playlist in simplified_playlists:
-            if "Albums" in simplified_playlist.name:
+            if (
+                "Albums" in simplified_playlist.name
+                and "New Albums 06/09/24" in simplified_playlist.name
+            ):
+                delete_playlist("0ubqg4akSDebHReJIG8sbd")
                 db_playlist = get_playlist_by_id_or_none(simplified_playlist.id)
-
-                if db_playlist is None:
-                    [playlist, albums] = [
-                        spotify.get_playlist(
-                            access_token=access_token, id=simplified_playlist.id
-                        ),
-                        spotify.get_playlist_album_info(
-                            access_token=access_token, id=simplified_playlist.id
-                        ),
-                    ]
-                    create_playlist(playlist, albums, db_user)
-                else:
-                    if db_playlist.snapshot_id != simplified_playlist.snapshot_id:
-                        [playlist, albums] = [
-                            spotify.get_playlist(
-                                access_token=access_token, id=simplified_playlist.id
-                            ),
-                            spotify.get_playlist_album_info(
-                                access_token=access_token, id=simplified_playlist.id
-                            ),
-                        ]
-                        update_playlist_with_albums(playlist, albums)
-
-        return make_response("Playlist data populated", 201)
-
-    @database_controller.route(
-        "populate_additional_album_details_from_playlist", methods=["GET"]
-    )
-    def populate_additional_album_details_from_playlist():
-        access_token = request.cookies.get("spotify_access_token")
-        user = spotify.get_current_user(access_token)
-        playlists = get_user_playlists(user.id)
-
-        for playlist in playlists:
-            albums = get_playlist_albums(playlist.id)
-            if albums == []:
-                continue
-            batch_albums = split_list(albums, 20)
-            for album_chunk in batch_albums:
-                sleep(0.5)
-                albums = spotify.get_multiple_albums(
-                    access_token=access_token, ids=[album.id for album in album_chunk]
-                )
-                for db_album in albums:
-                    album = spotify.get_album(access_token=access_token, id=db_album.id)
-                    update_album(album)
+                if (
+                    db_playlist is None
+                    or db_playlist.snapshot_id != simplified_playlist.snapshot_id
+                ):
+                    if db_playlist is not None:
+                        delete_playlist(db_playlist.id)
+                    playlist = spotify.get_playlist(
+                        access_token=access_token, id=simplified_playlist.id
+                    )
+                    create_playlist(playlist, db_user)
 
         return make_response("Playlist data populated", 201)
 
@@ -100,12 +58,8 @@ def database_controller(spotify: SpotifyClient, musicbrainz: MusicbrainzClient):
         access_token = request.cookies.get("spotify_access_token")
         user = spotify.get_current_user(access_token)
         albums = get_user_albums(user.id)
-        albums_without_label = [album for album in albums]  # if album.label is None]
-        if albums_without_label == []:
-            return make_response("No Albums to process", 204)
-        batch_albums = split_list(albums_without_label, 20)
+        batch_albums = split_list(albums, 20)
         for album_chunk in batch_albums:
-            sleep(0.5)
             albums = spotify.get_multiple_albums(
                 access_token=access_token, ids=[album.id for album in album_chunk]
             )
@@ -128,74 +82,6 @@ def database_controller(spotify: SpotifyClient, musicbrainz: MusicbrainzClient):
         access_token = request.cookies.get("spotify_access_token")
         user = spotify.get_current_user(access_token)
         populate_album_genres_by_user_id(user.id, musicbrainz)
-        return make_response("User album genres populated", 201)
-
-    @database_controller.route("populate_album_tracks", methods=["GET"])
-    def populate_album_tracks():
-        access_token = request.cookies.get("spotify_access_token")
-        user = spotify.get_current_user(access_token)
-        albums = get_user_albums_with_no_tracks(user.id)
-        for album in albums:
-            existing_album_tracks = get_album_tracks(album)
-            if existing_album_tracks != []:
-                continue
-            sleep(0.5)
-
-            album_tracks = spotify.get_album(
-                access_token=access_token, id=album.id
-            ).tracks.items
-            for track in album_tracks:
-                create_track_or_none(track, album)
-
-        return make_response("User album genres populated", 201)
-
-    @database_controller.route("populate_playlist_album_indexes", methods=["GET"])
-    def populate_playlist_album_indexes():
-        access_token = request.cookies.get("spotify_access_token")
-        user = spotify.get_current_user(access_token)
-        simplified_playlists = spotify.get_all_playlists(
-            user_id=user.id, access_token=access_token
-        )
-
-        for simplified_playlist in simplified_playlists:
-            if "Albums" in simplified_playlist.name:
-                if not playlist_has_null_album_indexes(simplified_playlist.id):
-                    continue
-                sleep(1)
-
-                [playlist, albums] = [
-                    spotify.get_playlist(
-                        access_token=access_token, id=simplified_playlist.id
-                    ),
-                    spotify.get_playlist_album_info(
-                        access_token=access_token, id=simplified_playlist.id
-                    ),
-                ]
-
-                for index, album in enumerate(albums):
-                    add_playlist_album_index(
-                        playlist_id=playlist.id, album_id=album.id, index=index
-                    )
-
-        return make_response("Playlist album indexes populated", 201)
-
-    @database_controller.route("populate_track_artists", methods=["GET"])
-    def populate_track_artists():
-        access_token = request.cookies.get("spotify_access_token")
-        user = spotify.get_current_user(access_token)
-        albums = get_user_albums(user.id)
-        offset = 1800
-        for index, album in enumerate(albums[offset:]):
-            if all_tracks_have_artists(album.id):
-                continue
-            sleep(0.5)
-            print(index + offset)
-            album_tracks = spotify.get_album(
-                access_token=access_token, id=album.id
-            ).tracks.items
-            for track in album_tracks:
-                create_track_or_none(track, album)
-
         return make_response("User album genres populated", 201)
 
     return database_controller
