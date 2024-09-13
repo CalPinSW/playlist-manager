@@ -6,9 +6,9 @@ import InputLabel from "../components/InputLabel";
 import Button from "../components/Button";
 import { Form, useForm } from "react-hook-form";
 import {
-  findAssociatedPlaylists,
   getPlaylistAlbums,
   getPlaylistTracks,
+  playlistSearch,
   updatePlaylist,
 } from "../api";
 import { useQuery } from "@tanstack/react-query";
@@ -53,9 +53,9 @@ export const PlaylistExplorer: FC = () => {
 
   useEffect(() => {
     if (playlist.name.slice(0, 10) === "New Albums") {
-      findAssociatedPlaylists(playlist).then(
+      playlistSearch(playlist.name.slice(11)).then(
         (associatedPlaylists: Playlist[]) => {
-          setAssociatedPlaylists(associatedPlaylists);
+          setAssociatedPlaylists(associatedPlaylists.filter((associatedPlaylist) => associatedPlaylist.name !== playlist.name));
         }
       );
     }

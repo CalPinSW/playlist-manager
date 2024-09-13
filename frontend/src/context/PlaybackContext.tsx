@@ -23,7 +23,7 @@ export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
   children,
 }) => {
   const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(10000);
-  const { data: playbackInfo } = useQuery<PlaybackInfo>({
+  const { data: playbackInfo, isError } = useQuery<PlaybackInfo>({
     queryKey: ["playbackInfo"],
     queryFn: () => {
       return getPlaybackInfo();
@@ -33,8 +33,8 @@ export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
     refetchIntervalInBackground: false,
   });
   useEffect(() => {
-    setPlaybackRefetchInterval(playbackInfo ? 10000 : 20000);
-  }, [playbackInfo]);
+    if (isError) {setPlaybackRefetchInterval(30000)}
+  }, [isError]);
 
   return (
     <PlaybackContext.Provider value={{ playbackInfo }}>

@@ -114,13 +114,13 @@ export const getPlaybackInfo = async (): Promise<PlaybackInfo> => {
 	return jsonRequest(`music/playback`, RequestMethod.GET, undefined, false);
 };
 
-export const findAssociatedPlaylists = async (
-	playlist: Playlist,
+export const playlistSearch = async (
+	search: string,
 ): Promise<Playlist[]> => {
 	return jsonRequest(
-		`spotify/find_associated_playlists/${playlist.id}`,
+		`music/playlist/search`,
 		RequestMethod.POST,
-		playlist,
+		search,
 	);
 };
 

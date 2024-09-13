@@ -303,3 +303,28 @@ def get_playlist_duration_up_to_track(playlist_id, track_id):
         if track.id == track_id:
             break
     return total_duration
+
+
+def search_playlist_names(user_id: str, search: str) -> List[dict]:
+    # Query playlists where name ends with the given date_str
+    playlists = (
+        DbPlaylist.select(
+            DbPlaylist.id, DbPlaylist.name, DbPlaylist.description, DbPlaylist.image_url
+        )
+        .where(DbPlaylist.name.contains(search))
+        .where(DbPlaylist.user_id == user_id)
+        .execute()
+    )
+
+    # Build a list of playlist details
+    result = [
+        {
+            "id": playlist.id,
+            "name": playlist.name,
+            "description": playlist.description,
+            "image_url": playlist.image_url,
+        }
+        for playlist in playlists
+    ]
+
+    return result

@@ -12,10 +12,11 @@ const Slide: FC<SlideProps> = ({children}) => {
 
 interface CarouselProps {
     slides: ReactNode[]
+    startIndex?: number
 }
 
-const Carousel: FC<CarouselProps> = ({slides}) => {
-  const [emblaRef] = useEmblaCarousel({skipSnaps: true})
+const Carousel: FC<CarouselProps> = ({slides, startIndex = 0}) => {
+  const [emblaRef] = useEmblaCarousel({skipSnaps: true, startIndex})
 
   return (
     <div className="overflow-hidden" ref={emblaRef}>

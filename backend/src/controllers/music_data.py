@@ -7,6 +7,7 @@ from src.database.crud.playlist import (
     get_playlist_track_list,
     get_recent_user_playlists,
     get_user_playlists,
+    search_playlist_names,
     update_playlist_info,
 )
 from src.dataclasses.playlist import Playlist
@@ -105,18 +106,11 @@ def music_controller(spotify: SpotifyClient):
                 )
             ]
 
-    @music_controller.route("find_associated_playlists", methods=["POST"])
+    @music_controller.route("playlist/search", methods=["POST"])
     def find_associated_playlists():
-        access_token = request.cookies.get("spotify_access_token")
         user_id = request.cookies.get("user_id")
-        playlist = Playlist.model_validate(request.json)
-        associated_playlists = spotify.find_associated_playlists(
-            user_id=user_id, access_token=access_token, playlist=playlist
-        )
-        return [
-            associated_playlist.model_dump()
-            for associated_playlist in associated_playlists
-        ]
+        search = request.json
+        return search_playlist_names(user_id, search)
 
     @music_controller.route("playback", methods=["GET"])
     def get_playback_info():
