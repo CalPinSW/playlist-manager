@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { getCurrentUserDetails, login, populateUserData} from "../../api";
+import { getCurrentUserDetails, login} from "../../api";
 import { useQuery } from "@tanstack/react-query";
 import { User } from "../../interfaces/User";
 import UserMenu from "./UserMenu";

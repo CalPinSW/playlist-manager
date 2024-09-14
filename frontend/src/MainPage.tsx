@@ -7,7 +7,6 @@ import Box from "./components/Box";
 import AddPlaylistForm from "./AddPlaylistForm";
 import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 import CustomButton from "./components/Button";
-import PlaybackFooter from "./presentational/PlaybackFooter";
 import useWindowSize from "./hooks/useWindowSize";
 
 interface PaginationState {
