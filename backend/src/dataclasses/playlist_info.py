@@ -26,6 +26,7 @@ class SimplifiedPlaylist(BaseModel):
     description: str
     images: Optional[List[Image]] = None
     tracks: PlaylistInfoTracks
+    snapshot_id: str
 
 
 class CurrentUserPlaylists(BaseModel):

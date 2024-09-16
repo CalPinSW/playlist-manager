@@ -11,6 +11,7 @@ def simplified_playlist_builder(
     description="",
     images=[image_builder()],
     tracks=playlist_info_tracks_builder(),
+    snapshot_id="snapshot1",
 ):
     return SimplifiedPlaylist.model_validate(
         {
@@ -19,5 +20,6 @@ def simplified_playlist_builder(
             "description": description,
             "images": images,
             "tracks": tracks,
+            "snapshot_id": snapshot_id,
         }
     )

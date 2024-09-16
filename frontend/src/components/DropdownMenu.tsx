@@ -28,7 +28,7 @@ const DropdownMenu: FC<ModalProps> = ({ children, trigger, isMenuOpen, closeMenu
     {isMenuOpen &&
       <div
         
-        className={`bg-background-popover w-full h-fit absolute opacity-100 origin-top-right left-0 rounded-xl shadow p-6 z-50`}
+        className={`bg-background-popover flex flex-col space-y-4 w-full h-fit absolute opacity-100 origin-top-right left-0 rounded-xl shadow p-6 z-50`}
         role={"menu"}
       >
         {children}

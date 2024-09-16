@@ -1,8 +1,10 @@
 import json
 import requests
 import os
+import urllib.parse
 from typing import List, Optional
 from flask import Response, make_response, redirect
+from src.database.crud.album import get_album_genres
 from src.dataclasses.album import Album
 from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
 from src.dataclasses.playback_request import (
@@ -146,7 +148,7 @@ class SpotifyClient:
         playlists = CurrentUserPlaylists.model_validate(api_playlists)
         return playlists
 
-    def get_all_playlists(self, user_id, access_token):
+    def get_all_playlists(self, user_id, access_token) -> List[SimplifiedPlaylist]:
         playlists: List[SimplifiedPlaylist] = []
         offset = 0
         limit = 50
@@ -262,6 +264,8 @@ class SpotifyClient:
         for track in playlist_tracks:
             if track.track.album not in playlist_albums:
                 playlist_albums.append(track.track.album)
+        for album in playlist_albums:
+            album.genres = [genre.name for genre in get_album_genres(album.id)]
         return playlist_albums
 
     def get_playlist_tracks(self, access_token, id: str):
@@ -291,6 +295,19 @@ class SpotifyClient:
         api_album = self.response_handler(response)
         album = Album.model_validate(api_album)
         return album
+
+    def get_multiple_albums(self, access_token, ids: List[str]) -> List[Album]:
+        encoded_ids = urllib.parse.quote_plus(",".join(ids))
+        response = requests.get(
+            f"https://api.spotify.com/v1/albums?ids={encoded_ids}",
+            headers={
+                "content-type": "application/json",
+            },
+            auth=BearerAuth(access_token),
+        )
+        api_albums = self.response_handler(response)
+        albums = [Album.model_validate(api_album) for api_album in api_albums["albums"]]
+        return albums
 
     def get_current_playback(self, access_token) -> PlaybackState | None:
         response = requests.get(

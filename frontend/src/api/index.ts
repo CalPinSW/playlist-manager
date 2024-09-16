@@ -2,7 +2,7 @@ import { Album } from "../interfaces/Album";
 import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
 import { Playlist } from "../interfaces/Playlist";
 import { User } from "../interfaces/User";
-import { backendUrl } from "./jsonRequest";
+import { backendUrl, request } from "./jsonRequest";
 import { RequestMethod } from "./jsonRequest";
 import { jsonRequest } from "./jsonRequest";
 
@@ -134,3 +134,19 @@ export const startPlayback = async (requestBody?: StartPlaybackRequest
 export const pauseOrStartPlayback = async (): Promise<Response> => {
 	return jsonRequest(`spotify/pause_or_start_playback`, RequestMethod.PUT);
 };
+
+export const populateUserData = async (): Promise<Response> => {
+	return request(`database/populate_user`, RequestMethod.GET);
+}
+
+export const populateAdditionalAlbumDetails = async (): Promise<Response> => {
+	return request('database/populate_additional_album_details', RequestMethod.GET)
+}
+
+export const populateUniversalGenreList = async (): Promise<Response> => {
+	return request('database/populate_universal_genre_list', RequestMethod.GET)
+}
+
+export const populateUserAlbumGenres = async (): Promise<Response> => {
+	return request('database/populate_user_album_genres', RequestMethod.GET)
+}
