@@ -62,3 +62,11 @@ If you now run [the frontend](../frontend/README.md) you should be able to commu
 ## Running Tests
 
 Tests can be run with `poetry run pytest`
+
+
+## Running DB Migrations
+
+Load env variables with `source .env`
+Run Python locally `python3`
+Import migration file >>>: `from src.database.migrations.(migration_file_name) import up, down`
+Run migration >>>: `up()` / `down()`
