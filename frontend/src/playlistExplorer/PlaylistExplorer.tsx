@@ -6,8 +6,9 @@ import InputLabel from "../components/InputLabel";
 import Button from "../components/Button";
 import { Form, useForm } from "react-hook-form";
 import {
-  findAssociatedPlaylists,
   getPlaylistAlbums,
+  getPlaylistTracks,
+  playlistSearch,
   updatePlaylist,
 } from "../api";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import { Album } from "../interfaces/Album";
 import { AlbumList } from "./AlbumList/AlbumList";
 import { TrackList } from "./TrackList/TrackList";
 import { usePlaybackContext } from "../hooks/usePlaybackContext";
+import { Track } from "../interfaces/Track";
 
 enum ViewMode {
   ALBUM = "album",
@@ -36,15 +38,24 @@ export const PlaylistExplorer: FC = () => {
     retry: false,
   });
 
+  
+  const { data: playlistTracks } = useQuery<Track[]>({
+    queryKey: ["playlist track info", playlist.id],
+    queryFn: () => {
+      return getPlaylistTracks(playlist.id);
+    },
+    retry: false,
+  });
+
   const [associatedPlaylists, setAssociatedPlaylists] = useState<Playlist[]>(
     []
   );
 
   useEffect(() => {
     if (playlist.name.slice(0, 10) === "New Albums") {
-      findAssociatedPlaylists(playlist).then(
+      playlistSearch(playlist.name.slice(11)).then(
         (associatedPlaylists: Playlist[]) => {
-          setAssociatedPlaylists(associatedPlaylists);
+          setAssociatedPlaylists(associatedPlaylists.filter((associatedPlaylist) => associatedPlaylist.name !== playlist.name));
         }
       );
     }
@@ -106,14 +117,14 @@ export const PlaylistExplorer: FC = () => {
             >
               <h2
                 className={`p-2 flex grow ${
-                  viewMode === ViewMode.TRACK ? "bg-primary-200" : ""
+                  viewMode === ViewMode.TRACK ? "bg-primary-darker" : ""
                 }`}
               >
                 Track View
               </h2>
               <h2
                 className={`p-2 flex grow text-right ${
-                  viewMode === ViewMode.ALBUM ? "bg-primary-200" : ""
+                  viewMode === ViewMode.ALBUM ? "bg-primary-darker" : ""
                 } ${!playlistAlbums ? "opacity-50 disabled" : ""}`}
               >
                 Album View
@@ -129,9 +140,9 @@ export const PlaylistExplorer: FC = () => {
                 associatedPlaylists={associatedPlaylists}
               />
             )}
-            {viewMode == ViewMode.TRACK && (
+            {viewMode == ViewMode.TRACK &&  playlistTracks &&(
               <TrackList
-                trackList={playlist.tracks.items}
+                trackList={playlistTracks}
                 activeTrackId={playbackInfo?.track_id}
               />
             )}

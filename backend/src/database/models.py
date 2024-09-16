@@ -31,7 +31,7 @@ class DbPlaylist(BaseModel):
     description = CharField()
     image_url = CharField(null=True)
     name = CharField()
-    user = ForeignKeyField(DbUser, backref="owner", to_field="id")
+    user = ForeignKeyField(DbUser, backref="owner", to_field="id", on_delete="CASCADE")
     snapshot_id = CharField()
     uri = CharField()
 
@@ -71,25 +71,52 @@ class DbGenre(BaseModel):
         db_table = "genre"
 
 
-class PlaylistAlbumRelationship(BaseModel):
-    playlist = ForeignKeyField(DbPlaylist, backref="albums")
-    album = ForeignKeyField(DbAlbum, backref="playlistsContaining")
+class DbTrack(BaseModel):
+    id = CharField(primary_key=True)
+    name = CharField()
+    album = ForeignKeyField(
+        DbAlbum, backref="album", to_field="id", on_delete="CASCADE"
+    )
+    disc_number = IntegerField()
+    track_number = IntegerField()
+    duration_ms = IntegerField()
+    uri = CharField()
 
     class Meta:
-        indexes = ((("playlist", "album"), True),)
+        db_table = "track"
+
+
+class PlaylistAlbumRelationship(BaseModel):
+    playlist = ForeignKeyField(DbPlaylist, backref="albums", on_delete="CASCADE")
+    album = ForeignKeyField(DbAlbum, backref="playlistsContaining", on_delete="CASCADE")
+    album_index = IntegerField(null=True)  # New column added
+
+    class Meta:
+        indexes = (
+            (("playlist", "album"), True),
+            (("playlist", "albumIndex"), True),
+        )
 
 
 class AlbumArtistRelationship(BaseModel):
-    album = ForeignKeyField(DbAlbum, backref="artists")
-    artist = ForeignKeyField(DbArtist, backref="albums")
+    album = ForeignKeyField(DbAlbum, backref="artists", on_delete="CASCADE")
+    artist = ForeignKeyField(DbArtist, backref="albums", on_delete="CASCADE")
 
     class Meta:
         indexes = ((("album", "artist"), True),)
 
 
 class AlbumGenreRelationship(BaseModel):
-    album = ForeignKeyField(DbAlbum, backref="genres")
-    genre = ForeignKeyField(DbGenre, backref="albums")
+    album = ForeignKeyField(DbAlbum, backref="genres", on_delete="CASCADE")
+    genre = ForeignKeyField(DbGenre, backref="albums", on_delete="CASCADE")
 
     class Meta:
         indexes = ((("album", "genre"), True),)
+
+
+class TrackArtistRelationship(BaseModel):
+    track = ForeignKeyField(DbTrack, backref="artists", on_delete="CASCADE")
+    artist = ForeignKeyField(DbArtist, backref="tracks", on_delete="CASCADE")
+
+    class Meta:
+        indexes = ((("track", "artist"), True),)

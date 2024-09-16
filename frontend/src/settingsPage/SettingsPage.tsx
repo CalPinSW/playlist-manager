@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { ButtonWithLoadingState } from "./PopulateUserDatabaseButton";
-import { populateAdditionalAlbumDetails, populateUniversalGenreList, populateUserAlbumGenres, populateUserData } from "../api";
+import { populateAdditionalAlbumDetails, populateUniversalGenreList, populateUserAlbumGenres, populateUserData} from "../api";
 
 export const SettingsPage: FC = () => {
   return (

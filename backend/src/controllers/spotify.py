@@ -1,10 +1,7 @@
-from logging import Logger
 from flask import Blueprint, make_response, request
 from src.dataclasses.playback_info import PlaybackInfo
 from src.dataclasses.playback_request import StartPlaybackRequest
-from src.dataclasses.playlist import Playlist
 from src.spotify import SpotifyClient
-import sys
 
 
 def spotify_controller(spotify: SpotifyClient):
@@ -53,7 +50,7 @@ def spotify_controller(spotify: SpotifyClient):
         spotify.delete_playlist(access_token=access_token, id=id)
         return make_response("playlist deleted", 200)
 
-    @spotify_controller.route("edit-playlist/<id>", methods=["GET"])
+    @spotify_controller.route("playlist/<id>", methods=["GET"])
     def get_edit_playlist(id):
         access_token = request.cookies.get("spotify_access_token")
         playlist = spotify.get_playlist(access_token=access_token, id=id)
@@ -101,13 +98,12 @@ def spotify_controller(spotify: SpotifyClient):
             return ("", 204)
         return playlist_progression.model_dump_json()
 
-    @spotify_controller.route("find_associated_playlists", methods=["POST"])
-    def find_associated_playlists():
+    @spotify_controller.route("find_associated_playlists/<id>", methods=["GET"])
+    def find_associated_playlists(playlist_id):
         access_token = request.cookies.get("spotify_access_token")
         user_id = request.cookies.get("user_id")
-        playlist = Playlist.model_validate(request.json)
         associated_playlists = spotify.find_associated_playlists(
-            user_id=user_id, access_token=access_token, playlist=playlist
+            user_id=user_id, access_token=access_token, playlist_id=playlist_id
         )
         return [
             associated_playlist.model_dump()

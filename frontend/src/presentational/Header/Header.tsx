@@ -14,7 +14,7 @@ const Header = () => {
   });
 
   return (
-    <div className="flex justify-between top-0 h-16 sm:h-20 bg-primary-300">
+    <div className="flex justify-between top-0 h-16 sm:h-20 bg-background-offset">
       <Link to="/" className="flex mx-4 my-auto text-lg">
         Playlist Manager
       </Link>

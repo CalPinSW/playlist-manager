@@ -9,7 +9,7 @@ const Button: FC<
   return (
     <a
       {...props}
-      className={`bg-secondary-300 rounded p-2 cursor-pointer hover:bg-secondary-500 active:bg-secondary-600 ${className}`}
+      className={`bg-secondary-darker rounded p-2 cursor-pointer hover:bg-secondary active:bg-secondary-lighter ${className}`}
     ></a>
   );
 };

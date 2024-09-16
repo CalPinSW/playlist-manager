@@ -1,5 +1,6 @@
 from typing import List
 from src.database.crud.artist import create_or_update_artist
+from src.database.crud.track import create_track_or_none
 from src.dataclasses.album import Album
 from src.database.models import (
     AlbumArtistRelationship,
@@ -12,10 +13,10 @@ from src.database.models import (
 )
 
 
-def create_album_or_none(album: Album):
+def create_album_or_none(album: Album, ignore_tracks=False):
     if DbAlbum.get_or_none(DbAlbum.id == album.id):
         return
-    album = DbAlbum.create(
+    db_album = DbAlbum.create(
         id=album.id,
         album_type=album.album_type,
         total_tracks=album.total_tracks,
@@ -26,12 +27,15 @@ def create_album_or_none(album: Album):
         label=album.label,
         uri=album.uri,
     )
-    for artist in album.artists:
+    for artist in db_album.artists:
         create_or_update_artist(artist)
         AlbumArtistRelationship.create(album=album.id, artist=artist.id)
-    for genre in album.genres or []:
+    for genre in db_album.genres or []:
         db_genre = DbGenre.get_or_create(name=genre)
         AlbumGenreRelationship.create(album=album.id, genre=db_genre.id)
+    if not ignore_tracks:
+        for track in album.tracks:
+            create_track_or_none(track, album)
 
     return album
 

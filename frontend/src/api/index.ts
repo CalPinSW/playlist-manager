@@ -1,6 +1,7 @@
 import { Album } from "../interfaces/Album";
-import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
+import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { Playlist } from "../interfaces/Playlist";
+import { Track } from "../interfaces/Track";
 import { User } from "../interfaces/User";
 import { backendUrl, request } from "./jsonRequest";
 import { RequestMethod } from "./jsonRequest";
@@ -39,13 +40,31 @@ export const getCurrentUserDetails = async (): Promise<User> => {
 	);
 };
 
-export const getPlaylists = async (
+export const getRecentPlaylists = async (
+	search: string,
 	offset: number,
 	limit: number,
 ): Promise<Playlist[]> => {
-	const endpoint = `spotify/playlists?limit=${encodeURIComponent(
-		limit,
-	)}&offset=${encodeURIComponent(offset)}`;
+	const searchParams = new URLSearchParams();
+	searchParams.append("limit", String(limit));
+	searchParams.append("offset", String(offset));
+	if (search !== "") {searchParams.append("search", search);}
+	searchParams.toString(); // "type=all&query=coins"
+	const endpoint = `music/playlists/recent?${searchParams.toString()}`;
+	return jsonRequest(endpoint, RequestMethod.GET);
+};
+
+export const getPlaylists = async (
+	search: string,
+	offset: number,
+	limit: number,
+): Promise<Playlist[]> => {
+	const searchParams = new URLSearchParams();
+	searchParams.append("limit", String(limit));
+	searchParams.append("offset", String(offset));
+	if (search !== "") {searchParams.append("search", search);}
+	searchParams.toString(); // "type=all&query=coins"
+	const endpoint = `music/playlists?${searchParams.toString()}`;
 	return jsonRequest(endpoint, RequestMethod.GET);
 };
 
@@ -54,12 +73,12 @@ export const addPlaylist = async (playlist: Playlist): Promise<Playlist> => {
 };
 
 export const getPlaylist = async (id: string): Promise<Playlist> => {
-	return jsonRequest(`spotify/edit-playlist/${id}`, RequestMethod.GET);
+	return jsonRequest(`music/playlist/${id}`, RequestMethod.GET);
 };
 
 export const updatePlaylist = async (playlist: Playlist): Promise<Playlist> => {
 	return jsonRequest(
-		`spotify/edit-playlist/${playlist.id}`,
+		`music/playlist/${playlist.id}`,
 		RequestMethod.POST,
 		playlist,
 	);
@@ -76,32 +95,32 @@ export const getPlaylistAlbums = async (
 	playlistId: string,
 ): Promise<Album[]> => {
 	return jsonRequest(
-		`spotify/playlist/${playlistId}/albums`,
+		`music/playlist/${playlistId}/albums`,
+		RequestMethod.GET,
+	);
+};
+
+
+export const getPlaylistTracks = async (
+	playlistId: string,
+): Promise<Track[]> => {
+	return jsonRequest(
+		`music/playlist/${playlistId}/tracks`,
 		RequestMethod.GET,
 	);
 };
 
 export const getPlaybackInfo = async (): Promise<PlaybackInfo> => {
-	return jsonRequest(`spotify/playback`, RequestMethod.GET, undefined, false);
+	return jsonRequest(`music/playback`, RequestMethod.GET, undefined, false);
 };
 
-export const getPlaylistProgress = async (
-	playbackInfo: PlaybackInfo,
-): Promise<PlaylistProgress> => {
-	return jsonRequest(
-		`spotify/playlist_progress`,
-		RequestMethod.POST,
-		playbackInfo,
-	);
-};
-
-export const findAssociatedPlaylists = async (
-	playlist: Playlist,
+export const playlistSearch = async (
+	search: string,
 ): Promise<Playlist[]> => {
 	return jsonRequest(
-		`spotify/find_associated_playlists`,
+		`music/playlist/search`,
 		RequestMethod.POST,
-		playlist,
+		search,
 	);
 };
 

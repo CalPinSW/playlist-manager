@@ -5,13 +5,12 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { PlaybackInfo, PlaylistProgress } from "../interfaces/PlaybackInfo";
+import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { useQuery } from "@tanstack/react-query";
-import { getPlaybackInfo, getPlaylistProgress } from "../api";
+import { getPlaybackInfo } from "../api";
 
 interface PlaybackContext {
   playbackInfo?: PlaybackInfo;
-  playlistProgress?: PlaylistProgress;
 }
 
 export const PlaybackContext = createContext<PlaybackContext>({});
@@ -23,8 +22,8 @@ interface PlaybackContextProviderProps {
 export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
   children,
 }) => {
-  const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(5000);
-  const { data: playbackInfo } = useQuery<PlaybackInfo>({
+  const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(10000);
+  const { data: playbackInfo, isError } = useQuery<PlaybackInfo>({
     queryKey: ["playbackInfo"],
     queryFn: () => {
       return getPlaybackInfo();
@@ -34,23 +33,11 @@ export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
     refetchIntervalInBackground: false,
   });
   useEffect(() => {
-    setPlaybackRefetchInterval(playbackInfo ? 5000 : 20000);
-  }, [playbackInfo]);
-  const { data: playlistProgress } = useQuery<PlaylistProgress | undefined>({
-    queryKey: ["playlistProgress"],
-    queryFn: () => {
-      if (playbackInfo?.playlist_id) {
-        return getPlaylistProgress(playbackInfo);
-      }
-    },
-    retryDelay: playbackRefetchInterval,
-    refetchInterval: 60000,
-    refetchIntervalInBackground: false,
-    enabled: !!playbackInfo?.playlist_id,
-  });
+    if (isError) {setPlaybackRefetchInterval(30000)}
+  }, [isError]);
 
   return (
-    <PlaybackContext.Provider value={{ playbackInfo, playlistProgress }}>
+    <PlaybackContext.Provider value={{ playbackInfo }}>
       {children}
     </PlaybackContext.Provider>
   );
