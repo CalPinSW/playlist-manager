@@ -7,16 +7,12 @@ from peewee import (
     ForeignKeyField,
 )
 from src.flask_config import Config
+from playhouse.flask_utils import FlaskDB
 
-database = PostgresqlDatabase(Config().DB_CONNECTION_STRING)
-
-
-class BaseModel(Model):
-    class Meta:
-        database = database
+db_wrapper = FlaskDB()
 
 
-class DbUser(BaseModel):
+class DbUser(db_wrapper.Model):
     id = CharField(primary_key=True)
     display_name = CharField()
     image_url = CharField(max_length=400)
@@ -26,7 +22,7 @@ class DbUser(BaseModel):
         db_table = "user"
 
 
-class DbPlaylist(BaseModel):
+class DbPlaylist(db_wrapper.Model):
     id = CharField(primary_key=True)
     description = CharField()
     image_url = CharField(null=True)
@@ -39,7 +35,7 @@ class DbPlaylist(BaseModel):
         db_table = "playlist"
 
 
-class DbAlbum(BaseModel):
+class DbAlbum(db_wrapper.Model):
     id = CharField(primary_key=True)
     album_type = CharField()
     total_tracks = IntegerField()
@@ -54,7 +50,7 @@ class DbAlbum(BaseModel):
         db_table = "album"
 
 
-class DbArtist(BaseModel):
+class DbArtist(db_wrapper.Model):
     id = CharField(primary_key=True)
     image_url = CharField(null=True)
     name = CharField()
@@ -64,14 +60,14 @@ class DbArtist(BaseModel):
         db_table = "artist"
 
 
-class DbGenre(BaseModel):
+class DbGenre(db_wrapper.Model):
     name = CharField(unique=True)
 
     class Meta:
         db_table = "genre"
 
 
-class DbTrack(BaseModel):
+class DbTrack(db_wrapper.Model):
     id = CharField(primary_key=True)
     name = CharField()
     album = ForeignKeyField(
@@ -86,7 +82,7 @@ class DbTrack(BaseModel):
         db_table = "track"
 
 
-class PlaylistAlbumRelationship(BaseModel):
+class PlaylistAlbumRelationship(db_wrapper.Model):
     playlist = ForeignKeyField(DbPlaylist, backref="albums", on_delete="CASCADE")
     album = ForeignKeyField(DbAlbum, backref="playlistsContaining", on_delete="CASCADE")
     album_index = IntegerField(null=True)  # New column added
@@ -98,7 +94,7 @@ class PlaylistAlbumRelationship(BaseModel):
         )
 
 
-class AlbumArtistRelationship(BaseModel):
+class AlbumArtistRelationship(db_wrapper.Model):
     album = ForeignKeyField(DbAlbum, backref="artists", on_delete="CASCADE")
     artist = ForeignKeyField(DbArtist, backref="albums", on_delete="CASCADE")
 
@@ -106,7 +102,7 @@ class AlbumArtistRelationship(BaseModel):
         indexes = ((("album", "artist"), True),)
 
 
-class AlbumGenreRelationship(BaseModel):
+class AlbumGenreRelationship(db_wrapper.Model):
     album = ForeignKeyField(DbAlbum, backref="genres", on_delete="CASCADE")
     genre = ForeignKeyField(DbGenre, backref="albums", on_delete="CASCADE")
 
@@ -114,7 +110,7 @@ class AlbumGenreRelationship(BaseModel):
         indexes = ((("album", "genre"), True),)
 
 
-class TrackArtistRelationship(BaseModel):
+class TrackArtistRelationship(db_wrapper.Model):
     track = ForeignKeyField(DbTrack, backref="artists", on_delete="CASCADE")
     artist = ForeignKeyField(DbArtist, backref="tracks", on_delete="CASCADE")
 

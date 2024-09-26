@@ -8,13 +8,15 @@ from src.flask_config import Config
 from src.musicbrainz import MusicbrainzClient
 from src.spotify import SpotifyClient
 from src.controllers.auth import auth_controller
-from src.database.models import database
+from src.database.models import db_wrapper
 
 
 def create_app():
     app = Flask(__name__)
     spotify = SpotifyClient()
     musicbrainz = MusicbrainzClient()
+    app.config["DATABASE"] = Config().DB_CONNECTION_STRING
+    db_wrapper.init_app(app)
 
     app.config.from_object(Config())
     app.config["CORS_HEADERS"] = "Content-Type"
@@ -47,15 +49,6 @@ def create_app():
         resp.delete_cookie("spotify_access_token")
         resp.delete_cookie("user_id")
         return resp
-
-    @app.before_request
-    def connect_db():
-        database.connect(reuse_if_open=True)
-
-    @app.teardown_request
-    def _db_close(exc):
-        if not database.is_closed():
-            database.close()
 
     app.register_blueprint(auth_controller(spotify=spotify))
     app.register_blueprint(spotify_controller(spotify=spotify))
