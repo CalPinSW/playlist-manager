@@ -8,12 +8,15 @@ from src.flask_config import Config
 from src.musicbrainz import MusicbrainzClient
 from src.spotify import SpotifyClient
 from src.controllers.auth import auth_controller
+from src.database.models import db_wrapper
 
 
 def create_app():
     app = Flask(__name__)
     spotify = SpotifyClient()
     musicbrainz = MusicbrainzClient()
+    app.config["DATABASE"] = Config().DB_CONNECTION_STRING
+    db_wrapper.init_app(app)
 
     app.config.from_object(Config())
     app.config["CORS_HEADERS"] = "Content-Type"

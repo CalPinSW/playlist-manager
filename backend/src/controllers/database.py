@@ -16,7 +16,6 @@ from src.database.crud.playlist import (
 from src.database.crud.user import get_or_create_user
 from src.musicbrainz import MusicbrainzClient
 from src.spotify import SpotifyClient
-from time import sleep
 
 
 def database_controller(spotify: SpotifyClient, musicbrainz: MusicbrainzClient):

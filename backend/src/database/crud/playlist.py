@@ -16,8 +16,6 @@ from src.database.models import (
 from src.dataclasses.album import Album
 from src.dataclasses.playlist import Playlist
 from peewee import fn, prefetch
-from playhouse.shortcuts import model_to_dict
-import time
 
 
 def get_playlist_by_id_or_none(id: str):
