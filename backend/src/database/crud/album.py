@@ -11,6 +11,7 @@ from src.database.models import (
     DbPlaylist,
     PlaylistAlbumRelationship,
 )
+from peewee import JOIN
 
 
 def create_album_or_none(album: Album, ignore_tracks=False):
@@ -98,5 +99,24 @@ def get_user_albums(user_id: str) -> List[DbAlbum]:
         .join(PlaylistAlbumRelationship)
         .join(DbPlaylist)
         .where(DbPlaylist.user == user_id)
+    )
+    return list(query)
+
+
+def get_user_albums_with_no_artists(user_id: str) -> List[DbAlbum]:
+    query = (
+        DbAlbum.select(DbAlbum)
+        .join(
+            PlaylistAlbumRelationship,
+            on=(PlaylistAlbumRelationship.album == DbAlbum.id),
+        )
+        .join(DbPlaylist)
+        .switch(DbAlbum)  # Switch back to Album after joining Playlist
+        .join(
+            AlbumArtistRelationship,
+            JOIN.LEFT_OUTER,
+            on=(AlbumArtistRelationship.album == DbAlbum.id),
+        )
+        .where(AlbumArtistRelationship.artist.is_null(True))
     )
     return list(query)

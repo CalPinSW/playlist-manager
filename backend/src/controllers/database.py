@@ -5,6 +5,7 @@ from src.database.crud.album import (
     get_album_artists,
     get_album_genres,
     get_user_albums,
+    get_user_albums_with_no_artists,
     update_album,
 )
 from src.database.crud.genre import create_genre
@@ -16,9 +17,12 @@ from src.database.crud.playlist import (
 from src.database.crud.user import get_or_create_user
 from src.musicbrainz import MusicbrainzClient
 from src.spotify import SpotifyClient
+from playhouse.flask_utils import FlaskDB
 
 
-def database_controller(spotify: SpotifyClient, musicbrainz: MusicbrainzClient):
+def database_controller(
+    spotify: SpotifyClient, musicbrainz: MusicbrainzClient, database: FlaskDB
+):
     database_controller = Blueprint(
         name="database_controller", import_name=__name__, url_prefix="/database"
     )
@@ -33,18 +37,20 @@ def database_controller(spotify: SpotifyClient, musicbrainz: MusicbrainzClient):
         )
 
         for simplified_playlist in simplified_playlists:
-            if "Albums" in simplified_playlist.name:
-                db_playlist = get_playlist_by_id_or_none(simplified_playlist.id)
-                if (
-                    db_playlist is None
-                    or db_playlist.snapshot_id != simplified_playlist.snapshot_id
-                ):
-                    if db_playlist is not None:
-                        delete_playlist(db_playlist.id)
-                    playlist = spotify.get_playlist(
-                        access_token=access_token, id=simplified_playlist.id
-                    )
-                    create_playlist(playlist, db_user)
+            with database.database.atomic():
+                if "Albums" in simplified_playlist.name:
+                    db_playlist = get_playlist_by_id_or_none(simplified_playlist.id)
+                    if (
+                        db_playlist is None
+                        or db_playlist.snapshot_id != simplified_playlist.snapshot_id
+                        or db_playlist.name.startswith("Best Albums")
+                    ):
+                        if db_playlist is not None:
+                            delete_playlist(db_playlist.id)
+                        playlist = spotify.get_playlist(
+                            access_token=access_token, id=simplified_playlist.id
+                        )
+                        create_playlist(playlist, db_user)
 
         return make_response("Playlist data populated", 201)
 
@@ -52,17 +58,18 @@ def database_controller(spotify: SpotifyClient, musicbrainz: MusicbrainzClient):
     def populate_additional_album_details():
         access_token = request.cookies.get("spotify_access_token")
         user = spotify.get_current_user(access_token)
-        albums = get_user_albums(user.id)
+        albums = get_user_albums_with_no_artists(user.id)
         batch_albums = split_list(albums, 20)
         for album_chunk in batch_albums:
             albums = spotify.get_multiple_albums(
                 access_token=access_token, ids=[album.id for album in album_chunk]
             )
             for db_album in albums:
-                db_album.genres = musicbrainz.get_album_genres(
-                    db_album.artists[0].name, db_album.name
-                )
-                update_album(db_album)
+                with database.database.atomic():
+                    db_album.genres = musicbrainz.get_album_genres(
+                        db_album.artists[0].name, db_album.name
+                    )
+                    update_album(db_album)
 
         return make_response("Playlist details populated", 201)
 

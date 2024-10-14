@@ -54,7 +54,9 @@ def create_app():
     app.register_blueprint(spotify_controller(spotify=spotify))
     app.register_blueprint(music_controller(spotify=spotify))
     app.register_blueprint(
-        database_controller(spotify=spotify, musicbrainz=musicbrainz)
+        database_controller(
+            spotify=spotify, musicbrainz=musicbrainz, database=db_wrapper
+        )
     )
 
     return app
