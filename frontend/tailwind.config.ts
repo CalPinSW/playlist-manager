@@ -80,7 +80,7 @@ const tailwindConfigModule = {
             lighter: "#3354e6",
             darker: "#ce4257",
           },
-          text: { primary: "#eae0d5" },
+          text: { primary: "#eae0d5", secondary: "#aeacb0" },
         },
       },
       { defaultTheme: { light: "light", dark: "dark" } }

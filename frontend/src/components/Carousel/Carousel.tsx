@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react'
+import React, { FC, ReactNode, useEffect } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 
 interface SlideProps {
@@ -13,10 +13,17 @@ const Slide: FC<SlideProps> = ({children}) => {
 interface CarouselProps {
     slides: ReactNode[]
     startIndex?: number
+    selectedIndex?: number
 }
 
-const Carousel: FC<CarouselProps> = ({slides, startIndex = 0}) => {
-  const [emblaRef] = useEmblaCarousel({skipSnaps: true, startIndex})
+const Carousel: FC<CarouselProps> = ({slides, startIndex = 0, selectedIndex}) => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({skipSnaps: true, startIndex})
+
+  useEffect(() => {
+    if (emblaApi && selectedIndex) {
+      emblaApi.scrollTo(selectedIndex)
+    }
+  }, [selectedIndex, emblaApi])
 
   return (
     <div className="overflow-hidden" ref={emblaRef}>

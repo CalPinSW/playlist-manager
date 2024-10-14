@@ -3,8 +3,9 @@ import { Album } from "../../interfaces/Album";
 import { AlbumContainer } from "./AlbumContainer";
 import { Playlist } from "../../interfaces/Playlist";
 import Carousel from "../../components/Carousel/Carousel";
-import Button from "../../components/Button";
-import { addAlbumToPlaylist, startPlayback } from "../../api";
+import AlbumInfo from "./AlbumInfo";
+import AlbumActions from "./AlbumActions";
+import Box from "../../components/Box";
 
 interface AlbumListProps {
   albumList: Album[];
@@ -27,44 +28,25 @@ export const AlbumList: FC<AlbumListProps> = ({
       setSelectedAlbum(album)
     }
   }
+  const selectedAlbumIndex = selectedAlbum ? albumList.findIndex((album) => album.id === selectedAlbum.id) : undefined;
 
   return (
     <div>
-      <Carousel startIndex={activeAlbumIndex != -1 ? activeAlbumIndex : 0} slides={albumList.map((album) => (
+      <Carousel startIndex={activeAlbumIndex != -1 ? activeAlbumIndex : 0} selectedIndex={selectedAlbumIndex} slides={albumList.map((album) => (
           <AlbumContainer
             album={album}
             key={album.id}
+            selected={album.id == selectedAlbum?.id}
             active={album.id == activeAlbumId}
             onClick={onAlbumClick}
           />
         )
       )}/>
       {selectedAlbum && 
-      <div className="flex"> 
-        <div className="flex flex-col">
-          <div>album: {selectedAlbum.name}</div>
-          <div>
-            artists: {selectedAlbum.artists.map((artist) => artist.name).join(", ")}
-          </div>
-          <div>genres: {selectedAlbum.genres}</div>
-          <div>label: {selectedAlbum.label}</div>
-        </div>
-        <div className="flex flex-col">
-        {associatedPlaylists.map((associatedPlaylist) => (
-          <Button
-            onClick={() => addAlbumToPlaylist(associatedPlaylist.id, selectedAlbum.id)}
-            key={associatedPlaylist.id}
-          >
-            Add to {associatedPlaylist.name}
-        </Button>
-        ))}
-        <Button
-            onClick={() => (startPlayback({context_uri: contextPlaylist.uri, offset: {album_id: selectedAlbum.id} }))}
-          >
-            Play Album
-          </Button>
-        </div>
-      </div>}
+      <Box className="flex flex-col my-2"> 
+        <AlbumInfo album={selectedAlbum} />
+        <AlbumActions album={selectedAlbum} associatedPlaylists={associatedPlaylists} contextPlaylist={contextPlaylist} />
+      </Box>}
     </div>
   );
   

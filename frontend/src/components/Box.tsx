@@ -5,7 +5,7 @@ const Box: FC<
 > = ({className, ...props}) => {
   return (
     <div
-      className={`p-2 rounded border-solid border border-background-offset ${className}`}
+      className={`p-2 rounded border-solid border-2 border-background-offset ${className}`}
       {...props}
     >
       {props.children}

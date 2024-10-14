@@ -1,8 +1,6 @@
 import React, { FC, useEffect, useState } from "react";
 import { Playlist } from "../interfaces/Playlist";
 import { Link, useLoaderData } from "react-router-dom";
-import Input from "../components/Input";
-import InputLabel from "../components/InputLabel";
 import Button from "../components/Button";
 import { Form, useForm } from "react-hook-form";
 import {
@@ -17,6 +15,7 @@ import { AlbumList } from "./AlbumList/AlbumList";
 import { TrackList } from "./TrackList/TrackList";
 import { usePlaybackContext } from "../hooks/usePlaybackContext";
 import { Track } from "../interfaces/Track";
+import InputWithLabelPlaceholder from "../components/Inputs/InputWithLabelPlaceholder";
 
 enum ViewMode {
   ALBUM = "album",
@@ -65,31 +64,26 @@ export const PlaylistExplorer: FC = () => {
 
   return (
     <div className="flex flex-col h-full space-y-1 ">
-      <div className="mx-2">
-        <h2 className="text-xl">Edit Playlist</h2>
-      </div>
-      <div className="mx-2 text-sm sm:text-base">
+      <div className="m-2 text-sm sm:text-base">
         <Form
           onSubmit={() => {
             updatePlaylist(getValues());
           }}
           control={control}
         >
-          <div className="flex flex-row justify-between sm:flex-col">
-            <InputLabel>Title:</InputLabel>
-            <Input
+          <div className="flex flex-col my-4 space-y-2">
+            <InputWithLabelPlaceholder
               register={register("name")}
               type="text"
               name="name"
+              placeholder={"Title"}
               defaultValue={playlist.name}
             />
-          </div>
-          <div className="flex flex-row justify-between sm:flex-col">
-            <InputLabel>Description:</InputLabel>
-            <Input
+            <InputWithLabelPlaceholder
               register={register("description")}
               type="text"
               name="description"
+              placeholder={"Description"}
               defaultValue={playlist.description}
             />
           </div>
@@ -103,9 +97,9 @@ export const PlaylistExplorer: FC = () => {
           </div>
         </Form>
         <>
-          <div className="mx-4 mt-2">
+          <div className=" mt-2">
             <button
-              className="border-solid rounded-md border border-primary-500 w-full flex justify-between"
+              className="border-solid rounded-md border border-primary-500 w-full flex justify-between overflow-hidden"
               disabled={!playlistAlbums}
               onClick={() => {
                 if (viewMode === ViewMode.ALBUM) {
@@ -116,18 +110,18 @@ export const PlaylistExplorer: FC = () => {
               }}
             >
               <h2
-                className={`p-2 flex grow ${
-                  viewMode === ViewMode.TRACK ? "bg-primary-darker" : ""
-                }`}
-              >
-                Track View
-              </h2>
-              <h2
                 className={`p-2 flex grow text-right ${
                   viewMode === ViewMode.ALBUM ? "bg-primary-darker" : ""
                 } ${!playlistAlbums ? "opacity-50 disabled" : ""}`}
               >
                 Album View
+              </h2>
+              <h2
+                className={`p-2 flex grow ${
+                  viewMode === ViewMode.TRACK ? "bg-primary-darker" : ""
+                }`}
+              >
+                Track View
               </h2>
             </button>
           </div>

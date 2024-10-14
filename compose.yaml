@@ -15,6 +15,9 @@ services:
                 - action: sync
                   path: ./frontend/src
                   target: /frontend/src
+                - action: sync
+                  path: ./frontend/public
+                  target: /frontend/public
 
     backend:
         image: backend:dev

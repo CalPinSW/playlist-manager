@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC } from "react";
 import { Album } from "../../interfaces/Album";
 import PlaylistIcon from "../../components/PlaylistIcon";
 import { RotatingBorderBox } from "../../components/RotatingBorderBox";
@@ -6,31 +6,31 @@ import { RotatingBorderBox } from "../../components/RotatingBorderBox";
 interface AlbumContainerProps {
   album: Album;
   onClick: (album: Album) => void;
+  selected: boolean;
   active?: boolean;
 }
 
 export const AlbumContainer: FC<AlbumContainerProps> = ({
   album,
   onClick,
+  selected,
   active,
 }) => {
-  const [showMoreInfo, setShowMoreInfo] = useState(false);
   return (
       <div
         className={`group max-h-40 max-w-40 [perspective:1000px]`}
         onClick={() => {
-          setShowMoreInfo((current) => !current);
           onClick(album)
         }}
       >
         <RotatingBorderBox active={active}>
           <div
             className={`m-1 relative transition-all duration-500 [transform-style:preserve-3d] ${
-              showMoreInfo && "[transform:rotateY(180deg)]"
+              selected && "[transform:rotateY(180deg)]"
             }`}
           >
-            <AlbumCover album={album} blur={showMoreInfo} />
-            {showMoreInfo && (
+            <AlbumCover album={album} blur={selected} />
+            {selected && (
               <div className="absolute top-0 [transform:rotateY(180deg)] [backface-visibility:hidden]">
                 <div className="flex flex-col space-y-2 m-2">
                   <div>{album.name}</div>
