@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, make_response, request
 from src.database.crud.playlist import (
+    create_playlist_album_relationship,
     get_playlist_albums_with_genres,
     get_playlist_by_id_or_none,
     get_playlist_duration,
@@ -111,6 +112,21 @@ def music_controller(spotify: SpotifyClient):
         user_id = request.cookies.get("user_id")
         search = request.json
         return search_playlist_names(user_id, search)
+
+    @music_controller.route("add_album_to_playlist", methods=["POST"])
+    def add_album_to_playlist():
+        access_token = request.cookies.get("spotify_access_token")
+        request_body = request.json
+        playlist_id = request_body["playlistId"]
+        album_id = request_body["albumId"]
+        if not playlist_id or not album_id:
+            return make_response(
+                "Invalid request payload. Expected playlistId and albumId.", 400
+            )
+        create_playlist_album_relationship(playlist_id=playlist_id, album_id=album_id)
+        return spotify.add_album_to_playlist(
+            access_token=access_token, playlist_id=playlist_id, album_id=album_id
+        )
 
     @music_controller.route("playback", methods=["GET"])
     def get_playback_info():

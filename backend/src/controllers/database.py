@@ -12,6 +12,7 @@ from src.database.crud.genre import create_genre
 from src.database.crud.playlist import (
     create_playlist,
     delete_playlist,
+    get_playlist_albums,
     get_playlist_by_id_or_none,
 )
 from src.database.crud.user import get_or_create_user
@@ -53,6 +54,31 @@ def database_controller(
                         create_playlist(playlist, db_user)
 
         return make_response("Playlist data populated", 201)
+
+    @database_controller.route("populate_playlist/<id>", methods=["GET"])
+    def populate_playlist(id):
+        access_token = request.cookies.get("spotify_access_token")
+        user = spotify.get_current_user(access_token)
+        (db_user, _) = get_or_create_user(user)
+        db_playlist = get_playlist_by_id_or_none(id)
+        if db_playlist is not None:
+            delete_playlist(db_playlist.id)
+        playlist = spotify.get_playlist(access_token=access_token, id=id)
+        create_playlist(playlist, db_user)
+        albums = get_playlist_albums(playlist.id)
+        batch_albums = split_list(albums, 20)
+        for album_chunk in batch_albums:
+            albums = spotify.get_multiple_albums(
+                access_token=access_token, ids=[album.id for album in album_chunk]
+            )
+            for db_album in albums:
+                with database.database.atomic():
+                    db_album.genres = musicbrainz.get_album_genres(
+                        db_album.artists[0].name, db_album.name
+                    )
+                    update_album(db_album)
+
+        return make_response("Playlist details populated", 201)
 
     @database_controller.route("populate_additional_album_details", methods=["GET"])
     def populate_additional_album_details():

@@ -162,6 +162,10 @@ export const populateAdditionalAlbumDetails = async (): Promise<Response> => {
 	return request('database/populate_additional_album_details', RequestMethod.GET)
 }
 
+export const populatePlaylist = async (id: string): Promise<Response> => {
+	return request(`database/populate_playlist/${id}`, RequestMethod.GET)
+}
+
 export const populateUniversalGenreList = async (): Promise<Response> => {
 	return request('database/populate_universal_genre_list', RequestMethod.GET)
 }

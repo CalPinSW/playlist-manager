@@ -326,3 +326,15 @@ def search_playlist_names(user_id: str, search: str) -> List[dict]:
     ]
 
     return result
+
+
+def create_playlist_album_relationship(playlist_id: str, album_id: str):
+    max_album_index = (
+        PlaylistAlbumRelationship.select(fn.MAX(PlaylistAlbumRelationship.album_index))
+        .where(PlaylistAlbumRelationship.playlist == playlist_id)
+        .scalar()
+    )
+    result = PlaylistAlbumRelationship.create(
+        playlist=playlist_id, album=album_id, album_index=max_album_index + 1
+    )
+    return

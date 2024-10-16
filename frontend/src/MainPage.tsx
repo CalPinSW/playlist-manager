@@ -31,22 +31,11 @@ export const Index: FC = () => {
     },
   });
 
-  const allQuery = useQuery<Playlist[]>({
-    queryKey: ["playlists", pagination, search],
-    queryFn: () => {
-      return getPlaylists(search, pagination.pageIndex, pagination.pageSize);
-    },
-  });
-
   return (
     <div className="py-4 px-2 space-y-2">
       <Box className="space-y-2">
         <SearchBar search={searchRecent} setSearch={setSearchRecent}/>
         <Carousel slides={(recentQuery.data ?? createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />  
-      </Box>
-      <Box className="space-y-2">
-      <SearchBar search={search} setSearch={setSearch}/>
-      <Carousel slides={(allQuery.data ??  createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />
       </Box>
       <Box>
         <AddPlaylistForm />

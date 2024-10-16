@@ -466,8 +466,8 @@ class SpotifyClient:
             auth=BearerAuth(access_token),
         )
         self.response_handler(response, jsonify=False)
-        if response.status_code == 200:
-            return make_response("Album successfully added to playlist", 200)
+        if response.status_code == 201:
+            return make_response("Album successfully added to playlist", 201)
         else:
             return make_response("Failed to add album to playlist", 400)
 
