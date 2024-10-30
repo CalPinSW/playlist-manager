@@ -1,6 +1,6 @@
 import React, { FC, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getPlaylists, getRecentPlaylists } from "./api";
+import { getRecentPlaylists, searchPlaylistsByAlbums } from "./api";
 import { Playlist } from "./interfaces/Playlist";
 import Box from "./components/Box";
 import AddPlaylistForm from "./AddPlaylistForm";
@@ -16,26 +16,36 @@ interface PaginationState {
 
 export const Index: FC = () => {
   const { isMobileView } = useWindowSize();
-  const [searchRecent, setSearchRecent] = useState<string>("")
-  const [search, setSearch] = useState<string>("")
+  const [playlistSearch, setPlaylistSearch] = useState<string>("")
+  const [albumSearch, setAlbumSearch] = useState<string>("")
   const [pagination, ] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: isMobileView ? 8 : 8,
   });
 
-
-  const recentQuery = useQuery<Playlist[]>({
-    queryKey: ["playlists", pagination, search],
+  const playlistQuery = useQuery<Playlist[]>({
+    queryKey: ["playlists", pagination, playlistSearch],
     queryFn: () => {
-      return getRecentPlaylists(search, pagination.pageIndex, pagination.pageSize);
+      return getRecentPlaylists(playlistSearch, pagination.pageIndex, pagination.pageSize);
+    },
+  });
+
+  const albumQuery = useQuery<Playlist[]>({
+    queryKey: ["albums", pagination, albumSearch],
+    queryFn: () => {
+      return searchPlaylistsByAlbums(albumSearch, pagination.pageIndex, pagination.pageSize);
     },
   });
 
   return (
     <div className="py-4 px-2 space-y-2">
       <Box className="space-y-2">
-        <SearchBar search={searchRecent} setSearch={setSearchRecent}/>
-        <Carousel slides={(recentQuery.data ?? createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />  
+        <SearchBar search={playlistSearch} setSearch={setPlaylistSearch}/>
+        <Carousel slides={(playlistQuery.data ?? createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />  
+      </Box>
+      <Box className="space-y-2">
+        <SearchBar search={albumSearch} setSearch={setAlbumSearch}/>
+        <Carousel slides={(albumQuery.data ?? createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />  
       </Box>
       <Box>
         <AddPlaylistForm />
