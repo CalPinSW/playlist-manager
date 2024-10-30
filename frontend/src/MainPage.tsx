@@ -1,14 +1,13 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getPlaylists } from "./api";
+import { getPlaylists, getRecentPlaylists } from "./api";
 import { Playlist } from "./interfaces/Playlist";
-import PlaylistTable from "./playlistTable/PlaylistTable";
 import Box from "./components/Box";
 import AddPlaylistForm from "./AddPlaylistForm";
-import { GoArrowLeft, GoArrowRight } from "react-icons/go";
-import CustomButton from "./components/Button";
-import PlaybackFooter from "./presentational/PlaybackFooter";
 import useWindowSize from "./hooks/useWindowSize";
+import SearchBar from "./components/SearchBar";
+import Carousel from "./components/Carousel/Carousel";
+import PlaylistSlide from "./components/Playlist/PlaylistSlide";
 
 interface PaginationState {
   pageIndex: number;
@@ -17,62 +16,26 @@ interface PaginationState {
 
 export const Index: FC = () => {
   const { isMobileView } = useWindowSize();
-
-  const [pagination, setPagination] = useState<PaginationState>({
+  const [searchRecent, setSearchRecent] = useState<string>("")
+  const [search, setSearch] = useState<string>("")
+  const [pagination, ] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: isMobileView ? 5 : 8,
+    pageSize: isMobileView ? 8 : 8,
   });
 
-  useEffect(() => {
-    const previousIndex = pagination.pageSize * pagination.pageIndex;
-    const pageSize = isMobileView ? 8 : 8;
-    const newIndex = Math.floor(previousIndex / pageSize);
 
-    setPagination({
-      pageIndex: newIndex,
-      pageSize: pageSize,
-    });
-  }, [isMobileView]);
-
-  const onClickNext = () => {
-    setPagination((state) => ({
-      pageSize: state.pageSize,
-      pageIndex: state.pageIndex + state.pageSize,
-    }));
-  };
-
-  const onClickPrevious = () => {
-    setPagination((state) => ({
-      pageSize: state.pageSize,
-      pageIndex: Math.max(state.pageIndex - state.pageSize, 0),
-    }));
-  };
-  const { isLoading, error, data } = useQuery<Playlist[]>({
-    queryKey: ["playlists", pagination],
+  const recentQuery = useQuery<Playlist[]>({
+    queryKey: ["playlists", pagination, search],
     queryFn: () => {
-      return getPlaylists(pagination.pageIndex, pagination.pageSize);
+      return getRecentPlaylists(search, pagination.pageIndex, pagination.pageSize);
     },
   });
 
-  if (isLoading || !data) return "Loading...";
-
-  if (error) return "An error has occurred: " + error.message;
-
   return (
     <div className="py-4 px-2 space-y-2">
-      <Box>
-        <PlaylistTable playlists={data} />
-        <div className="flex justify-between">
-          <CustomButton className="flex space-x-2" onClick={onClickPrevious}>
-            <GoArrowLeft className="my-auto" />
-            <div>Previous</div>
-          </CustomButton>
-
-          <CustomButton className="flex space-x-2" onClick={onClickNext}>
-            <GoArrowRight className="my-auto" />
-            <div>Next</div>
-          </CustomButton>
-        </div>
+      <Box className="space-y-2">
+        <SearchBar search={searchRecent} setSearch={setSearchRecent}/>
+        <Carousel slides={(recentQuery.data ?? createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />  
       </Box>
       <Box>
         <AddPlaylistForm />
@@ -80,3 +43,7 @@ export const Index: FC = () => {
     </div>
   );
 };
+
+const createUndefinedArray = (length: number): undefined[] =>{
+  return Array.from({ length }, () => undefined);
+}

@@ -5,6 +5,7 @@ import Layout from "./presentational/Layout";
 import { getPlaylist } from "./api";
 import { Login } from "./Login";
 import { Index } from "./MainPage";
+import { SettingsPage } from "./settingsPage/SettingsPage";
 
 const router = createBrowserRouter([
   {
@@ -13,6 +14,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Index /> },
       { path: "/login", element: <Login /> },
+      { path: "/settings", element: <SettingsPage /> },
       {
         path: "/edit/:playlistId",
         element: <PlaylistExplorer />,

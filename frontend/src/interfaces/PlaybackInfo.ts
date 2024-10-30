@@ -3,7 +3,6 @@ export interface PlaybackInfo {
   track_id: string;
   album_title: string;
   album_id: string;
-  playlist_id?: string;
   track_artists: string[];
   album_artists: string[];
   artwork_url: string;
@@ -12,11 +11,12 @@ export interface PlaybackInfo {
   album_progress: number;
   album_duration: number;
   is_playing: boolean;
+  playlist?: PlaylistProgress
 }
 
 export interface PlaylistProgress {
-  playlist_id: string;
-  playlist_title: string;
-  playlist_progress: number;
-  playlist_duration: number;
+  id: string;
+  title: string;
+  progress: number;
+  duration: number;
 }

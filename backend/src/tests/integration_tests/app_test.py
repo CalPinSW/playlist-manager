@@ -24,6 +24,7 @@ def client():
         yield client
 
 
+@pytest.mark.skip(reason="Need to implement integration test database")
 def test_index_page(monkeypatch, client):
     # This replaces any call to requests.get with our own function
     monkeypatch.setattr(requests, "get", stub)

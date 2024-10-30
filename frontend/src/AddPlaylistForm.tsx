@@ -1,6 +1,6 @@
 import React, { FC } from "react";
-import Input from "./components/Input";
-import InputLabel from "./components/InputLabel";
+import Input from "./components/Inputs/Input";
+import InputLabel from "./components/Inputs/InputLabel";
 import Button from "./components/Button";
 import { Form, useForm } from "react-hook-form";
 import { addPlaylist } from "./api";

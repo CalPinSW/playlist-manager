@@ -1,8 +1,11 @@
 import json
+from time import sleep
 import requests
 import os
+import urllib.parse
 from typing import List, Optional
 from flask import Response, make_response, redirect
+from src.database.crud.album import get_album_genres
 from src.dataclasses.album import Album
 from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
 from src.dataclasses.playback_request import (
@@ -56,6 +59,7 @@ class SpotifyClient:
 
     def response_handler(self, response: requests.Response, jsonify=True):
         if response.status_code == 401:
+            print(response.reason)
             raise UnauthorizedException
         else:
             if jsonify:
@@ -146,7 +150,7 @@ class SpotifyClient:
         playlists = CurrentUserPlaylists.model_validate(api_playlists)
         return playlists
 
-    def get_all_playlists(self, user_id, access_token):
+    def get_all_playlists(self, user_id, access_token) -> List[SimplifiedPlaylist]:
         playlists: List[SimplifiedPlaylist] = []
         offset = 0
         limit = 50
@@ -162,15 +166,16 @@ class SpotifyClient:
                 access_token=access_token, user_id=user_id, limit=limit, offset=offset
             )
 
-    def find_associated_playlists(self, user_id, access_token, playlist: Playlist):
-        user_playlists = self.get_all_playlists(
-            user_id=user_id, access_token=access_token
-        )
+    def find_associated_playlists(self, user_id, access_token, playlist_id: str):
+        [playlist_name, user_playlists] = [
+            self.get_playlist(access_token=access_token, id=playlist_id).name,
+            self.get_all_playlists(user_id=user_id, access_token=access_token),
+        ]
         associated_playlists = [
             matchingPlaylist
             for matchingPlaylist in user_playlists
-            if matchingPlaylist.name[-8:] == playlist.name[-8:]
-            and matchingPlaylist.name != playlist.name
+            if matchingPlaylist.name[-8:] == playlist_name[-8:]
+            and matchingPlaylist.name != playlist_name
         ]
         return associated_playlists
 
@@ -262,6 +267,8 @@ class SpotifyClient:
         for track in playlist_tracks:
             if track.track.album not in playlist_albums:
                 playlist_albums.append(track.track.album)
+        for album in playlist_albums:
+            album.genres = [genre.name for genre in get_album_genres(album.id)]
         return playlist_albums
 
     def get_playlist_tracks(self, access_token, id: str):
@@ -272,6 +279,7 @@ class SpotifyClient:
             access_token=access_token, id=id, limit=limit, offset=offset
         )
         while True:
+            sleep(0.5)
             playlist_tracks += api_tracks_object.items
             if not api_tracks_object.next:
                 return playlist_tracks
@@ -291,6 +299,19 @@ class SpotifyClient:
         api_album = self.response_handler(response)
         album = Album.model_validate(api_album)
         return album
+
+    def get_multiple_albums(self, access_token, ids: List[str]) -> List[Album]:
+        encoded_ids = urllib.parse.quote_plus(",".join(ids))
+        response = requests.get(
+            f"https://api.spotify.com/v1/albums?ids={encoded_ids}",
+            headers={
+                "content-type": "application/json",
+            },
+            auth=BearerAuth(access_token),
+        )
+        api_albums = self.response_handler(response)
+        albums = [Album.model_validate(api_album) for api_album in api_albums["albums"]]
+        return albums
 
     def get_current_playback(self, access_token) -> PlaybackState | None:
         response = requests.get(
@@ -445,8 +466,8 @@ class SpotifyClient:
             auth=BearerAuth(access_token),
         )
         self.response_handler(response, jsonify=False)
-        if response.status_code == 200:
-            return make_response("Album successfully added to playlist", 200)
+        if response.status_code == 201:
+            return make_response("Album successfully added to playlist", 201)
         else:
             return make_response("Failed to add album to playlist", 400)
 

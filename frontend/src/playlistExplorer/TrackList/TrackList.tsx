@@ -1,12 +1,12 @@
 import React, { FC } from "react";
-import { PlaylistTrack } from "../../interfaces/Playlist";
 import { TrackContainer } from "./TrackContainer";
 import Box from "../../components/Box";
 import SongIcon from "../../components/SongIcon";
 import ArtistIcon from "../../components/ArtistIcon";
+import { Track } from "../../interfaces/Track";
 
 interface TrackListProps {
-	trackList: PlaylistTrack[];
+	trackList: Track[];
 	activeTrackId?: string;
 }
 export const TrackList: FC<TrackListProps> = ({ trackList, activeTrackId }) => {
@@ -25,9 +25,9 @@ export const TrackList: FC<TrackListProps> = ({ trackList, activeTrackId }) => {
 					{trackList.map((track, index) => (
 						<TrackContainer
 							index={index + 1}
-							track={track.track}
-							key={track.track.id}
-							active={track.track.id == activeTrackId}
+							track={track}
+							key={track.id}
+							active={track.id == activeTrackId}
 						/>
 					))}
 				</div>
