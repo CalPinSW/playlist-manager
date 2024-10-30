@@ -12,7 +12,6 @@ from src.database.crud.playlist import (
     search_playlists_by_albums,
     update_playlist_info,
 )
-from src.dataclasses.playlist import Playlist
 from src.spotify import SpotifyClient
 
 
@@ -78,11 +77,11 @@ def music_controller(spotify: SpotifyClient):
     def get_playlist(id):
         db_playlist = get_playlist_by_id_or_none(id)
         if db_playlist is not None:
-            return db_playlist.__data__
+            return make_response(jsonify(db_playlist.__data__), 200)
         else:
             access_token = request.cookies.get("spotify_access_token")
             playlist = spotify.get_playlist(access_token=access_token, id=id)
-            return playlist.model_dump()
+            return make_response(jsonify(playlist.to_dict()), 200)
 
     @music_controller.route("playlist/<id>", methods=["POST"])
     def post_edit_playlist(id):
@@ -156,24 +155,26 @@ def music_controller(spotify: SpotifyClient):
         if playback_info is None:
             return ("", 204)
         if playback_info.playlist_id is not None:
-            playlist_name = get_playlist_by_id_or_none(playback_info.playlist_id).name
-            playlist_duration = get_playlist_duration(playback_info.playlist_id)
-            playlist_progress = (
-                get_playlist_duration_up_to_track(
-                    playback_info.playlist_id, playback_info.track_id
+            playlist_info = get_playlist_by_id_or_none(playback_info.playlist_id)
+            if playlist_info:
+                playlist_name = playlist_info.name
+                playlist_duration = get_playlist_duration(playback_info.playlist_id)
+                playlist_progress = (
+                    get_playlist_duration_up_to_track(
+                        playback_info.playlist_id, playback_info.track_id
+                    )
+                    + playback_info.track_progress
                 )
-                + playback_info.track_progress
-            )
 
-            playback_info_with_playlist = playback_info.model_dump()
-            playback_info_with_playlist["playlist"] = {
-                "id": playback_info.playlist_id,
-                "title": playlist_name,
-                "progress": playlist_progress,
-                "duration": playlist_duration,
-            }
-            return playback_info_with_playlist
+                playback_info_with_playlist = playback_info.model_dump()
+                playback_info_with_playlist["playlist"] = {
+                    "id": playback_info.playlist_id,
+                    "title": playlist_name,
+                    "progress": playlist_progress,
+                    "duration": playlist_duration,
+                }
+                return playback_info_with_playlist
 
-        return playback_info.model_dump_json()
+            return playback_info.model_dump_json()
 
     return music_controller

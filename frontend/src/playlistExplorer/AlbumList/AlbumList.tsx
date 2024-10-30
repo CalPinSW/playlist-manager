@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import { Album } from "../../interfaces/Album";
 import { AlbumContainer } from "./AlbumContainer";
 import { Playlist } from "../../interfaces/Playlist";
@@ -29,6 +29,12 @@ export const AlbumList: FC<AlbumListProps> = ({
     }
   }
   const selectedAlbumIndex = selectedAlbum ? albumList.findIndex((album) => album.id === selectedAlbum.id) : undefined;
+  const albumInfoRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (selectedAlbum && albumInfoRef.current) {
+      albumInfoRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedAlbum]);
 
   return (
     <div>
@@ -43,9 +49,11 @@ export const AlbumList: FC<AlbumListProps> = ({
         )
       )}/>
       {selectedAlbum && 
-      <Box className="flex flex-col my-2"> 
-        <AlbumInfo album={selectedAlbum} />
-        <AlbumActions album={selectedAlbum} associatedPlaylists={associatedPlaylists} contextPlaylist={contextPlaylist} />
+      <Box className="my-2" > 
+        <div ref={albumInfoRef}>
+          <AlbumInfo album={selectedAlbum} />
+          <AlbumActions album={selectedAlbum} associatedPlaylists={associatedPlaylists} contextPlaylist={contextPlaylist} />
+        </div>
       </Box>}
     </div>
   );

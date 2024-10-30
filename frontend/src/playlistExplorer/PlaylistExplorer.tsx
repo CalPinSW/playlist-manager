@@ -65,7 +65,7 @@ export const PlaylistExplorer: FC = () => {
   const { playbackInfo } = usePlaybackContext();
 
   return (
-    <div className="m-2 text-sm sm:text-base space-y-4">
+    <div className="p-2 text-sm sm:text-base space-y-4">
       <Form
         onSubmit={() => {
           updatePlaylist(getValues());

@@ -17,7 +17,7 @@ const PlaybackFooter: FC = () => {
   }
 
   return (
-    <div className="w-full h-fit absolute bottom-0 bg-background-offset px-4 py-2 text-sm sm:text-base">
+    <div className="flex-shrink-0 w-full h-fit bg-background-offset px-4 py-2 text-sm sm:text-base">
       <div className="flex space-x-4 sm:space-x-6">
         <div className="flex flex-col space-y-2 w-1/5 max-w-32">
           <button className="opacity-80 w-full h-full" onClick={handlePausePlayClick}>

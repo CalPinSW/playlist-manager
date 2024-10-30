@@ -5,9 +5,9 @@ import Header from "./Header/Header";
 
 const Layout = () => {
   return (
-    <div className="text-text-primary bg-background flex flex-col h-full w-full flex-nowrap overflow-none">
+    <div className="flex flex-col h-screen w-screen text-text-primary bg-background  ">
       <Header />
-      <div className="h-fit overflow-y-scroll inline-block">
+      <div className="flex-grow overflow-y-scroll">
         <Outlet />
       </div>
       <PlaybackFooter />
