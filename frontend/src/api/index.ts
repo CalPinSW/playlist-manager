@@ -40,6 +40,20 @@ export const getCurrentUserDetails = async (): Promise<User> => {
 	);
 };
 
+export const searchPlaylistsByAlbums = async (
+	search: string,
+	offset: number,
+	limit: number,
+): Promise<Playlist[]> => {
+	const searchParams = new URLSearchParams();
+	searchParams.append("limit", String(limit));
+	searchParams.append("offset", String(offset));
+	if (search !== "") {searchParams.append("search", search);}
+	searchParams.toString(); 
+	const endpoint = `music/playlist_album_search?${searchParams.toString()}`;
+	return jsonRequest(endpoint, RequestMethod.GET);
+};
+
 export const getRecentPlaylists = async (
 	search: string,
 	offset: number,
@@ -49,7 +63,7 @@ export const getRecentPlaylists = async (
 	searchParams.append("limit", String(limit));
 	searchParams.append("offset", String(offset));
 	if (search !== "") {searchParams.append("search", search);}
-	searchParams.toString(); // "type=all&query=coins"
+	searchParams.toString();
 	const endpoint = `music/playlists/recent?${searchParams.toString()}`;
 	return jsonRequest(endpoint, RequestMethod.GET);
 };

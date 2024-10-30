@@ -9,6 +9,7 @@ from src.database.crud.playlist import (
     get_recent_user_playlists,
     get_user_playlists,
     search_playlist_names,
+    search_playlists_by_albums,
     update_playlist_info,
 )
 from src.dataclasses.playlist import Playlist
@@ -19,6 +20,26 @@ def music_controller(spotify: SpotifyClient):
     music_controller = Blueprint(
         name="music_controller", import_name=__name__, url_prefix="/music"
     )
+
+    @music_controller.route("playlist_album_search")
+    def album_search():
+        user_id = request.cookies.get("user_id")
+        limit = request.args.get("limit", type=int)
+        offset = request.args.get("offset", type=int)
+        search = request.args.get("search")
+        sort_by = request.args.get("sort_by")
+        desc = request.args.get("desc") == "True"
+        return jsonify(
+            search_playlists_by_albums(
+                user_id=user_id,
+                limit=limit,
+                offset=offset,
+                search=search,
+                sort_by=sort_by,
+                desc=desc,
+                as_dicts=True,
+            )
+        )
 
     @music_controller.route("playlists")
     def index():

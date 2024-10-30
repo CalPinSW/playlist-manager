@@ -155,6 +155,55 @@ def get_recent_user_playlists(
     return playlists
 
 
+def search_playlists_by_albums(
+    user_id: str,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+    search: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    desc: bool = True,
+    as_dicts: bool = False,
+) -> List[DbPlaylist]:
+    # Subquery to find albums where the album name or artist name contains the search query
+    albums_with_artists_query = (
+        DbAlbum.select(DbAlbum.id).join(AlbumArtistRelationship).join(DbArtist)
+    )
+
+    if search:
+        albums_with_artists_query = albums_with_artists_query.where(
+            (DbAlbum.name.contains(search)) | (DbArtist.name.contains(search))
+        )
+
+    # Query to find playlists containing the matching albums
+    playlists_with_albums_query = (
+        DbPlaylist.select(DbPlaylist)
+        .join(PlaylistAlbumRelationship)
+        .join(DbAlbum)
+        .where(DbAlbum.id.in_(albums_with_artists_query))
+    )
+
+    if sort_by:
+        sort_field = getattr(DbPlaylist, sort_by)
+        if desc:
+            playlists_with_albums_query = playlists_with_albums_query.order_by(
+                sort_field.desc()
+            )
+        else:
+            playlists_with_albums_query = playlists_with_albums_query.order_by(
+                sort_field.asc()
+            )
+
+    if limit is not None:
+        playlists_with_albums_query = playlists_with_albums_query.limit(limit)
+    if offset is not None:
+        playlists_with_albums_query = playlists_with_albums_query.offset(offset)
+
+    if as_dicts:
+        return list(playlists_with_albums_query.dicts())
+    else:
+        return list(playlists_with_albums_query.execute())
+
+
 def get_playlist_albums(playlist_id: str) -> List[DbAlbum]:
     query = (
         DbAlbum.select()
