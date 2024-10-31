@@ -1,12 +1,9 @@
 from peewee import (
-    PostgresqlDatabase,
-    Model,
     CharField,
     IntegerField,
     DateField,
     ForeignKeyField,
 )
-from src.flask_config import Config
 from playhouse.flask_utils import FlaskDB
 
 db_wrapper = FlaskDB()
@@ -116,3 +113,14 @@ class TrackArtistRelationship(db_wrapper.Model):
 
     class Meta:
         indexes = ((("track", "artist"), True),)
+
+
+class DbAccessToken(db_wrapper.Model):
+    user = ForeignKeyField(
+        DbUser, backref="owner", to_field="id", on_delete="CASCADE", unique=True
+    )
+    access_token = CharField(max_length=400)
+    refresh_token = CharField(max_length=200)
+
+    class Meta:
+        db_table = "access_token"

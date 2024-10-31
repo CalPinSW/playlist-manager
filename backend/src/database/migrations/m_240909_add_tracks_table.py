@@ -1,13 +1,13 @@
 from src.database.models import (
     DbTrack,
     TrackArtistRelationship,
-    database,
+    db_wrapper,
 )
 
 
 def up():
-    with database:
-        database.create_tables(
+    with db_wrapper.database:
+        db_wrapper.database.create_tables(
             [
                 DbTrack,
                 TrackArtistRelationship,
@@ -16,8 +16,8 @@ def up():
 
 
 def down():
-    with database:
-        database.drop_tables(
+    with db_wrapper.database:
+        db_wrapper.database.drop_tables(
             [
                 DbTrack,
                 TrackArtistRelationship,

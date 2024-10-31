@@ -7,13 +7,13 @@ from src.database.models import (
     DbPlaylist,
     PlaylistAlbumRelationship,
     DbUser,
-    database,
+    db_wrapper,
 )
 
 
 def up():
-    with database:
-        database.create_tables(
+    with db_wrapper.database:
+        db_wrapper.database.create_tables(
             [
                 DbUser,
                 DbPlaylist,
@@ -28,8 +28,8 @@ def up():
 
 
 def down():
-    with database:
-        database.drop_tables(
+    with db_wrapper.database:
+        db_wrapper.database.drop_tables(
             [
                 DbUser,
                 DbPlaylist,

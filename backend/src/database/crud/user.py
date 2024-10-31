@@ -1,9 +1,9 @@
-from src.database.models import DbUser
+from src.database.models import DbAccessToken, DbUser
 from src.dataclasses.user import User
 
 
 def get_user_by_id(id: str):
-    return DbUser.get(
+    return DbUser.get_or_none(
         DbUser.id == id,
     )
 
@@ -26,3 +26,15 @@ def get_or_create_user(user: User):
             "uri": user.uri,
         },
     )
+
+
+def upsert_user_tokens(user_id: str, access_token: str, refresh_token: str):
+    DbAccessToken.insert(
+        user=user_id, access_token=access_token, refresh_token=refresh_token
+    ).on_conflict(
+        conflict_target=[DbAccessToken.user],
+        update={
+            DbAccessToken.access_token: access_token,
+            DbAccessToken.refresh_token: refresh_token,
+        },
+    ).execute()

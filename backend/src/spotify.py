@@ -6,6 +6,7 @@ import urllib.parse
 from typing import List, Optional
 from flask import Response, make_response, redirect
 from src.database.crud.album import get_album_genres
+from src.database.crud.user import upsert_user_tokens
 from src.dataclasses.album import Album
 from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
 from src.dataclasses.playback_request import (
@@ -102,6 +103,11 @@ class SpotifyClient:
         token_response = TokenResponse.model_validate(api_response)
         access_token = token_response.access_token
         user_info = self.get_current_user(access_token)
+        upsert_user_tokens(
+            user_info.id,
+            access_token=token_response.access_token,
+            refresh_token=token_response.refresh_token,
+        )
         resp = add_cookies_to_response(
             make_response(),
             {"spotify_access_token": access_token, "user_id": user_info.id},
@@ -123,12 +129,16 @@ class SpotifyClient:
         )
         api_response = self.response_handler(response)
         token_response = TokenResponse.model_validate(api_response)
-        access_token = token_response.access_token
-        user_info = self.get_current_user(access_token)
+        user_info = self.get_current_user(token_response.access_token)
+        upsert_user_tokens(
+            user_info.id,
+            access_token=token_response.access_token,
+            refresh_token=token_response.refresh_token,
+        )
         resp = add_cookies_to_response(
             make_response(redirect(f"{Config().FRONTEND_URL}/")),
             {
-                "spotify_access_token": access_token,
+                "spotify_access_token": token_response.access_token,
                 "spotify_refresh_token": token_response.refresh_token,
                 "user_id": user_info.id,
             },
