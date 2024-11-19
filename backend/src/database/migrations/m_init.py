@@ -7,8 +7,8 @@ from src.database.models import (
     DbPlaylist,
     PlaylistAlbumRelationship,
     DbUser,
-    database,
 )
+from src.database.migrations.setup import database
 
 
 def up():

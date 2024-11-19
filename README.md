@@ -78,3 +78,12 @@ The frontend and backend applications are deployed to two Azure Web Applications
 3. Sending a curl request to the appropriate Webhook url:
     - Frontend: `curl -dH -X POST "Frontend Webhook from Azure"`
     - Backend: `curl -dH -X POST "Backend Webhook from Azure"`
+
+
+## Database Migrations
+
+Database migrations can be run with the following steps:
+1. Navigate to the /backend folder.
+3. Run Python locally (e.g. `python3`). 
+4. From the Python terminal import the migration functions you wish to run. (e.g. `from src.database.migrations.m_241030_add_access_tokens_table import up, down`).
+5. Running the desired migration (e.g. `up()`).

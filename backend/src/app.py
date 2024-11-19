@@ -1,4 +1,4 @@
-from flask import Flask, make_response
+from flask import Flask, redirect
 from flask_cors import CORS
 from src.controllers.database import database_controller
 from src.controllers.spotify import spotify_controller
@@ -43,11 +43,7 @@ def create_app():
 
     @app.errorhandler(UnauthorizedException)
     def handle_unauthorized_exception(_):
-        resp = make_response(
-            "Spotify access token invalid or missing. Please re-authenticate.", 401
-        )
-        resp.delete_cookie("spotify_access_token")
-        resp.delete_cookie("user_id")
+        resp = redirect("/login", 401)
         return resp
 
     app.register_blueprint(auth_controller(spotify=spotify))

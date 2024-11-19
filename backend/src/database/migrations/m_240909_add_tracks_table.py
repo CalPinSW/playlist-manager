@@ -1,8 +1,8 @@
 from src.database.models import (
     DbTrack,
     TrackArtistRelationship,
-    database,
 )
+from src.database.migrations.setup import database
 
 
 def up():

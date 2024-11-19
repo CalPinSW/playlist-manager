@@ -3,9 +3,11 @@ from time import sleep
 import requests
 import os
 import urllib.parse
+from tenacity import RetryError, Retrying, stop_after_attempt, wait_fixed
 from typing import List, Optional
 from flask import Response, make_response, redirect
 from src.database.crud.album import get_album_genres
+from src.database.crud.user import get_user_tokens, upsert_user_tokens
 from src.dataclasses.album import Album
 from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
 from src.dataclasses.playback_request import (
@@ -59,7 +61,6 @@ class SpotifyClient:
 
     def response_handler(self, response: requests.Response, jsonify=True):
         if response.status_code == 401:
-            print(response.reason)
             raise UnauthorizedException
         else:
             if jsonify:
@@ -81,7 +82,8 @@ class SpotifyClient:
             }
         )
 
-    def refresh_access_token(self, refresh_token):
+    def refresh_access_token(self, user_id):
+        refresh_token = get_user_tokens(user_id).refresh_token
         if not refresh_token:
             raise UnauthorizedException
         response = requests.post(
@@ -101,12 +103,17 @@ class SpotifyClient:
         api_response = self.response_handler(response)
         token_response = TokenResponse.model_validate(api_response)
         access_token = token_response.access_token
-        user_info = self.get_current_user(access_token)
-        resp = add_cookies_to_response(
-            make_response(),
-            {"spotify_access_token": access_token, "user_id": user_info.id},
+        refresh_token = (
+            refresh_token
+            if token_response.refresh_token is None
+            else token_response.refresh_token
         )
-        return resp
+        upsert_user_tokens(
+            user_id=user_id,
+            access_token=token_response.access_token,
+            refresh_token=refresh_token,
+        )
+        return (user_id, access_token, refresh_token)
 
     def request_access_token(self, code):
         response = requests.post(
@@ -123,53 +130,60 @@ class SpotifyClient:
         )
         api_response = self.response_handler(response)
         token_response = TokenResponse.model_validate(api_response)
-        access_token = token_response.access_token
-        user_info = self.get_current_user(access_token)
+        user_info = self.get_current_user(token_response.access_token)
+        upsert_user_tokens(
+            user_info.id,
+            access_token=token_response.access_token,
+            refresh_token=token_response.refresh_token,
+        )
         resp = add_cookies_to_response(
             make_response(redirect(f"{Config().FRONTEND_URL}/")),
             {
-                "spotify_access_token": access_token,
-                "spotify_refresh_token": token_response.refresh_token,
                 "user_id": user_info.id,
             },
         )
         return resp
 
-    def get_playlists(
-        self, user_id, access_token, limit=10, offset=0
-    ) -> CurrentUserPlaylists:
-        response = requests.get(
-            url=f"https://api.spotify.com/v1/users/{user_id}/playlists",
-            params={
-                "limit": limit,
-                "offset": offset,
-            },
-            auth=BearerAuth(access_token),
-        )
-        api_playlists = self.response_handler(response)
+    def get_playlists(self, user_id, limit=10, offset=0) -> CurrentUserPlaylists:
+        try:
+            for attempt in Retrying(
+                wait=wait_fixed(2),
+                after=self.refresh_user_access_tokens(user_id=user_id),
+            ):
+                with attempt:
+                    access_token = get_user_tokens(user_id=user_id).access_token
+                    response = requests.get(
+                        url=f"https://api.spotify.com/v1/users/{user_id}/playlists",
+                        params={
+                            "limit": limit,
+                            "offset": offset,
+                        },
+                        auth=BearerAuth(access_token),
+                    )
+                    api_playlists = self.response_handler(response)
+        except RetryError:
+            pass
         playlists = CurrentUserPlaylists.model_validate(api_playlists)
         return playlists
 
-    def get_all_playlists(self, user_id, access_token) -> List[SimplifiedPlaylist]:
+    def get_all_playlists(self, user_id) -> List[SimplifiedPlaylist]:
         playlists: List[SimplifiedPlaylist] = []
         offset = 0
         limit = 50
-        api_playlists = self.get_playlists(
-            access_token=access_token, user_id=user_id, limit=limit, offset=offset
-        )
+        api_playlists = self.get_playlists(user_id=user_id, limit=limit, offset=offset)
         while True:
             playlists += api_playlists.items
             if not api_playlists.next:
                 return playlists
             offset += limit
             api_playlists = self.get_playlists(
-                access_token=access_token, user_id=user_id, limit=limit, offset=offset
+                user_id=user_id, limit=limit, offset=offset
             )
 
-    def find_associated_playlists(self, user_id, access_token, playlist_id: str):
+    def find_associated_playlists(self, user_id, playlist_id: str):
         [playlist_name, user_playlists] = [
-            self.get_playlist(access_token=access_token, id=playlist_id).name,
-            self.get_all_playlists(user_id=user_id, access_token=access_token),
+            self.get_playlist(id=playlist_id, user_id=user_id).name,
+            self.get_all_playlists(user_id=user_id),
         ]
         associated_playlists = [
             matchingPlaylist
@@ -178,6 +192,25 @@ class SpotifyClient:
             and matchingPlaylist.name != playlist_name
         ]
         return associated_playlists
+
+    def get_user_by_id(self, user_id):
+        try:
+            for attempt in Retrying(
+                wait=wait_fixed(1),
+                after=self.refresh_user_access_tokens(user_id=user_id),
+                stop=stop_after_attempt(2),
+            ):
+                access_token = get_user_tokens(user_id=user_id).access_token
+                with attempt:
+                    response = requests.get(
+                        url="https://api.spotify.com/v1/me",
+                        auth=BearerAuth(access_token),
+                    )
+                    api_current_user = self.response_handler(response)
+                    current_user = User.model_validate(api_current_user)
+        except RetryError:
+            pass
+        return current_user
 
     def get_current_user(self, access_token):
         response = requests.get(
@@ -188,28 +221,38 @@ class SpotifyClient:
         current_user = User.model_validate(api_current_user)
         return current_user
 
-    def get_playlist(self, access_token, id: str, fields=None):
-        response = requests.get(
-            url=f"https://api.spotify.com/v1/playlists/{id}",
-            params={
-                "playlist_id": id,
-                "fields": fields,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            auth=BearerAuth(access_token),
-        )
-        api_playlist = self.response_handler(response)
+    def get_playlist(self, user_id, id: str, fields=None):
+        try:
+            for attempt in Retrying(
+                wait=wait_fixed(2),
+                after=self.refresh_user_access_tokens(user_id=user_id),
+            ):
+                with attempt:
+                    access_token = get_user_tokens(user_id=user_id).access_token
+                    response = requests.get(
+                        url=f"https://api.spotify.com/v1/playlists/{id}",
+                        params={
+                            "playlist_id": id,
+                            "fields": fields,
+                        },
+                        headers={
+                            "content-type": "application/json",
+                        },
+                        auth=BearerAuth(access_token),
+                    )
+                    api_playlist = self.response_handler(response)
+        except RetryError:
+            pass
         playlist = Playlist.model_validate(api_playlist)
         if playlist.tracks.next:
             playlist.tracks.items = self.get_playlist_tracks(
-                access_token=access_token, id=playlist.id
+                user_id=user_id, id=playlist.id
             )
         return playlist
 
-    def create_playlist(self, user_id, access_token, name, description):
+    def create_playlist(self, user_id, name, description):
         description = None if description == "" else description
+        access_token = get_user_tokens(user_id=user_id).access_token
         response = requests.post(
             url=f"https://api.spotify.com/v1/users/{user_id}/playlists",
             data=json.dumps(
@@ -226,8 +269,9 @@ class SpotifyClient:
         return self.response_handler(response, jsonify=False)
 
     def update_playlist(
-        self, access_token, id: str, name, description
+        self, user_id: str, id: str, name, description
     ):  # ToDo: Figure out how to set description to empty string
+        access_token = get_user_tokens(user_id=user_id).access_token
         response = requests.put(
             url=f"https://api.spotify.com/v1/playlists/{id}",
             data=json.dumps({"name": name, "description": description, "public": True}),
@@ -238,14 +282,16 @@ class SpotifyClient:
         )
         return self.response_handler(response, jsonify=False)
 
-    def delete_playlist(self, access_token, id: str):
+    def delete_playlist(self, user_id, id: str):
+        access_token = get_user_tokens(user_id=user_id).access_token
         response = requests.delete(
             url=f"https://api.spotify.com/v1/playlists/{id}/followers",
             auth=BearerAuth(access_token),
         )
         return self.response_handler(response, jsonify=False)
 
-    def get_playlist_items(self, access_token, id, limit, offset):
+    def get_playlist_items(self, user_id, id, limit, offset):
+        access_token = get_user_tokens(user_id=user_id).access_token
         response = requests.get(
             url=f"https://api.spotify.com/v1/playlists/{id}/tracks",
             params={
@@ -261,8 +307,8 @@ class SpotifyClient:
         playlist_tracks = PlaylistTracks.model_validate(api_playlist_tracks)
         return playlist_tracks
 
-    def get_playlist_album_info(self, access_token, id) -> List[Album]:
-        playlist_tracks = self.get_playlist_tracks(access_token, id)
+    def get_playlist_album_info(self, user_id, id) -> List[Album]:
+        playlist_tracks = self.get_playlist_tracks(user_id=user_id, id=id)
         playlist_albums: List[Album] = []
         for track in playlist_tracks:
             if track.track.album not in playlist_albums:
@@ -271,12 +317,12 @@ class SpotifyClient:
             album.genres = [genre.name for genre in get_album_genres(album.id)]
         return playlist_albums
 
-    def get_playlist_tracks(self, access_token, id: str):
+    def get_playlist_tracks(self, user_id, id: str):
         playlist_tracks: List[PlaylistTrackObject] = []
         offset = 0
         limit = 100
         api_tracks_object = self.get_playlist_items(
-            access_token=access_token, id=id, limit=limit, offset=offset
+            user_id=user_id, id=id, limit=limit, offset=offset
         )
         while True:
             sleep(0.5)
@@ -285,10 +331,11 @@ class SpotifyClient:
                 return playlist_tracks
             offset += limit
             api_tracks_object = self.get_playlist_items(
-                access_token, id, limit=limit, offset=offset
+                user_id=user_id, id=id, limit=limit, offset=offset
             )
 
-    def get_album(self, access_token, id):
+    def get_album(self, user_id, id):
+        access_token = get_user_tokens(user_id=user_id).access_token
         response = requests.get(
             f"https://api.spotify.com/v1/albums/{id}",
             headers={
@@ -300,7 +347,8 @@ class SpotifyClient:
         album = Album.model_validate(api_album)
         return album
 
-    def get_multiple_albums(self, access_token, ids: List[str]) -> List[Album]:
+    def get_multiple_albums(self, user_id, ids: List[str]) -> List[Album]:
+        access_token = get_user_tokens(user_id=user_id).access_token
         encoded_ids = urllib.parse.quote_plus(",".join(ids))
         response = requests.get(
             f"https://api.spotify.com/v1/albums?ids={encoded_ids}",
@@ -313,9 +361,10 @@ class SpotifyClient:
         albums = [Album.model_validate(api_album) for api_album in api_albums["albums"]]
         return albums
 
-    def get_current_playback(self, access_token) -> PlaybackState | None:
+    def get_current_playback(self, user_id) -> PlaybackState | None:
+        access_token = get_user_tokens(user_id=user_id).access_token
         response = requests.get(
-            f"https://api.spotify.com/v1/me/player",
+            "https://api.spotify.com/v1/me/player",
             auth=BearerAuth(access_token),
         )
         api_current_playback = self.response_handler(response)
@@ -326,8 +375,8 @@ class SpotifyClient:
         )
         return current_playback
 
-    def get_my_current_playback(self, access_token) -> PlaybackInfo | None:
-        api_playback = self.get_current_playback(access_token=access_token)
+    def get_my_current_playback(self, user_id) -> PlaybackInfo | None:
+        api_playback = self.get_current_playback(user_id=user_id)
 
         if api_playback is None:
             return None
@@ -336,7 +385,7 @@ class SpotifyClient:
             playlist_id = context.uri.replace("spotify:playlist:", "")
         else:
             playlist_id = None
-        album = self.get_album(access_token=access_token, id=api_playback.item.album.id)
+        album = self.get_album(user_id=user_id, id=api_playback.item.album.id)
         album_duration = sum([track.duration_ms for track in album.tracks.items])
         album_progress = (
             sum(
@@ -369,13 +418,11 @@ class SpotifyClient:
             }
         )
 
-    def get_playlist_progression(self, access_token, api_playback: PlaybackInfo):
+    def get_playlist_progression(self, user_id, api_playback: PlaybackInfo):
         playlist_tracks = self.get_playlist_tracks(
-            access_token=access_token, id=api_playback.playlist_id
+            user_id=user_id, id=api_playback.playlist_id
         )
-        playlist_info = self.get_playlist(
-            access_token=access_token, id=api_playback.playlist_id
-        )
+        playlist_info = self.get_playlist(user_id=user_id, id=api_playback.playlist_id)
         playlist_progress = get_playlist_progress(api_playback, playlist_tracks)
         playlist_duration = get_playlist_duration(playlist_tracks)
         return PlaylistProgression.model_validate(
@@ -387,9 +434,9 @@ class SpotifyClient:
             }
         )
 
-    def search_albums(
-        self, access_token, search=None, offset=0, limit=50
-    ) -> List[Album]:
+    def search_albums(self, user_id, search=None, offset=0, limit=50) -> List[Album]:
+        access_token = get_user_tokens(user_id=user_id).access_token
+
         if search:
             response = requests.get(
                 f"https://api.spotify.com/v1/albums/{id}",
@@ -430,7 +477,9 @@ class SpotifyClient:
                 if x["album_type"] == "album"
             ]
 
-    def save_albums_to_library(self, access_token, album_ids: List[str]) -> Response:
+    def save_albums_to_library(self, user_id, album_ids: List[str]) -> Response:
+        access_token = get_user_tokens(user_id=user_id).access_token
+
         response = requests.put(
             url="https://api.spotify.com/v1/me/albums",
             data=json.dumps(
@@ -445,12 +494,13 @@ class SpotifyClient:
         )
         return self.response_handler(response, jsonify=False)
 
-    def add_album_to_playlist(self, access_token, playlist_id, album_id) -> Response:
-        album = self.get_album(access_token=access_token, id=album_id)
-        self.save_albums_to_library(access_token=access_token, album_ids=[album.id])
+    def add_album_to_playlist(self, user_id, playlist_id, album_id) -> Response:
+        access_token = get_user_tokens(user_id=user_id).access_token
+        album = self.get_album(user_id=user_id, id=album_id)
+        self.save_albums_to_library(user_id=user_id, album_ids=[album.id])
         track_uris = [item.uri for item in album.tracks.items]
         if self.is_album_in_playlist(
-            access_token=access_token, album=album, playlist_id=playlist_id
+            user_id=user_id, album=album, playlist_id=playlist_id
         ):
             return make_response("Album already present in playlist", 403)
         response = requests.post(
@@ -471,15 +521,14 @@ class SpotifyClient:
         else:
             return make_response("Failed to add album to playlist", 400)
 
-    def is_album_in_playlist(self, access_token, playlist_id, album: Album) -> bool:
-        playlist_tracks = self.get_playlist_tracks(
-            access_token=access_token, id=playlist_id
-        )
+    def is_album_in_playlist(self, user_id, playlist_id, album: Album) -> bool:
+        playlist_tracks = self.get_playlist_tracks(user_id=user_id, id=playlist_id)
         playlist_track_ids = [track.track.id for track in playlist_tracks]
         album_track_ids = [track.id for track in album.tracks.items]
         return all(e in playlist_track_ids for e in album_track_ids)
 
-    def pause_playback(self, access_token) -> Response:
+    def pause_playback(self, user_id) -> Response:
+        access_token = get_user_tokens(user_id=user_id).access_token
         response = requests.put(
             url="https://api.spotify.com/v1/me/player/pause",
             headers={
@@ -493,9 +542,11 @@ class SpotifyClient:
 
     def start_playback(
         self,
-        access_token,
+        user_id,
         start_playback_request_body: Optional[StartPlaybackRequest] = None,
     ) -> Response:
+        access_token = get_user_tokens(user_id=user_id).access_token
+
         if not start_playback_request_body:
             data = None
         else:
@@ -504,7 +555,7 @@ class SpotifyClient:
                     {
                         "uri": (
                             self.get_album(
-                                access_token=access_token,
+                                user_id=user_id,
                                 id=start_playback_request_body.offset.album_id,
                             )
                             .tracks.items[0]
@@ -528,12 +579,17 @@ class SpotifyClient:
             make_response("", response.status_code), jsonify=False
         )
 
-    def pause_or_start_playback(self, access_token) -> Response:
-        is_playing = self.get_current_playback(access_token).is_playing
+    def pause_or_start_playback(self, user_id) -> Response:
+        is_playing = self.get_current_playback(user_id=user_id).is_playing
         if is_playing:
-            return self.pause_playback(access_token)
+            return self.pause_playback(user_id=user_id)
         else:
-            return self.start_playback(access_token)
+            return self.start_playback(user_id=user_id)
+
+    def refresh_user_access_tokens(self, user_id):
+        if not user_id:
+            raise UnauthorizedException
+        self.refresh_access_token(user_id=user_id)
 
 
 def get_playlist_duration(playlist_info: List[PlaylistTrackObject]) -> int:
