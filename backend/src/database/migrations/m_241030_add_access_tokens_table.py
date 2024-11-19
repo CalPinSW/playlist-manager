@@ -1,9 +1,10 @@
-from src.database.models import DbAccessToken, db_wrapper
+from src.database.models import DbAccessToken
+from src.database.migrations.setup import database
 
 
 def up():
-    with db_wrapper.database:
-        db_wrapper.database.create_tables(
+    with database:
+        database.create_tables(
             [
                 DbAccessToken,
             ]
@@ -11,8 +12,8 @@ def up():
 
 
 def down():
-    with db_wrapper.database:
-        db_wrapper.database.drop_tables(
+    with database:
+        database.drop_tables(
             [
                 DbAccessToken,
             ]

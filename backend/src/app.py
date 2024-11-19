@@ -1,4 +1,4 @@
-from flask import Flask, make_response, redirect
+from flask import Flask, redirect
 from flask_cors import CORS
 from src.controllers.database import database_controller
 from src.controllers.spotify import spotify_controller
