@@ -11,19 +11,16 @@ def spotify_controller(spotify: SpotifyClient):
 
     @spotify_controller.route("current-user")
     def get_current_user():
-        access_token = request.cookies.get("spotify_access_token")
-        user = spotify.get_current_user(access_token=access_token)
+        user_id = request.cookies.get("user_id")
+        user = spotify.get_user_by_id(user_id=user_id)
         return user.model_dump()
 
     @spotify_controller.route("playlists")
     def index():
         user_id = request.cookies.get("user_id")
-        access_token = request.cookies.get("spotify_access_token")
         limit = request.args.get("limit")
         offset = request.args.get("offset")
-        playlists = spotify.get_playlists(
-            user_id=user_id, access_token=access_token, limit=limit, offset=offset
-        )
+        playlists = spotify.get_playlists(user_id=user_id, limit=limit, offset=offset)
         sort_by = request.args.get("sort_by")
         desc = request.args.get("desc") == "True"
         if sort_by is not None:
@@ -33,12 +30,10 @@ def spotify_controller(spotify: SpotifyClient):
     @spotify_controller.route("create-playlist", methods=["POST"])
     def create_playlist():
         user_id = request.cookies.get("user_id")
-        access_token = request.cookies.get("spotify_access_token")
         name = request.json.get("name")
         description = request.json.get("description")
         spotify.create_playlist(
             user_id=user_id,
-            access_token=access_token,
             name=name,
             description=description,
         )
@@ -46,23 +41,23 @@ def spotify_controller(spotify: SpotifyClient):
 
     @spotify_controller.route("delete-playlist/<id>", methods=["POST"])
     def delete_playlist_by_id(id):
-        access_token = request.cookies.get("spotify_access_token")
-        spotify.delete_playlist(access_token=access_token, id=id)
+        user_id = request.cookies.get("user_id")
+        spotify.delete_playlist(user_id=user_id, id=id)
         return make_response("playlist deleted", 200)
 
     @spotify_controller.route("playlist/<id>", methods=["GET"])
     def get_edit_playlist(id):
-        access_token = request.cookies.get("spotify_access_token")
-        playlist = spotify.get_playlist(access_token=access_token, id=id)
+        user_id = request.cookies.get("user_id")
+        playlist = spotify.get_playlist(user_id=user_id, id=id)
         return playlist.model_dump()
 
     @spotify_controller.route("edit-playlist/<id>", methods=["POST"])
     def post_edit_playlist(id):
-        access_token = request.cookies.get("spotify_access_token")
+        user_id = request.cookies.get("user_id")
         name = request.json.get("name")
         description = request.json.get("description")
         spotify.update_playlist(
-            access_token=access_token,
+            user_id=user_id,
             id=id,
             name=name,
             description=description,
@@ -71,28 +66,26 @@ def spotify_controller(spotify: SpotifyClient):
 
     @spotify_controller.route("playlist/<id>/albums", methods=["GET"])
     def get_playlist_album_info(id):
-        access_token = request.cookies.get("spotify_access_token")
+        user_id = request.cookies.get("user_id")
         return [
             album.model_dump()
-            for album in spotify.get_playlist_album_info(
-                access_token=access_token, id=id
-            )
+            for album in spotify.get_playlist_album_info(user_id=user_id, id=id)
         ]
 
     @spotify_controller.route("playback", methods=["GET"])
     def get_playback_info():
-        access_token = request.cookies.get("spotify_access_token")
-        playback_info = spotify.get_my_current_playback(access_token=access_token)
+        user_id = request.cookies.get("user_id")
+        playback_info = spotify.get_my_current_playback(user_id=user_id)
         if playback_info is None:
             return ("", 204)
         return playback_info.model_dump_json()
 
     @spotify_controller.route("playlist_progress", methods=["POST"])
     def get_playlist_progress():
-        access_token = request.cookies.get("spotify_access_token")
+        user_id = request.cookies.get("user_id")
         api_playback = PlaybackInfo.model_validate(request.json)
         playlist_progression = spotify.get_playlist_progression(
-            access_token=access_token, api_playback=api_playback
+            user_id=user_id, api_playback=api_playback
         )
         if playlist_progression is None:
             return ("", 204)
@@ -100,10 +93,9 @@ def spotify_controller(spotify: SpotifyClient):
 
     @spotify_controller.route("find_associated_playlists/<id>", methods=["GET"])
     def find_associated_playlists(playlist_id):
-        access_token = request.cookies.get("spotify_access_token")
         user_id = request.cookies.get("user_id")
         associated_playlists = spotify.find_associated_playlists(
-            user_id=user_id, access_token=access_token, playlist_id=playlist_id
+            user_id=user_id, playlist_id=playlist_id
         )
         return [
             associated_playlist.model_dump()
@@ -112,7 +104,7 @@ def spotify_controller(spotify: SpotifyClient):
 
     @spotify_controller.route("add_album_to_playlist", methods=["POST"])
     def add_album_to_playlist():
-        access_token = request.cookies.get("spotify_access_token")
+        user_id = request.cookies.get("user_id")
         request_body = request.json
         playlist_id = request_body["playlistId"]
         album_id = request_body["albumId"]
@@ -121,26 +113,28 @@ def spotify_controller(spotify: SpotifyClient):
                 "Invalid request payload. Expected playlistId and albumId.", 400
             )
         return spotify.add_album_to_playlist(
-            access_token=access_token, playlist_id=playlist_id, album_id=album_id
+            user_id=user_id, playlist_id=playlist_id, album_id=album_id
         )
 
     @spotify_controller.route("pause_playback", methods=["PUT"])
     def pause_playback():
-        access_token = request.cookies.get("spotify_access_token")
-        return spotify.pause_playback(access_token)
+        user_id = request.cookies.get("user_id")
+        return spotify.pause_playback(user_id)
 
     @spotify_controller.route("start_playback", methods=["PUT"])
     def start_playback():
-        access_token = request.cookies.get("spotify_access_token")
+        user_id = request.cookies.get("user_id")
         request_body = request.json
         start_playback_request_body = (
             StartPlaybackRequest.model_validate(request_body) if request_body else None
         )
-        return spotify.start_playback(access_token, start_playback_request_body)
+        return spotify.start_playback(
+            user_id=user_id, start_playback_request_body=start_playback_request_body
+        )
 
     @spotify_controller.route("pause_or_start_playback", methods=["PUT"])
     def pause_or_start_playback():
-        access_token = request.cookies.get("spotify_access_token")
-        return spotify.pause_or_start_playback(access_token)
+        user_id = request.cookies.get("user_id")
+        return spotify.pause_or_start_playback(user_id=user_id)
 
     return spotify_controller

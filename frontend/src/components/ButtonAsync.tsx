@@ -1,11 +1,12 @@
 import React, { FC, useState, MouseEvent } from "react";
+import LoadingSpinner from "./LoadingSpinner";
 
 const ButtonAsync: FC<
   React.DetailedHTMLProps<
     React.ButtonHTMLAttributes<HTMLButtonElement>,
     HTMLButtonElement
   >
-> = ({className, onClick, ...props}) => {
+> = ({className, onClick,children,  ...props}) => {
   const [isLoading, setIsLoading] = useState(false);
   
   const handleClick = async (event: MouseEvent<HTMLButtonElement>): Promise<void>  => {
@@ -21,7 +22,9 @@ const ButtonAsync: FC<
       disabled={isLoading}
       onClick={handleClick}
       className={`bg-primary rounded p-2 cursor-pointer hover:bg-primary-lighter active:bg-primary-lighter disabled:bg-background-offset ${className}`}
-    />
+    >
+      {isLoading ? <LoadingSpinner /> : children}
+    </button>
   );
 };
 

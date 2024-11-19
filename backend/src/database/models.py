@@ -119,8 +119,8 @@ class DbAccessToken(db_wrapper.Model):
     user = ForeignKeyField(
         DbUser, backref="owner", to_field="id", on_delete="CASCADE", unique=True
     )
-    access_token = CharField(max_length=400)
-    refresh_token = CharField(max_length=200)
+    access_token = CharField(max_length=400, null=True)
+    refresh_token = CharField(max_length=200, null=True)
 
     class Meta:
         db_table = "access_token"

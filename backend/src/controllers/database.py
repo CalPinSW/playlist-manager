@@ -31,7 +31,7 @@ def database_controller(
     @database_controller.route("populate_user", methods=["GET"])
     def populate_user():
         access_token = request.cookies.get("spotify_access_token")
-        user = spotify.get_current_user(access_token)
+        user = spotify.get_user_by_id(access_token)
         (db_user, _) = get_or_create_user(user)
         simplified_playlists = spotify.get_all_playlists(
             user_id=user.id, access_token=access_token
@@ -49,7 +49,9 @@ def database_controller(
                         if db_playlist is not None:
                             delete_playlist(db_playlist.id)
                         playlist = spotify.get_playlist(
-                            access_token=access_token, id=simplified_playlist.id
+                            user_id=user.id,
+                            access_token=access_token,
+                            id=simplified_playlist.id,
                         )
                         create_playlist(playlist, db_user)
 
@@ -58,12 +60,14 @@ def database_controller(
     @database_controller.route("populate_playlist/<id>", methods=["GET"])
     def populate_playlist(id):
         access_token = request.cookies.get("spotify_access_token")
-        user = spotify.get_current_user(access_token)
+        user = spotify.get_user_by_id(access_token)
         (db_user, _) = get_or_create_user(user)
         db_playlist = get_playlist_by_id_or_none(id)
         if db_playlist is not None:
             delete_playlist(db_playlist.id)
-        playlist = spotify.get_playlist(access_token=access_token, id=id)
+        playlist = spotify.get_playlist(
+            user_id=user.id, access_token=access_token, id=id
+        )
         create_playlist(playlist, db_user)
         albums = get_playlist_albums(playlist.id)
         batch_albums = split_list(albums, 20)
@@ -83,7 +87,7 @@ def database_controller(
     @database_controller.route("populate_additional_album_details", methods=["GET"])
     def populate_additional_album_details():
         access_token = request.cookies.get("spotify_access_token")
-        user = spotify.get_current_user(access_token)
+        user = spotify.get_user_by_id(access_token)
         albums = get_user_albums_with_no_artists(user.id)
         batch_albums = split_list(albums, 20)
         for album_chunk in batch_albums:
@@ -108,7 +112,7 @@ def database_controller(
     @database_controller.route("populate_user_album_genres", methods=["GET"])
     def populate_user_album_genres():
         access_token = request.cookies.get("spotify_access_token")
-        user = spotify.get_current_user(access_token)
+        user = spotify.get_user_by_id(access_token)
         populate_album_genres_by_user_id(user.id, musicbrainz)
         return make_response("User album genres populated", 201)
 

@@ -20,6 +20,7 @@ gunicorn = "^22.0.0"
 peewee = "^3.17.6"
 asyncio = "^3.4.3"
 psycopg2 = "^2.9.9"
+tenacity = "^9.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
