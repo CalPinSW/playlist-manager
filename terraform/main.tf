@@ -1,9 +1,15 @@
 terraform {
   required_providers {
     azurerm = {
-      source = "hashicorp/azurerm"
+      source  = "hashicorp/azurerm"
       version = ">= 3.8"
     }
+  }
+  backend "azurerm" {
+      resource_group_name  = "cohort32-33_CalPin_ProjectExercise"
+      storage_account_name = "playman"
+      container_name       = "playman"
+      key                  = "terraform.tfstate"
   }
 }
 
@@ -16,10 +22,6 @@ data "azurerm_resource_group" "main" {
   name     = "cohort32-33_CalPin_ProjectExercise"
 }
 
-import {
-  to  = azurerm_service_plan.main
-  id  = "/subscriptions/d33b95c7-af3c-4247-9661-aa96d47fccc0/resourceGroups/cohort32-33_CalPin_ProjectExercise/providers/Microsoft.Web/serverFarms/ASP-cohort3233CalPinProjectExercise-8171"
-}
 
 resource "azurerm_service_plan" "main" {
   name                = "ASP-cohort3233CalPinProjectExercise-8171"
@@ -29,44 +31,59 @@ resource "azurerm_service_plan" "main" {
   sku_name            = "B1"
   tags                = {}
   zone_balancing_enabled = false
+}
 
-  lifecycle {
-    prevent_destroy = true
+
+resource "azurerm_storage_account" "tfstate" {
+  name                     = "playman"
+  resource_group_name      = data.azurerm_resource_group.main.name
+  location                 = data.azurerm_resource_group.main.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  allow_nested_items_to_be_public = false
+
+  tags = {
+    environment = "staging"
   }
+}
+
+resource "azurerm_storage_container" "tfstate" {
+  name                  = "playman"
+  storage_account_id = azurerm_storage_account.tfstate.id
+  container_access_type = "private"
 }
 
 data "azurerm_client_config" "main" {}
 
-import {
-  to  = azurerm_key_vault.main
-  id  = "/subscriptions/d33b95c7-af3c-4247-9661-aa96d47fccc0/resourceGroups/cohort32-33_CalPin_ProjectExercise/providers/Microsoft.KeyVault/vaults/PlayManKeyVault"
-}
 
 resource "azurerm_key_vault" "main" {
-  name                       = "PlayManKeyVault"
+  name                       = "PlayManKeyVault1"
   location                   = data.azurerm_resource_group.main.location
   resource_group_name        = data.azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.main.tenant_id
   sku_name                   = "standard"
-  soft_delete_retention_days = 90
-  enable_rbac_authorization  = true
+  soft_delete_retention_days = 7
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.main.tenant_id
+    object_id = data.azurerm_client_config.main.object_id
+
+    key_permissions    = ["List", "Create", "Delete", "Get", "Purge", "Recover", "Update", "GetRotationPolicy", "SetRotationPolicy"]
+    secret_permissions = ["List", "Set", "Get", "Purge", "Recover"]
+  }
 }
 
 
-data "azurerm_key_vault_secret" "spotify_secret" {
+resource "azurerm_key_vault_secret" "spotify_secret" {
   name         = "SpotifySecret"
+  value        = var.spotify_secret
   key_vault_id = azurerm_key_vault.main.id
 }
 
-data "azurerm_key_vault_secret" "flask_secret_key" {
+resource "azurerm_key_vault_secret" "flask_secret_key" {
   name         = "FlaskSecretKey"
+  value        = var.flask_secret_key
   key_vault_id = azurerm_key_vault.main.id
-}
-
-
-import {
-  to  = azurerm_linux_web_app.frontend
-  id  = "/subscriptions/d33b95c7-af3c-4247-9661-aa96d47fccc0/resourceGroups/cohort32-33_CalPin_ProjectExercise/providers/Microsoft.Web/sites/PlayMan"
 }
 
 resource "azurerm_linux_web_app" "frontend" {
@@ -105,15 +122,6 @@ resource "azurerm_linux_web_app" "frontend" {
       docker_registry_url   = "https://index.docker.io"
     }
   }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-import {
-  to  = azurerm_linux_web_app.backend
-  id  = "/subscriptions/d33b95c7-af3c-4247-9661-aa96d47fccc0/resourceGroups/cohort32-33_CalPin_ProjectExercise/providers/Microsoft.Web/sites/PlayManBackend"
 }
 
 resource "azurerm_linux_web_app" "backend" {
@@ -131,10 +139,10 @@ resource "azurerm_linux_web_app" "backend" {
     "FRONTEND_URL"                        = var.frontend_url
     "MUSICBRAINZ_URL"                     = var.musicbrainz_url
     "MUSICBRAINZ_USER_AGENT"              = var.musicbrainz_user_agent
-    "SECRET_KEY"                          = data.azurerm_key_vault_secret.flask_secret_key.value
+    "SECRET_KEY"                          = azurerm_key_vault_secret.flask_secret_key.value
     "SPOTIFY_CLIENT_ID"                   = var.spotify_client_id
     "SPOTIFY_REDIRECT_URI"                = "${var.backend_url}/auth/get-user-code" 
-    "SPOTIFY_SECRET"                      = data.azurerm_key_vault_secret.spotify_secret.value
+    "SPOTIFY_SECRET"                      = azurerm_key_vault_secret.spotify_secret.value
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
   }
   https_only = true
@@ -163,8 +171,5 @@ resource "azurerm_linux_web_app" "backend" {
       }
     }
   }
-
-  lifecycle {
-    prevent_destroy = true
-  }
+  depends_on = [ azurerm_key_vault_secret.flask_secret_key, azurerm_key_vault_secret.spotify_secret ]
 }
