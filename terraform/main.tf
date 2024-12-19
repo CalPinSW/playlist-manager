@@ -15,6 +15,10 @@ terraform {
 
 provider "azurerm" {
   features {}
+  
+  client_id       = var.arm_client_id
+  client_secret   = var.arm_client_secret
+  tenant_id       = var.arm_tenant_id
   subscription_id = "d33b95c7-af3c-4247-9661-aa96d47fccc0"
 }
 
@@ -57,22 +61,27 @@ data "azurerm_client_config" "main" {}
 
 
 resource "azurerm_key_vault" "main" {
-  name                       = "PlayManKeyVault1"
+  name                       = "PlaymanKeyVault4"
   location                   = data.azurerm_resource_group.main.location
   resource_group_name        = data.azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.main.tenant_id
   sku_name                   = "standard"
   soft_delete_retention_days = 7
+}
 
-  access_policy {
+resource "azurerm_key_vault_access_policy" "main" {
+    key_vault_id = azurerm_key_vault.main.id
     tenant_id = data.azurerm_client_config.main.tenant_id
     object_id = data.azurerm_client_config.main.object_id
 
     key_permissions    = ["List", "Create", "Delete", "Get", "Purge", "Recover", "Update", "GetRotationPolicy", "SetRotationPolicy"]
     secret_permissions = ["List", "Set", "Get", "Purge", "Recover", "Delete"]
-  }
 }
 
+
+data "azuread_service_principal" "main" {
+  display_name = "PlayMan CI/CD"
+}
 
 resource "azurerm_key_vault_secret" "spotify_secret" {
   name         = "SpotifySecret"
