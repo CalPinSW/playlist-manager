@@ -67,6 +67,7 @@ jobs:
         TF_VAR_db_connection_string: ${{secrets.db_connection_string}}
         TF_VAR_frontend_url: ${{secrets.frontend_url}}
         TF_VAR_backend_url: ${{secrets.backend_url}}
+        TF_VAR_neon_api_key: ${{secrets.neon_api_key}}
 
       steps: 
         - name: Checkout Repository

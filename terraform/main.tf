@@ -4,6 +4,12 @@ terraform {
       source  = "hashicorp/azurerm"
       version = ">= 3.8"
     }
+
+    neon = {
+      source  = "kislerdm/neon"
+      version = ">= 0.2.2"
+    }
+
   }
   backend "azurerm" {
       resource_group_name  = "cohort32-33_CalPin_ProjectExercise"

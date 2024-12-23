@@ -67,7 +67,7 @@ Currently the backend consists of an auth endpoints and endpoints for communicat
 
 ## Infrastructure
 
-With the exception of the database, infrastructure is managed by terraform in the [terraform](./terraform) folder. Any changes to the terraform configuration will be applied by CI/CD pipelines when pushed to main branch.
+With the exception of the database, infrastructure is managed by terraform in the [terraform](./terraform) folder. Any changes to the terraform configuration will be applied by CI/CD pipelines when pushed to main branch. Any variables used by terraform must be added to Github actions secrets, and configured in the ci-pipeline yaml file. Use the prefix `TF_VARS_` for the variable to be automatically read by terraform in the pipeline.
 
 ## CI
 

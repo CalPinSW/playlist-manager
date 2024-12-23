@@ -47,3 +47,8 @@ variable "arm_client_secret" {
 variable "arm_tenant_id" {
   description = "Tenant Id for the Service Principal"
 }
+
+variable "neon_api_key" {
+  description = "API key for neon database"
+}
+
