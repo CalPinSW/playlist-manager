@@ -45,6 +45,13 @@ instance/
 # NPM stuff:
 node_modules
 
+# Infrastructure
+*.terraform.lock.hcl
+*.terraform.tfstate.lock.info
+*terraform.tfstate*
+*terraform.tfvars*
+*.terraform/
+
 # Environments
 .env
 .venv
