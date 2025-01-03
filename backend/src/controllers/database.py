@@ -36,7 +36,7 @@ def database_controller(
         simplified_playlists = spotify.get_all_playlists(
             user_id=user.id, access_token=access_token
         )
-
+        number_of_playlists_updated = 0
         for simplified_playlist in simplified_playlists:
             with database.database.atomic():
                 if "Albums" in simplified_playlist.name:
@@ -44,8 +44,8 @@ def database_controller(
                     if (
                         db_playlist is None
                         or db_playlist.snapshot_id != simplified_playlist.snapshot_id
-                        or db_playlist.name.startswith("Best Albums")
                     ):
+                        number_of_playlists_updated += 1
                         if db_playlist is not None:
                             delete_playlist(db_playlist.id)
                         playlist = spotify.get_playlist(
@@ -53,7 +53,10 @@ def database_controller(
                         )
                         create_playlist(playlist, db_user)
 
-        return make_response("Playlist data populated", 201)
+        return make_response(
+            f"Playlist data populated/updated for {number_of_playlists_updated} playlists.",
+            201,
+        )
 
     @database_controller.route("populate_playlist/<id>", methods=["GET"])
     def populate_playlist(id):
