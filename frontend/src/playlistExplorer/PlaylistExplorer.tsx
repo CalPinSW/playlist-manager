@@ -18,6 +18,7 @@ import { usePlaybackContext } from "../hooks/usePlaybackContext";
 import { Track } from "../interfaces/Track";
 import InputWithLabelPlaceholder from "../components/Inputs/InputWithLabelPlaceholder";
 import ButtonAsync from "../components/ButtonAsync";
+import { ImageLink, useDownloadImages } from "../hooks/useDownload";
 
 enum ViewMode {
   ALBUM = "album",
@@ -63,6 +64,16 @@ export const PlaylistExplorer: FC = () => {
   }, []);
 
   const { playbackInfo } = usePlaybackContext();
+  
+  const [images,setImages] = useState<ImageLink[]>([])
+
+  useEffect(()=> {
+    if (playlistAlbums) {
+      setImages(playlistAlbums.map((album) => ({url: album.image_url, name: `${album.name} - ${album.artists.map((artist) => artist.name).join(", ")}`})))
+    }
+  }, playlistAlbums)
+
+  const {handleZip} = useDownloadImages()
 
   return (
     <div className="p-2 text-sm sm:text-base space-y-4">
@@ -118,14 +129,14 @@ export const PlaylistExplorer: FC = () => {
                 viewMode === ViewMode.ALBUM ? "bg-primary-darker" : ""
               } ${!playlistAlbums ? "opacity-50 disabled" : ""}`}
             >
-              Album View
+              {`Album View (${playlistAlbums?.length ?? 0})`}
             </h2>
             <h2
               className={`p-2 flex grow ${
                 viewMode === ViewMode.TRACK ? "bg-primary-darker" : ""
               }`}
             >
-              Track View
+              {`Track View (${playlistTracks?.length ?? 0})`}
             </h2>
           </button>
         </div>
@@ -146,6 +157,7 @@ export const PlaylistExplorer: FC = () => {
           )}
         </div>
       </>
+      {images.length > 0 && <Button onClick={() => handleZip(playlist.name, images)}>Download Album Images</Button>}
     </div>
   );
 };
