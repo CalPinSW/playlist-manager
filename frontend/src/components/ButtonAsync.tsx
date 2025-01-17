@@ -11,9 +11,12 @@ const ButtonAsync: FC<
   
   const handleClick = async (event: MouseEvent<HTMLButtonElement>): Promise<void>  => {
     if (onClick) {
-      setIsLoading(true)
-      await onClick(event)
-      setIsLoading(false);
+      try {
+        setIsLoading(true)
+        await onClick(event)
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
   return (

@@ -42,7 +42,6 @@ def database_controller(
                     if (
                         db_playlist is None
                         or db_playlist.snapshot_id != simplified_playlist.snapshot_id
-                        or db_playlist.name.startswith("Best Albums")
                     ):
                         if db_playlist is not None:
                             delete_playlist(db_playlist.id)

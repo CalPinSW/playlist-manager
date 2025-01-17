@@ -52,6 +52,9 @@ class MusicbrainzClient:
             url=Config().MUSICBRAINZ_URL + "/release-group?query=" + query,
             headers=self.request_headers,
         )
+        if response.status_code != 200:
+            print(response.reason)
+            print(response.headers)
         data = response.json()
         release_group_response = ReleaseGroupResponse.model_validate(data)
         sleep(1)
