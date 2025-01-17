@@ -69,7 +69,7 @@ export const PlaylistExplorer: FC = () => {
 
   useEffect(()=> {
     if (playlistAlbums) {
-      setImages(playlistAlbums.map((album) => ({url: album.image_url, name: `${album.name} - ${album.artists.map((artist) => artist.name).join(", ")}`})))
+      setImages(playlistAlbums.map((album, i) => ({url: album.image_url, name: `${i+1}_${album.name} - ${album.artists.map((artist) => artist.name).join(", ")}`})))
     }
   }, playlistAlbums)
 
