@@ -13,14 +13,15 @@ import logging
 
 
 def create_app():
-    logging.basicConfig(level=logging.INFO)
     app = Flask(__name__)
+    app.config.from_object(Config())
+    app.logger.setLevel(app.config["LOGGING_LEVEL"])
+
     spotify = SpotifyClient()
     musicbrainz = MusicbrainzClient(logger=app.logger)
     app.config["DATABASE"] = Config().DB_CONNECTION_STRING
     db_wrapper.init_app(app)
 
-    app.config.from_object(Config())
     app.config["CORS_HEADERS"] = "Content-Type"
 
     # Since the backend runs on a different host to the frontend in production,

@@ -51,3 +51,7 @@ variable "neon_api_key" {
   description = "API key for neon database"
 }
 
+variable "logging_level" {
+  description = "level of logging for the backend"
+}
+

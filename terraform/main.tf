@@ -158,6 +158,7 @@ resource "azurerm_linux_web_app" "backend" {
     "SPOTIFY_CLIENT_ID"                   = var.spotify_client_id
     "SPOTIFY_REDIRECT_URI"                = "${var.backend_url}/auth/get-user-code" 
     "SPOTIFY_SECRET"                      = azurerm_key_vault_secret.spotify_secret.value
+    "LOGGING_LEVEL"                       = var.logging_level
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
   }
   https_only = true
