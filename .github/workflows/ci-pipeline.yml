@@ -68,6 +68,8 @@ jobs:
         TF_VAR_frontend_url: ${{secrets.frontend_url}}
         TF_VAR_backend_url: ${{secrets.backend_url}}
         TF_VAR_neon_api_key: ${{secrets.neon_api_key}}
+        TF_VAR_logging_level: ${{vars.logging_level}}
+        TF_VAR_loggly_token: ${{secrets.loggly_token}}
 
       steps: 
         - name: Checkout Repository
