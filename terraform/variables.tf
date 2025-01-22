@@ -55,3 +55,6 @@ variable "logging_level" {
   description = "level of logging for the backend"
 }
 
+variable "loggly_token" {
+  description = "customer token for loggly"
+}

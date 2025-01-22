@@ -9,13 +9,22 @@ from src.musicbrainz import MusicbrainzClient
 from src.spotify import SpotifyClient
 from src.controllers.auth import auth_controller
 from src.database.models import db_wrapper
-import logging
+from loggly.handlers import HTTPSHandler
+from logging import Formatter
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config())
     app.logger.setLevel(app.config["LOGGING_LEVEL"])
+    if app.config["LOGGLY_TOKEN"] is not None:
+        handler = HTTPSHandler(
+            f'https://logs-01.loggly.com/inputs/{app.config["LOGGLY_TOKEN"]}/tag/todo-app'
+        )
+        handler.setFormatter(
+            Formatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
+        )
+        app.logger.addHandler(handler)
 
     spotify = SpotifyClient()
     musicbrainz = MusicbrainzClient(logger=app.logger)
