@@ -9,12 +9,14 @@ from src.musicbrainz import MusicbrainzClient
 from src.spotify import SpotifyClient
 from src.controllers.auth import auth_controller
 from src.database.models import db_wrapper
+import logging
 
 
 def create_app():
+    logging.basicConfig(level=logging.INFO)
     app = Flask(__name__)
     spotify = SpotifyClient()
-    musicbrainz = MusicbrainzClient()
+    musicbrainz = MusicbrainzClient(logger=app.logger)
     app.config["DATABASE"] = Config().DB_CONNECTION_STRING
     db_wrapper.init_app(app)
 
@@ -51,7 +53,10 @@ def create_app():
     app.register_blueprint(music_controller(spotify=spotify))
     app.register_blueprint(
         database_controller(
-            spotify=spotify, musicbrainz=musicbrainz, database=db_wrapper
+            spotify=spotify,
+            musicbrainz=musicbrainz,
+            database=db_wrapper,
+            logger=app.logger,
         )
     )
 
