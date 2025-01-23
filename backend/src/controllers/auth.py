@@ -2,6 +2,7 @@ from uuid import uuid4
 from flask import Blueprint, make_response, redirect, request, session
 from src.flask_config import Config
 from src.spotify import SpotifyClient
+from src.utils.response_creator import add_cookies_to_response
 
 
 def auth_controller(spotify: SpotifyClient):
@@ -36,7 +37,13 @@ def auth_controller(spotify: SpotifyClient):
 
     @auth_controller.route("refresh-user-code")
     def auth_refresh():
-        refresh_token = request.cookies.get("spotify_refresh_token")
-        return spotify.refresh_access_token(refresh_token=refresh_token)
+        user_id = request.cookies.get("user_id")
+        (user_id, _, _) = spotify.refresh_access_token(user_id=user_id)
+        return add_cookies_to_response(
+            make_response(),
+            {
+                "user_id": user_id,
+            },
+        )
 
     return auth_controller
