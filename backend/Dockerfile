@@ -9,7 +9,7 @@ FROM os-base AS app-base
 
 WORKDIR /backend
 COPY src src
-COPY pyproject.toml gunicorn.conf.py ./
+COPY pyproject.toml gunicorn.conf.py README.md ./
 
 RUN ["poetry", "install", "--only", "main"]
 

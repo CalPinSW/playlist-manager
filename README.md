@@ -65,16 +65,29 @@ _The application is comprised of a React frontend bundled with esbuild, and a py
 ![Component Diagram](./diagrams/ComponentDiagram.png)  
 Currently the backend consists of an auth endpoints and endpoints for communicating with the Spotify API.\_
 
+## Infrastructure
+
+With the exception of the database, infrastructure is managed by terraform in the [terraform](./terraform) folder. Any changes to the terraform configuration will be applied by CI/CD pipelines when pushed to main branch. Any variables used by terraform must be added to Github actions secrets, and configured in the ci-pipeline yaml file. Use the prefix `TF_VARS_` for the variable to be automatically read by terraform in the pipeline.
+
 ## CI
 
 Pipelines will run when pull requests are created or commits are pushed to the origin.
 
 ## Deployment
 
-The frontend and backend applications are deployed to two Azure Web Applications. The frontend can be accessed [here](https://playman.azurewebsites.net/) These can be updated locally by:
+The frontend and backend applications are deployed to two Azure Web Applications. The frontend can be accessed [here](https://playman.azurewebsites.net/). Any pushes to the main branch will be deployed automatically, but they can also be updated locally by:
 
 1. Building new Docker images with (from the relevant frontend/backend directory) `docker build --target production --tag calpin/playlist-manager-"frontend/backend":prod .`
 2. Pushing the new image to Docker Hub `docker push calpin/playlist-manager-"frontend/backend":prod`
 3. Sending a curl request to the appropriate Webhook url:
     - Frontend: `curl -dH -X POST "Frontend Webhook from Azure"`
     - Backend: `curl -dH -X POST "Backend Webhook from Azure"`
+
+
+## Database Migrations
+
+Database migrations can be run with the following steps:
+1. Navigate to the /backend folder.
+3. Run Python locally (e.g. `python3`). 
+4. From the Python terminal import the migration functions you wish to run. (e.g. `from src.database.migrations.m_241030_add_access_tokens_table import up, down`).
+5. Running the desired migration (e.g. `up()`).
