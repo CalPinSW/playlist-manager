@@ -1,5 +1,6 @@
 import React, { FC } from "react";
 import { Album } from "../../interfaces/Album";
+import ButtonAsync from "../../components/ButtonAsync";
 import Button from "../../components/Button";
 import { Playlist } from "../../interfaces/Playlist";
 import { addAlbumToPlaylist, startPlayback } from "../../api";
@@ -14,12 +15,12 @@ const AlbumActions: FC<AlbumActionsProps> = ({album, associatedPlaylists, contex
     return (
         <div className="flex flex-col my-2 gap-2">
             {associatedPlaylists.map((associatedPlaylist) => (
-                <Button
+                <ButtonAsync
                     onClick={() => addAlbumToPlaylist(associatedPlaylist.id, album.id)}
                     key={associatedPlaylist.id}
                 >
                     Add to {associatedPlaylist.name}
-                </Button>
+                </ButtonAsync>
         ))}
             <Button
                 onClick={() => (startPlayback({context_uri: contextPlaylist.uri, offset: {album_id: album.id} }))}
