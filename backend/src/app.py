@@ -11,6 +11,7 @@ from src.controllers.auth import auth_controller
 from src.database.models import db_wrapper
 from loggly.handlers import HTTPSHandler
 from pythonjsonlogger.json import JsonFormatter
+from logging import getLogger
 
 
 def create_app():
@@ -19,12 +20,17 @@ def create_app():
     app.logger.setLevel(app.config["LOGGING_LEVEL"])
     if app.config["LOGGLY_TOKEN"] is not None:
         handler = HTTPSHandler(
-            f'https://logs-01.loggly.com/inputs/{app.config["LOGGLY_TOKEN"]}/tag/todo-app'
+            f'https://logs-01.loggly.com/inputs/{app.config["LOGGLY_TOKEN"]}/tag/playman'
         )
         handler.setFormatter(
             JsonFormatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
         )
         app.logger.addHandler(handler)
+        getLogger("werkzeug").addHandler(
+            HTTPSHandler(
+                f'https://logs-01.loggly.com/inputs/{app.config["LOGGLY_TOKEN"]}/tag/playman-requests'
+            )
+        )
 
     spotify = SpotifyClient()
     musicbrainz = MusicbrainzClient(logger=app.logger)
