@@ -12,7 +12,6 @@ class Config:
         self.MUSICBRAINZ_USER_AGENT = os.environ.get("MUSICBRAINZ_USER_AGENT")
         self.LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL")
         self.LOGGLY_TOKEN = os.environ.get("LOGGLY_TOKEN")
-        self.FLASK_ENV = "production"
 
         if not self.SECRET_KEY:
             raise ValueError(

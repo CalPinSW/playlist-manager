@@ -1,7 +1,6 @@
 services:
     frontend:
         image: frontend:dev
-        container_name: frontend
         build:
             context: frontend
             dockerfile: Dockerfile
@@ -22,7 +21,6 @@ services:
 
     backend:
         image: backend:dev
-        container_name: backend
         build:
             context: backend
             dockerfile: Dockerfile
@@ -37,19 +35,6 @@ services:
                 - action: sync
                   path: ./backend/src
                   target: /backend/src
-        networks:
-            monitoring-network:
-                ipv4_address: 172.16.238.11
-
-    prometheus:
-        image: prom/prometheus
-        ports: 
-        - "9090:9090"
-        volumes:
-        - ./prometheus.yml:/etc/prometheus/prometheus.yml
-        networks:
-            monitoring-network:
-                ipv4_address: 172.16.238.12
 
     test:
         profiles:
@@ -62,12 +47,3 @@ services:
         env_file:
             - path: backend/.env.test
               required: true
-
-networks:
-  monitoring-network:
-    name: monitoring-network
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.16.238.0/24
