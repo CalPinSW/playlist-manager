@@ -59,8 +59,15 @@ class MusicbrainzClient:
             headers=self.request_headers,
         )
         if response.status_code != 200:
-            self.logger.error(response.reason)
-            self.logger.error(response.headers)
+            self.logger.error(
+                {
+                    "message": "Error getting album genres from Musicbrainz",
+                    "artist": artist_name,
+                    "album": album_title,
+                    "response_reason": response.reason,
+                    "response_headers": response.headers,
+                }
+            )
         data = response.json()
         release_group_response = ReleaseGroupResponse.model_validate(data)
         sleep(1)

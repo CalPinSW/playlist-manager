@@ -39,7 +39,13 @@ def database_controller(
         (db_user, _) = get_or_create_user(user)
         simplified_playlists = spotify.get_all_playlists(user_id=user.id)
         number_of_playlists_updated = 0
-        logger.info("Populating user playlists for user_id: %s", user_id)
+        logger.info(
+            {
+                "message": "Populating user playlists",
+                "user_id": user_id,
+                "number_of_playlists_found": simplified_playlists.count,
+            }
+        )
         try:
             for simplified_playlist in simplified_playlists:
                 with database.database.atomic():
@@ -58,37 +64,57 @@ def database_controller(
                                 id=simplified_playlist.id,
                             )
                             create_playlist(playlist, db_user)
-
             logger.info(
-                f"Completed populating user playlists for user_id: {user_id}. {number_of_playlists_updated} albums updated",
+                {
+                    "message": "Completed populating user playlists",
+                    "user_id": user_id,
+                    "number_of_playlists_found": simplified_playlists.count,
+                    "number_of_playlists_updated": number_of_playlists_updated,
+                }
             )
 
             return make_response(
                 f"Playlist data populated/updated for {number_of_playlists_updated} playlists.",
                 201,
             )
-        except:
-            logger.info(
-                f"Error populating user playlists for user_id: {user_id}.",
-                user_id,
+        except Exception as e:
+            simplified_playlist_id = (
+                locals().get("simplified_playlist", {}).get("id", "N/A")
+            )
+
+            logger.error(
+                {
+                    "message": "Error populating user playlists",
+                    "user_id": user_id,
+                    "number_of_playlists_found": simplified_playlists.count,
+                    "number_of_playlists_successfully_updated": number_of_playlists_updated,
+                    "failing_playlist_id": simplified_playlist_id,
+                    "error": str(e),
+                }
             )
 
     @database_controller.route("populate_playlist/<id>", methods=["GET"])
     def populate_playlist(id):
         user_id = request.cookies.get("user_id")
         logger.info(
-            f"Populating playlist_id ${id} for user_id {user_id}.",
+            {
+                "message": "Populating user playlist",
+                "playlist_id": id,
+                "user_id": user_id,
+            }
         )
         try:
             user = spotify.get_user_by_id(user_id=user_id)
             (db_user, _) = get_or_create_user(user)
             db_playlist = get_playlist_by_id_or_none(id)
+            created_or_updated = "created"
             if db_playlist is not None:
+                created_or_updated = "updated"
                 delete_playlist(db_playlist.id)
             playlist = spotify.get_playlist(user_id=user.id, id=id)
             create_playlist(playlist, db_user)
-            albums = get_playlist_albums(playlist.id)
-            batch_albums = split_list(albums, 20)
+            playlist_albums = get_playlist_albums(playlist.id)
+            batch_albums = split_list(playlist_albums, 20)
             for album_chunk in batch_albums:
                 albums = spotify.get_multiple_albums(
                     user_id=user_id, ids=[album.id for album in album_chunk]
@@ -99,22 +125,38 @@ def database_controller(
                             db_album.artists[0].name, db_album.name
                         )
                         update_album(db_album)
-
             logger.info(
-                f"Completed populating playlist_id ${id} for user_id {user_id}.",
+                {
+                    "message": "Completed populating user playlist",
+                    "playlist_id": id,
+                    "user_id": user_id,
+                    "create_update_mode": created_or_updated,
+                }
             )
             return make_response("Playlist details populated", 201)
-        except:
+        except Exception as e:
+            failed_album_id = locals().get("db_album", {}).get("id", "N/A")
             logger.error(
-                f"Error populating playlist_id ${id} for user_id {user_id}.",
+                {
+                    "message": "Error populating user playlist",
+                    "playlist_id": id,
+                    "user_id": user_id,
+                    "create_update_mode": created_or_updated,
+                    "failed_album_id": failed_album_id,
+                    "error": str(e),
+                }
             )
 
     @database_controller.route("populate_additional_album_details", methods=["GET"])
     def populate_additional_album_details():
         user_id = request.cookies.get("user_id")
         logger.info(
-            f"Populating additional album details for user_id {user_id}.",
+            {
+                "message": "Populating additional album details",
+                "user_id": user_id,
+            }
         )
+
         try:
             albums = get_user_albums_with_no_artists(user_id=user_id)
             batch_albums = split_list(albums, 20)
@@ -129,13 +171,24 @@ def database_controller(
                         )
                         update_album(db_album)
             logger.info(
-                f"Completed populating additional album details for user_id {user_id}.",
+                {
+                    "message": "Completed populating additional album details",
+                    "user_id": user_id,
+                    "number_of_albums_updated": albums.count,
+                }
             )
 
             return make_response("Playlist details populated", 201)
-        except:
+        except Exception as e:
+            failed_album_id = locals().get("db_album", {}).get("id", "N/A")
             logger.error(
-                f"Error populating additional album details for user_id {user_id}.",
+                {
+                    "message": "Error populating additional album details",
+                    "user_id": user_id,
+                    "number_of_albums_updated": albums.count,
+                    "failed_album_id": failed_album_id,
+                    "error": e,
+                }
             )
 
     @database_controller.route("populate_universal_genre_list", methods=["GET"])
@@ -155,23 +208,45 @@ def database_controller(
         user_id: str, musicbrainz: MusicbrainzClient = MusicbrainzClient(logger=logger)
     ):
         albums = get_user_albums(user_id=user_id)
-        logger.info(f"processing album {0} of {len(albums)}")
+        logger.info(
+            {
+                "message": "Processing all user album details",
+                "user_id": user_id,
+                "number_of_albums_to_process": albums.count
+            }
+        )
         skip_count = 0
-        for idx, db_album in enumerate(albums):
-            logger.info("\033[A                             \033[A")
+        try:
+            for idx, db_album in enumerate(albums):
+                if get_album_genres(db_album.id) != []:
+                    skip_count += 1
+                    continue
+                album_artists = get_album_artists(db_album)
+                genres = musicbrainz.get_album_genres(
+                    artist_name=album_artists[0].name, album_title=db_album.name
+                )
+                add_genres_to_album(db_album, genres)
             logger.info(
-                f"processing album {idx} of {len(albums)}, skipped {skip_count}"
+                {
+                    "message": "Completed processing all user album details",
+                    "user_id": user_id,
+                    "number_of_albums_processed": albums.count - skip_count,
+                    "number_of_albums_skipped": skip_count
+                }
             )
-            if get_album_genres(db_album.id) != []:
-                skip_count += 1
-                continue
-            album_artists = get_album_artists(db_album)
-            genres = musicbrainz.get_album_genres(
-                artist_name=album_artists[0].name, album_title=db_album.name
+        except Exception as e:
+            failed_album_id = locals().get("db_album", {}).get("id", "N/A")
+            logger.error(
+                {
+                    "message": "Error populating all user albums details",
+                    "user_id": user_id,
+                    "number_of_albums_processed": albums.count - skip_count,
+                    "number_of_albums_skipped": skip_count,
+                    "failed_album_id": failed_album_id,
+                    "error": e,
+                }
             )
-            add_genres_to_album(db_album, genres)
-        logger.info("\033[A                             \033[A")
-        logger.info(f"completed. Processed {len(albums)} albums. Skipped ")
+    
 
     return database_controller
 

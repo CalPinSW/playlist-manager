@@ -10,7 +10,7 @@ from src.spotify import SpotifyClient
 from src.controllers.auth import auth_controller
 from src.database.models import db_wrapper
 from loggly.handlers import HTTPSHandler
-from logging import Formatter
+from pythonjsonlogger.json import JsonFormatter
 
 
 def create_app():
@@ -22,7 +22,7 @@ def create_app():
             f'https://logs-01.loggly.com/inputs/{app.config["LOGGLY_TOKEN"]}/tag/todo-app'
         )
         handler.setFormatter(
-            Formatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
+            JsonFormatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
         )
         app.logger.addHandler(handler)
 
