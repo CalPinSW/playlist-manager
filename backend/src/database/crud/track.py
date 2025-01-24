@@ -27,15 +27,9 @@ def create_track_or_none(track: Track):
         uri=track.uri,
     )
     for artist in track.artists:
-        create_or_update_artist(artist)
-        TrackArtistRelationship.get_or_create(track=track.id, artist=artist.id)
+        db_artist = create_or_update_artist(artist)
+        TrackArtistRelationship.get_or_create(track=db_track, artist=db_artist)
     return db_track
-
-
-def add_track_artists(track: SimplifiedTrack):
-    for artist in track.artists:
-        create_or_update_artist(artist)
-        TrackArtistRelationship.create(track=track.id, artist=artist.id)
 
 
 def get_album_tracks(album: DbAlbum) -> List[DbTrack] | None:
