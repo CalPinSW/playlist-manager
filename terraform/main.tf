@@ -149,6 +149,7 @@ resource "azurerm_linux_web_app" "backend" {
     "BACKEND_URL"                         = var.backend_url
     "DB_CONNECTION_STRING"                = var.db_connection_string
     "DOCKER_ENABLE_CI"                    = "true"
+    "ENVIRONMENT"                         = var.environment
     "FLASK_APP"                           = "src/app" 
     "FLASK_DEBUG"                         = "false" 
     "FRONTEND_URL"                        = var.frontend_url

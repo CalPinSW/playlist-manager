@@ -55,21 +55,22 @@ jobs:
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+        TF_VAR_environment: ${{vars.ENVIRONMENT}}
         TF_VAR_arm_client_id: ${{ secrets.ARM_CLIENT_ID }}
         TF_VAR_arm_client_secret: ${{ secrets.ARM_CLIENT_SECRET }}
         TF_VAR_arm_subscription_id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         TF_VAR_arm_tenant_id: ${{ secrets.ARM_TENANT_ID }}
-        TF_VAR_musicbrainz_url: ${{secrets.musicbrainz_url}}
-        TF_VAR_musicbrainz_user_agent: ${{secrets.musicbrainz_user_agent}}
-        TF_VAR_flask_secret_key: ${{secrets.flask_secret_key}}
-        TF_VAR_spotify_client_id: ${{secrets.spotify_client_id}}
-        TF_VAR_spotify_secret: ${{secrets.spotify_secret}}
-        TF_VAR_db_connection_string: ${{secrets.db_connection_string}}
-        TF_VAR_frontend_url: ${{secrets.frontend_url}}
-        TF_VAR_backend_url: ${{secrets.backend_url}}
-        TF_VAR_neon_api_key: ${{secrets.neon_api_key}}
-        TF_VAR_logging_level: ${{vars.logging_level}}
-        TF_VAR_loggly_token: ${{secrets.loggly_token}}
+        TF_VAR_musicbrainz_url: ${{secrets.MUSICBRAINZ_URL}}
+        TF_VAR_musicbrainz_user_agent: ${{secrets.MUSICBRAINZ_USER_AGENT}}
+        TF_VAR_flask_secret_key: ${{secrets.FLASK_SECRET_KEY}}
+        TF_VAR_spotify_client_id: ${{secrets.SPOTIFY_CLIENT_ID}}
+        TF_VAR_spotify_secret: ${{secrets.SPOTIFY_SECRET}}
+        TF_VAR_db_connection_string: ${{secrets.DB_CONNECTION_STRING}}
+        TF_VAR_frontend_url: ${{secrets.FRONTEND_URL}}
+        TF_VAR_backend_url: ${{secrets.BACKEND_URL}}
+        TF_VAR_neon_api_key: ${{secrets.NEON_API_KEY}}
+        TF_VAR_logging_level: ${{vars.LOGGING_LEVEL}}
+        TF_VAR_loggly_token: ${{secrets.LOGGLY_TOKEN}}
 
       steps: 
         - name: Checkout Repository

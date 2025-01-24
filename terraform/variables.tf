@@ -1,3 +1,7 @@
+variable "environment" {
+  description = "The environment in which the application is running"
+}
+
 variable "db_connection_string" {
   description = "The connection string for the db used by the application"
   sensitive = true

@@ -43,7 +43,7 @@ def database_controller(
             {
                 "message": "Populating user playlists",
                 "user_id": user_id,
-                "number_of_playlists_found": simplified_playlists.count,
+                "number_of_playlists_found": len(simplified_playlists),
             }
         )
         try:
@@ -68,7 +68,7 @@ def database_controller(
                 {
                     "message": "Completed populating user playlists",
                     "user_id": user_id,
-                    "number_of_playlists_found": simplified_playlists.count,
+                    "number_of_playlists_found": len(simplified_playlists),
                     "number_of_playlists_updated": number_of_playlists_updated,
                 }
             )
@@ -86,7 +86,7 @@ def database_controller(
                 {
                     "message": "Error populating user playlists",
                     "user_id": user_id,
-                    "number_of_playlists_found": simplified_playlists.count,
+                    "number_of_playlists_found": len(simplified_playlists),
                     "number_of_playlists_successfully_updated": number_of_playlists_updated,
                     "failing_playlist_id": simplified_playlist_id,
                     "error": str(e),
@@ -175,7 +175,7 @@ def database_controller(
                 {
                     "message": "Completed populating additional album details",
                     "user_id": user_id,
-                    "number_of_albums_updated": albums.count,
+                    "number_of_albums_updated": len(albums),
                 }
             )
 
@@ -186,7 +186,7 @@ def database_controller(
                 {
                     "message": "Error populating additional album details",
                     "user_id": user_id,
-                    "number_of_albums_updated": albums.count,
+                    "number_of_albums_updated": len(albums),
                     "failed_album_id": failed_album_id,
                     "error": e,
                 }
@@ -213,7 +213,7 @@ def database_controller(
             {
                 "message": "Processing all user album details",
                 "user_id": user_id,
-                "number_of_albums_to_process": albums.count,
+                "number_of_albums_to_process": len(albums),
             }
         )
         skip_count = 0
@@ -231,7 +231,7 @@ def database_controller(
                 {
                     "message": "Completed processing all user album details",
                     "user_id": user_id,
-                    "number_of_albums_processed": albums.count - skip_count,
+                    "number_of_albums_processed": len(albums) - skip_count,
                     "number_of_albums_skipped": skip_count,
                 }
             )
@@ -241,7 +241,7 @@ def database_controller(
                 {
                     "message": "Error populating all user albums details",
                     "user_id": user_id,
-                    "number_of_albums_processed": albums.count - skip_count,
+                    "number_of_albums_processed": len(albums) - skip_count,
                     "number_of_albums_skipped": skip_count,
                     "failed_album_id": failed_album_id,
                     "error": e,
