@@ -25,7 +25,7 @@ export const AlbumContainer: FC<AlbumContainerProps> = ({
       >
         <RotatingBorderBox active={active}>
           <div
-            className={`size-[100%-1px] m-1 relative transition-all duration-500 [transform-style:preserve-3d] ${
+            className={`size-full p-1 relative transition-all duration-500 [transform-style:preserve-3d] ${
               selected && "[transform:rotateY(180deg)]"
             }`}
           >
