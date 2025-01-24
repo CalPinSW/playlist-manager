@@ -78,8 +78,8 @@ def database_controller(
                 201,
             )
         except Exception as e:
-            simplified_playlist_id = (
-                locals().get("simplified_playlist", {}).get("id", "N/A")
+            simplified_playlist_id = getattr(
+                locals().get("simplified_playlist"), "id", "N/A"
             )
 
             logger.error(
@@ -135,7 +135,8 @@ def database_controller(
             )
             return make_response("Playlist details populated", 201)
         except Exception as e:
-            failed_album_id = locals().get("db_album", {}).get("id", "N/A")
+            failed_album_id = getattr(locals().get("db_album"), "id", "N/A")
+
             logger.error(
                 {
                     "message": "Error populating user playlist",
@@ -180,7 +181,7 @@ def database_controller(
 
             return make_response("Playlist details populated", 201)
         except Exception as e:
-            failed_album_id = locals().get("db_album", {}).get("id", "N/A")
+            failed_album_id = getattr(locals().get("db_album"), "id", "N/A")
             logger.error(
                 {
                     "message": "Error populating additional album details",
@@ -212,7 +213,7 @@ def database_controller(
             {
                 "message": "Processing all user album details",
                 "user_id": user_id,
-                "number_of_albums_to_process": albums.count
+                "number_of_albums_to_process": albums.count,
             }
         )
         skip_count = 0
@@ -231,11 +232,11 @@ def database_controller(
                     "message": "Completed processing all user album details",
                     "user_id": user_id,
                     "number_of_albums_processed": albums.count - skip_count,
-                    "number_of_albums_skipped": skip_count
+                    "number_of_albums_skipped": skip_count,
                 }
             )
         except Exception as e:
-            failed_album_id = locals().get("db_album", {}).get("id", "N/A")
+            failed_album_id = getattr(locals().get("db_album"), "id", "N/A")
             logger.error(
                 {
                     "message": "Error populating all user albums details",
@@ -246,7 +247,6 @@ def database_controller(
                     "error": e,
                 }
             )
-    
 
     return database_controller
 
