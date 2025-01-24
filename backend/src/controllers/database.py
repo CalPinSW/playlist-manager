@@ -136,13 +136,14 @@ def database_controller(
             return make_response("Playlist details populated", 201)
         except Exception as e:
             failed_album_id = getattr(locals().get("db_album"), "id", "N/A")
+            created_or_updated_value = locals().get("created_or_updated", "N/A")
 
             logger.error(
                 {
                     "message": "Error populating user playlist",
                     "playlist_id": id,
                     "user_id": user_id,
-                    "create_update_mode": created_or_updated,
+                    "create_update_mode": created_or_updated_value,
                     "failed_album_id": failed_album_id,
                     "error": str(e),
                 }

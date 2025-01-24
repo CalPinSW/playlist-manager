@@ -6,6 +6,7 @@ from src.database.models import (
     AlbumArtistRelationship,
     AlbumGenreRelationship,
     DbAlbum,
+    DbAlbumNote,
     DbArtist,
     DbGenre,
     DbPlaylist,
@@ -234,6 +235,10 @@ def get_playlist_albums_with_genres(playlist_id: str) -> List[dict]:
     for album in albums_with_genres_and_artists:
         genres = [genre_rel.genre.name for genre_rel in album.genres]
         artists = [{"name": artist_rel.artist.name} for artist_rel in album.artists]
+        notes = [
+            note.text
+            for note in DbAlbumNote.select().where(DbAlbumNote.album == album.id)
+        ]
 
         album_details = {
             "id": album.id,
@@ -241,6 +246,7 @@ def get_playlist_albums_with_genres(playlist_id: str) -> List[dict]:
             "image_url": album.image_url,
             "genres": genres,
             "artists": artists,
+            "notes": notes,
         }
 
         albums_with_details.append(album_details)
