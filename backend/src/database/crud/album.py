@@ -14,9 +14,10 @@ from src.database.models import (
 from peewee import JOIN
 
 
-def create_album_or_none(album: Album, ignore_tracks=False):
-    if DbAlbum.get_or_none(DbAlbum.id == album.id):
-        return
+def get_or_create_album(album: Album, ignore_tracks=False):
+    existing_db_album = DbAlbum.get_or_none(DbAlbum.id == album.id)
+    if existing_db_album:
+        return existing_db_album
     db_album = DbAlbum.create(
         id=album.id,
         album_type=album.album_type,
@@ -38,20 +39,26 @@ def create_album_or_none(album: Album, ignore_tracks=False):
         for track in album.tracks:
             create_track_or_none(track, album)
 
-    return album
+    return db_album
 
 
 def update_album(album: Album):
-    db_album = DbAlbum.update(
-        album_type=album.album_type,
-        total_tracks=album.total_tracks,
-        image_url=album.images[0].url if album.images else None,
-        name=album.name,
-        release_date=album.release_date,
-        release_date_precision=album.release_date_precision,
-        label=album.label,
-        uri=album.uri,
-    ).where(DbAlbum.id == album.id).execute()
+    updated_albums = (
+        DbAlbum.update(
+            album_type=album.album_type,
+            total_tracks=album.total_tracks,
+            image_url=album.images[0].url if album.images else None,
+            name=album.name,
+            release_date=album.release_date,
+            release_date_precision=album.release_date_precision,
+            label=album.label,
+            uri=album.uri,
+        )
+        .where(DbAlbum.id == album.id)
+        .returning(DbAlbum)
+        .execute()
+    )
+    db_album = list(updated_albums)[0]
 
     for artist in album.artists:
         db_artist = create_or_update_artist(artist)
@@ -60,7 +67,6 @@ def update_album(album: Album):
         db_genre = DbGenre.get_or_none(name=genre)
         if db_genre:
             AlbumGenreRelationship.get_or_create(album=db_album, genre=db_genre)
-
     return album
 
 
