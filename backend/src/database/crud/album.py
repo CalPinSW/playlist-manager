@@ -42,7 +42,7 @@ def create_album_or_none(album: Album, ignore_tracks=False):
 
 
 def update_album(album: Album):
-    DbAlbum.update(
+    db_album = DbAlbum.update(
         album_type=album.album_type,
         total_tracks=album.total_tracks,
         image_url=album.images[0].url if album.images else None,
@@ -54,12 +54,12 @@ def update_album(album: Album):
     ).where(DbAlbum.id == album.id).execute()
 
     for artist in album.artists:
-        create_or_update_artist(artist)
-        AlbumArtistRelationship.get_or_create(album=album.id, artist=artist.id)
+        db_artist = create_or_update_artist(artist)
+        AlbumArtistRelationship.get_or_create(album=db_album, artist=db_artist)
     for genre in album.genres or []:
         db_genre = DbGenre.get_or_none(name=genre)
         if db_genre:
-            AlbumGenreRelationship.get_or_create(album=album.id, genre=db_genre.id)
+            AlbumGenreRelationship.get_or_create(album=db_album, genre=db_genre)
 
     return album
 
@@ -78,7 +78,7 @@ def add_genres_to_album(album: DbAlbum, genres: List[str]) -> DbAlbum:
     for genre in genres or []:
         db_genre = DbGenre.get_or_none(name=genre)
         if db_genre:
-            AlbumGenreRelationship.get_or_create(album=album.id, genre=db_genre.id)
+            AlbumGenreRelationship.get_or_create(album=album, genre=db_genre)
 
     return album
 
