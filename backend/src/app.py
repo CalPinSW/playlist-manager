@@ -32,7 +32,7 @@ def create_app():
     app.logger.setLevel(app.config["LOGGING_LEVEL"])
     if app.config["LOGGLY_TOKEN"] is not None:
         jsonFormatter = JsonFormatter(
-            "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+            "[%(asctime)s] %(levelname)s in %(module)s [%(environment)s]: %(message)s"
         )
         loggly_url = f'https://logs-01.loggly.com/inputs/{app.config["LOGGLY_TOKEN"]}/tag/playman'
 
