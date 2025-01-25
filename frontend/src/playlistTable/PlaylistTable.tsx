@@ -36,7 +36,7 @@ const PlaylistTable: FC<IPlaylistTable> = ({ playlistsQuery }) => {
             <img src={row.original.image_url} className="w-full"></img>
           );
         }
-        return <PlaylistIcon className="w-full h-full fill-primary" />;
+        return <PlaylistIcon className="size-full fill-primary" />;
       },
     }),
     columnHelper.accessor("name", {

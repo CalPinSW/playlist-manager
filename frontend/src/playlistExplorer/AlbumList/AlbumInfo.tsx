@@ -1,5 +1,6 @@
 import React, { FC } from "react";
 import { Album } from "../../interfaces/Album";
+import { renderArtistList } from "../../utils/renderArtistList";
 
 interface AlbumInfoProps {
     album: Album
@@ -10,7 +11,7 @@ const AlbumInfo: FC<AlbumInfoProps> = ({album}) => {
         <div className="flex flex-col">
           <div>album: {album.name}</div>
           <div>
-            artists: {album.artists.map((artist) => artist.name).join(", ")}
+            artists: {renderArtistList(album.artists)}
           </div>
           <div>genres: {album.genres}</div>
           <div>label: {album.label}</div>
