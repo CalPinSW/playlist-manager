@@ -9,16 +9,60 @@ from src.musicbrainz import MusicbrainzClient
 from src.spotify import SpotifyClient
 from src.controllers.auth import auth_controller
 from src.database.models import db_wrapper
+from loggly.handlers import HTTPSHandler
+from pythonjsonlogger.json import JsonFormatter
+from logging import getLogger
+import logging
+
+
+class EnvironmentFilter(logging.Filter):
+    def __init__(self, environment):
+        super().__init__()
+        self.environment = environment
+
+    def filter(self, record):
+        record.environment = self.environment
+        return True
 
 
 def create_app():
     app = Flask(__name__)
+
+    app.config.from_object(Config())
+    app.logger.setLevel(app.config["LOGGING_LEVEL"])
+    if app.config["LOGGLY_TOKEN"] is not None:
+        jsonFormatter = JsonFormatter(
+            "[%(asctime)s] %(levelname)s in %(module)s [%(environment)s]: %(message)s"
+        )
+        loggly_url = f'https://logs-01.loggly.com/inputs/{app.config["LOGGLY_TOKEN"]}/tag/playman'
+
+        # Default Logging
+        handler = HTTPSHandler(loggly_url)
+        handler.setFormatter(jsonFormatter)
+        handler.addFilter(EnvironmentFilter(app.config["ENVIRONMENT"]))
+        app.logger.addHandler(handler)
+
+        # Request Logging
+        request_logger = getLogger("werkzeug")
+        request_logger.setLevel(app.config["LOGGING_LEVEL"])
+        request_handler = HTTPSHandler(loggly_url + "-requests")
+        request_handler.setFormatter(jsonFormatter)
+        request_handler.addFilter(EnvironmentFilter(app.config["ENVIRONMENT"]))
+        request_logger.addHandler(request_handler)
+
+        # DB Logging
+        db_logger = logging.getLogger("peewee")
+        db_logger.setLevel(app.config["LOGGING_LEVEL"])
+        db_handler = HTTPSHandler(loggly_url + "-db")
+        db_handler.setFormatter(jsonFormatter)
+        db_handler.addFilter(EnvironmentFilter(app.config["ENVIRONMENT"]))
+        db_logger.addHandler(db_handler)
+
     spotify = SpotifyClient()
-    musicbrainz = MusicbrainzClient()
+    musicbrainz = MusicbrainzClient(logger=app.logger)
     app.config["DATABASE"] = Config().DB_CONNECTION_STRING
     db_wrapper.init_app(app)
 
-    app.config.from_object(Config())
     app.config["CORS_HEADERS"] = "Content-Type"
 
     # Since the backend runs on a different host to the frontend in production,
@@ -51,7 +95,10 @@ def create_app():
     app.register_blueprint(music_controller(spotify=spotify))
     app.register_blueprint(
         database_controller(
-            spotify=spotify, musicbrainz=musicbrainz, database=db_wrapper
+            spotify=spotify,
+            musicbrainz=musicbrainz,
+            database=db_wrapper,
+            logger=app.logger,
         )
     )
 
