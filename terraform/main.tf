@@ -172,7 +172,7 @@ resource "azurerm_linux_web_app" "backend" {
     always_on = false
     ftps_state = "FtpsOnly"
     cors {
-      allowed_origins = var.use_cors ? ["https://playman.azurewebsites.net"] : "*"
+      allowed_origins = var.use_cors ? ["https://playman.azurewebsites.net"] : ["*"]
       support_credentials = var.use_cors
     }
     application_stack {
