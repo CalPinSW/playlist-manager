@@ -79,7 +79,7 @@ def create_app():
             r"/*": {
                 "origins": [
                     f"{Config().FRONTEND_URL}",
-                    "https://z9i1dqk-calpin-8081.exp.direct",
+                    "*",
                 ]
             }
         },
