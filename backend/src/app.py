@@ -75,15 +75,7 @@ def create_app():
 
     CORS(
         app,
-        resources={
-            r"/*": {
-                "origins": [
-                    f"{Config().FRONTEND_URL}",
-                    "*",
-                ]
-            }
-        },
-        supports_credentials=True,
+        resources={r"/*": {"origins": "*"}},
     )
 
     @app.errorhandler(UnauthorizedException)
