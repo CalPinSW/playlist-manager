@@ -13,7 +13,8 @@ def auth_controller(spotify: SpotifyClient):
     @auth_controller.route("login")
     def login():
         state = str(uuid4())
-        session["SpotifyState"] = state
+        if Config().USE_CORS:
+            session["SpotifyState"] = state
         query_string = spotify.get_login_query_string(state)
         return "https://accounts.spotify.com/authorize?" + query_string
 
@@ -29,10 +30,13 @@ def auth_controller(spotify: SpotifyClient):
     @auth_controller.route("get-user-code")
     def auth_redirect():
         code = request.args.get("code")
-        state = request.args.get("state")
-        test = session["SpotifyState"]
-        if state != test:
-            return make_response({"error": test}, 401)
+
+        if Config().USE_CORS:
+            state = request.args.get("state")
+            test = session["SpotifyState"]
+            if state != test:
+                return make_response({"error": test}, 401)
+
         return spotify.request_access_token(code=code)
 
     @auth_controller.route("refresh-user-code")
