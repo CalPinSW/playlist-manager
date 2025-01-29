@@ -15,7 +15,7 @@ export const jsonRequest = async <I, O>(
 	data?: I,
 	redirectOnUnauthorized = true,
 ) => {
-	let fetchOptions: RequestInit = useCors ? { credentials: "include", mode: "cors" } : {};
+	let fetchOptions: RequestInit = useCors ? { credentials: "include", mode: "cors" } : {credentials: "include"};
 	switch (method) {
 		case RequestMethod.POST:
 		case RequestMethod.PUT:
@@ -54,7 +54,7 @@ export const request = async <I>(
 	data?: I,
 	redirectOnUnauthorized = true,
 ) => {
-	let fetchOptions: RequestInit = useCors ? { credentials: "include", mode: "cors" } : {};
+	let fetchOptions: RequestInit = useCors ? { credentials: "include", mode: "cors" } : {credentials: "include"};
 	switch (method) {
 		case RequestMethod.POST:
 		case RequestMethod.PUT:
