@@ -72,11 +72,23 @@ def create_app():
         SESSION_COOKIE_SAMESITE="None",
         SESSION_COOKIE_SECURE="True",
     )
-
-    CORS(
-        app,
-        resources={r"/*": {"origins": "*"}},
-    )
+    if Config().USE_CORS:
+        CORS(
+            app,
+            resources={
+                r"/*": {
+                    "origins": [
+                        f"{Config().FRONTEND_URL}",
+                    ]
+                }
+            },
+            supports_credentials=True,
+        )
+    else:
+        CORS(
+            app,
+            resources={r"/*": {"origins": "*"}},
+        )
 
     @app.errorhandler(UnauthorizedException)
     def handle_unauthorized_exception(_):

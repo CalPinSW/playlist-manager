@@ -3,9 +3,7 @@ import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { Playlist } from "../interfaces/Playlist";
 import { Track } from "../interfaces/Track";
 import { User } from "../interfaces/User";
-import { backendUrl, request } from "./jsonRequest";
-import { RequestMethod } from "./jsonRequest";
-import { jsonRequest } from "./jsonRequest";
+import { jsonRequest, request, RequestMethod } from "./jsonRequest";
 
 export const openInNewTab = (url: string) => {
 	const newWindow = window.open(url, "_self", "noopener,noreferrer");
@@ -13,18 +11,14 @@ export const openInNewTab = (url: string) => {
 };
 
 export const login = async (): Promise<void> => {
-	return fetch(`${backendUrl}/auth/login`, {
-		credentials: "include",
-	}).then(async response => {
+	return request(`auth/login`).then(async response => {
 		const redirectUrl = await response.text();
 		openInNewTab(redirectUrl);
 	});
 };
 
 export const logout = async (): Promise<void> => {
-	return fetch(`${backendUrl}/auth/logout`, {
-		credentials: "include",
-	}).then(async response => {
+	return request(`auth/logout`).then(async response => {
 		const redirectUrl = await response.text();
 		console.log(redirectUrl)
 		window.open("/", "_self");

@@ -13,6 +13,7 @@ class Config:
         self.LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL")
         self.LOGGLY_TOKEN = os.environ.get("LOGGLY_TOKEN")
         self.ENVIRONMENT = os.environ.get("ENVIRONMENT")
+        self.USE_CORS = os.environ.get("USE_CORS")
 
         if not self.SECRET_KEY:
             raise ValueError(
