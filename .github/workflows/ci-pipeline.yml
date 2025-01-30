@@ -63,7 +63,6 @@ jobs:
         TF_VAR_musicbrainz_url: ${{secrets.MUSICBRAINZ_URL}}
         TF_VAR_musicbrainz_user_agent: ${{secrets.MUSICBRAINZ_USER_AGENT}}
         TF_VAR_flask_secret_key: ${{secrets.FLASK_SECRET_KEY}}
-        TF_VAR_use_cors: ${{secrets.USE_CORS}}
         TF_VAR_spotify_client_id: ${{secrets.SPOTIFY_CLIENT_ID}}
         TF_VAR_spotify_secret: ${{secrets.SPOTIFY_SECRET}}
         TF_VAR_db_connection_string: ${{secrets.DB_CONNECTION_STRING}}

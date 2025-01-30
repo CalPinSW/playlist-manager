@@ -39,10 +39,6 @@ variable "backend_url" {
   description = "The address of the backend application"
 }
 
-variable "use_cors" {
-  description = "The address of the backend application"
-}
-
 variable "arm_client_id" {
   description = "Client Id for the Service Principal"
 }

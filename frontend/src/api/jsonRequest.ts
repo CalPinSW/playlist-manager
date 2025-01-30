@@ -1,7 +1,6 @@
 import { openInNewTab } from ".";
 
 export const backendUrl = process.env.BACKEND_URL;
-export const useCors = process.env.USE_CORS;
 
 export enum RequestMethod {
 	GET = "get",
@@ -15,13 +14,15 @@ export const jsonRequest = async <I, O>(
 	data?: I,
 	redirectOnUnauthorized = true,
 ) => {
-	let fetchOptions: RequestInit = useCors ? { credentials: "include", mode: "cors" } : {};
+	let fetchOptions: RequestInit = { credentials: "include" };
 	switch (method) {
 		case RequestMethod.POST:
 		case RequestMethod.PUT:
 			fetchOptions = {
 				...fetchOptions,
 				method: method,
+				credentials: "include",
+				mode: "cors",
 				headers: {
 					"Content-Type": "application/json",
 				},
@@ -32,7 +33,7 @@ export const jsonRequest = async <I, O>(
 	if (response.status === 401 && redirectOnUnauthorized) {
 		const refresh_response = await fetch(
 			`${backendUrl}/auth/refresh-user-code`,
-			fetchOptions,
+			{ credentials: "include" },
 		);
 		if (refresh_response.status != 401) {
 			const retried_response = await fetch(
@@ -54,13 +55,15 @@ export const request = async <I>(
 	data?: I,
 	redirectOnUnauthorized = true,
 ) => {
-	let fetchOptions: RequestInit = useCors ? { credentials: "include", mode: "cors" } : {};
+	let fetchOptions: RequestInit = { credentials: "include" };
 	switch (method) {
 		case RequestMethod.POST:
 		case RequestMethod.PUT:
 			fetchOptions = {
 				...fetchOptions,
 				method: method,
+				credentials: "include",
+				mode: "cors",
 				headers: {
 					"Content-Type": "application/json",
 				},
@@ -71,7 +74,7 @@ export const request = async <I>(
 	if (response.status === 401 && redirectOnUnauthorized) {
 		const refresh_response = await fetch(
 			`${backendUrl}/auth/refresh-user-code`,
-			fetchOptions
+			{ credentials: "include" },
 		);
 		if (refresh_response.status != 401) {
 			const retried_response = await fetch(

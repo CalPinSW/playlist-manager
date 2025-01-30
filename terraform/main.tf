@@ -112,7 +112,6 @@ resource "azurerm_linux_web_app" "frontend" {
     "DOCKER_ENABLE_CI"                    = "true"
     "FRONTEND_URL"                        = var.frontend_url
     "NODE_ENV"                            = "production"
-    "USE_CORS"                            = var.use_cors
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
   }
   https_only = true
@@ -152,8 +151,6 @@ resource "azurerm_linux_web_app" "backend" {
     "DOCKER_ENABLE_CI"                    = "true"
     "ENVIRONMENT"                         = var.environment
     "FLASK_APP"                           = "src/app" 
-    "USE_CORS"                            = var.use_cors
-
     "FLASK_DEBUG"                         = "false" 
     "FRONTEND_URL"                        = var.frontend_url
     "MUSICBRAINZ_URL"                     = var.musicbrainz_url
