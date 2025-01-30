@@ -9,7 +9,6 @@ const define = {
 	"process.env.BACKEND_URL": JSON.stringify(
 		process.env.BACKEND_URL || "http://localhost:5000",
 	),
-	"process.env.USE_CORS": process.env.USE_CORS || false,
 };
 
 export const buildOptions = {
