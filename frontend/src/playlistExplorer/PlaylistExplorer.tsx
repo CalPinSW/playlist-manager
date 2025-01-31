@@ -18,6 +18,7 @@ import { usePlaybackContext } from "../hooks/usePlaybackContext";
 import { Track } from "../interfaces/Track";
 import InputWithLabelPlaceholder from "../components/Inputs/InputWithLabelPlaceholder";
 import ButtonAsync from "../components/ButtonAsync";
+import { renderArtistList } from "../utils/renderArtistList";
 import { ImageLink, useDownloadImages } from "../hooks/useDownload";
 
 enum ViewMode {
@@ -112,7 +113,7 @@ export const PlaylistExplorer: FC = () => {
         Sync new playlist data
       </ButtonAsync>
       <>
-        <div className=" mt-2">
+        <div className="mt-2">
           <button
             className="border-solid rounded-md border border-primary-500 w-full flex justify-between overflow-hidden"
             disabled={!playlistAlbums}
@@ -155,6 +156,18 @@ export const PlaylistExplorer: FC = () => {
               activeTrackId={playbackInfo?.track_id}
             />
           )}
+        </div>
+        <div>
+          <h4>
+          Album List:
+          </h4>
+          <div className="flex flex-col">
+            {
+            playlistAlbums?.map(
+              (album) => <div key={album.id}>{album.name} - {renderArtistList(album.artists)}</div>
+            )
+            }
+          </div>
         </div>
       </>
       {images.length > 0 && <Button onClick={() => handleZip(playlist.name, images)}>Download Album Images</Button>}

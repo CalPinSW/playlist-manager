@@ -41,11 +41,21 @@ export const Index: FC = () => {
     <div className="py-4 px-2 space-y-2">
       <Box className="space-y-2">
         <SearchBar search={playlistSearch} setSearch={setPlaylistSearch}/>
-        <Carousel slides={(playlistQuery.data ?? createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />  
+        <Carousel slides={
+          (playlistQuery.data ?? 
+          createUndefinedArray(pagination.pageSize)).map(
+            (p, index) =><PlaylistSlide playlist={p} key={`playlistSearch ${index}`}/>
+          )} 
+        />  
       </Box>
       <Box className="space-y-2">
         <SearchBar search={albumSearch} setSearch={setAlbumSearch}/>
-        <Carousel slides={(albumQuery.data ?? createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />  
+        <Carousel slides={
+          (albumQuery.data ?? 
+          createUndefinedArray(pagination.pageSize)).map(
+            (p, index) => <PlaylistSlide playlist={p} key={`albumSearch ${index}`}/>
+          )}
+        />  
       </Box>
       <Box>
         <AddPlaylistForm />

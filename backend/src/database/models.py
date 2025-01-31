@@ -124,3 +124,14 @@ class DbAccessToken(db_wrapper.Model):
 
     class Meta:
         db_table = "access_token"
+
+
+class DbAlbumNote(db_wrapper.Model):
+    id = CharField(primary_key=True)
+    text = CharField()
+    album = ForeignKeyField(
+        DbAlbum, backref="album", to_field="id", on_delete="CASCADE"
+    )
+
+    class Meta:
+        db_table = "album_notes"

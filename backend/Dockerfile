@@ -17,7 +17,7 @@ EXPOSE 5000
 
 FROM app-base AS production
 
-ENTRYPOINT exec poetry run gunicorn "src.app:create_app()" -c gunicorn.conf.py --bind 0.0.0.0:5000
+ENTRYPOINT exec poetry run gunicorn "src.app:create_app()" -c gunicorn.conf.py --bind 0.0.0.0:5000 -t 60 --keep-alive 60
 
 FROM app-base AS development
 
