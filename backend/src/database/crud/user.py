@@ -40,5 +40,5 @@ def upsert_user_tokens(user_id: str, access_token: str, refresh_token: str):
     ).execute()
 
 
-def get_user_tokens(user_id: str):
+def get_user_tokens(user_id: str) -> DbAccessToken | None:
     return DbAccessToken.get_or_none(DbAccessToken.user == user_id)

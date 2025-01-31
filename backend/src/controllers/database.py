@@ -56,7 +56,6 @@ def database_controller(
                             or db_playlist.snapshot_id
                             != simplified_playlist.snapshot_id
                         ):
-                            number_of_playlists_updated += 1
                             if db_playlist is not None:
                                 delete_playlist(db_playlist.id)
                             playlist = spotify.get_playlist(
@@ -64,6 +63,7 @@ def database_controller(
                                 id=simplified_playlist.id,
                             )
                             create_playlist(playlist, db_user)
+                            number_of_playlists_updated += 1
             logger.info(
                 {
                     "message": "Completed populating user playlists",
@@ -90,6 +90,20 @@ def database_controller(
                     "number_of_playlists_successfully_updated": number_of_playlists_updated,
                     "failing_playlist_id": simplified_playlist_id,
                     "error": str(e),
+                }
+            )
+        except:
+            simplified_playlist_id = getattr(
+                locals().get("simplified_playlist"), "id", "N/A"
+            )
+
+            logger.error(
+                {
+                    "message": "Error populating user playlists",
+                    "user_id": user_id,
+                    "number_of_playlists_found": len(simplified_playlists),
+                    "number_of_playlists_successfully_updated": number_of_playlists_updated,
+                    "failing_playlist_id": simplified_playlist_id,
                 }
             )
 
