@@ -162,6 +162,19 @@ def database_controller(
                     "error": str(e),
                 }
             )
+        except:
+            failed_album_id = getattr(locals().get("db_album"), "id", "N/A")
+            created_or_updated_value = locals().get("created_or_updated", "N/A")
+
+            logger.error(
+                {
+                    "message": "Error populating user playlist",
+                    "playlist_id": id,
+                    "user_id": user_id,
+                    "create_update_mode": created_or_updated_value,
+                    "failed_album_id": failed_album_id,
+                }
+            )
 
     @database_controller.route("populate_additional_album_details", methods=["GET"])
     def populate_additional_album_details():
