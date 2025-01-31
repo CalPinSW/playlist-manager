@@ -13,6 +13,7 @@ class DbUser(db_wrapper.Model):
     id = CharField(primary_key=True)
     display_name = CharField()
     image_url = CharField(max_length=400)
+    auth0_id = CharField(unique=True)
     uri = CharField()
 
     class Meta:

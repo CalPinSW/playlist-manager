@@ -20,6 +20,7 @@ import InputWithLabelPlaceholder from "../components/Inputs/InputWithLabelPlaceh
 import ButtonAsync from "../components/ButtonAsync";
 import { renderArtistList } from "../utils/renderArtistList";
 import { ImageLink, useDownloadImages } from "../hooks/useDownload";
+import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
 
 enum ViewMode {
   ALBUM = "album",
@@ -28,6 +29,8 @@ enum ViewMode {
 
 export const PlaylistExplorer: FC = () => {
   const playlist = useLoaderData() as Playlist;
+  const authorizedRequest = useAuthorizedRequest()
+  
   const { control, register, getValues } = useForm({
     defaultValues: playlist,
   });
@@ -36,7 +39,7 @@ export const PlaylistExplorer: FC = () => {
   const { data: playlistAlbums } = useQuery<Album[]>({
     queryKey: ["playlist albums info", playlist.id],
     queryFn: () => {
-      return getPlaylistAlbums(playlist.id);
+      return authorizedRequest(getPlaylistAlbums(playlist.id));
     },
     retry: false,
   });
@@ -45,7 +48,7 @@ export const PlaylistExplorer: FC = () => {
   const { data: playlistTracks } = useQuery<Track[]>({
     queryKey: ["playlist track info", playlist.id],
     queryFn: () => {
-      return getPlaylistTracks(playlist.id);
+      return authorizedRequest(getPlaylistTracks(playlist.id));
     },
     retry: false,
   });
@@ -56,7 +59,7 @@ export const PlaylistExplorer: FC = () => {
 
   useEffect(() => {
     if (playlist.name.slice(0, 10) === "New Albums") {
-      playlistSearch(playlist.name.slice(11)).then(
+      authorizedRequest(playlistSearch(playlist.name.slice(11))).then(
         (associatedPlaylists: Playlist[]) => {
           setAssociatedPlaylists(associatedPlaylists.filter((associatedPlaylist) => associatedPlaylist.name !== playlist.name));
         }
@@ -80,7 +83,7 @@ export const PlaylistExplorer: FC = () => {
     <div className="p-2 text-sm sm:text-base space-y-4">
       <Form
         onSubmit={() => {
-          updatePlaylist(getValues());
+          authorizedRequest(updatePlaylist(getValues()));
         }}
         control={control}
       >
@@ -109,7 +112,7 @@ export const PlaylistExplorer: FC = () => {
           </div>
         </div>
       </Form>
-      <ButtonAsync className="flex" onClick={() => populatePlaylist(playlist.id)}>
+      <ButtonAsync className="flex" onClick={() => authorizedRequest(populatePlaylist(playlist.id))}>
         Sync new playlist data
       </ButtonAsync>
       <>

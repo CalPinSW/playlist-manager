@@ -42,6 +42,7 @@
 		"typescript-eslint": "^8.2.0"
 	},
 	"dependencies": {
+		"@auth0/auth0-react": "^2.3.0",
 		"@tanstack/react-query": "^5.53.1",
 		"@tanstack/react-table": "^8.20.5",
 		"dotenv": "^16.4.5",

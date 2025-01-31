@@ -12,9 +12,10 @@ export const jsonRequest = async <I, O>(
 	endpoint: string,
 	method: RequestMethod = RequestMethod.GET,
 	data?: I,
+	headers?: HeadersInit,
 	redirectOnUnauthorized = true,
 ) => {
-	let fetchOptions: RequestInit = { credentials: "include" };
+	let fetchOptions: RequestInit = { credentials: "include", headers };
 	switch (method) {
 		case RequestMethod.POST:
 		case RequestMethod.PUT:
@@ -25,6 +26,7 @@ export const jsonRequest = async <I, O>(
 				mode: "cors",
 				headers: {
 					"Content-Type": "application/json",
+					...fetchOptions.headers
 				},
 				body: JSON.stringify(data),
 			};
@@ -53,9 +55,10 @@ export const request = async <I>(
 	endpoint: string,
 	method: RequestMethod = RequestMethod.GET,
 	data?: I,
+	headers?: HeadersInit,
 	redirectOnUnauthorized = true,
 ) => {
-	let fetchOptions: RequestInit = { credentials: "include" };
+	let fetchOptions: RequestInit = { credentials: "include", headers };
 	switch (method) {
 		case RequestMethod.POST:
 		case RequestMethod.PUT:
@@ -66,6 +69,7 @@ export const request = async <I>(
 				mode: "cors",
 				headers: {
 					"Content-Type": "application/json",
+					...fetchOptions.headers
 				},
 				body: JSON.stringify(data),
 			};

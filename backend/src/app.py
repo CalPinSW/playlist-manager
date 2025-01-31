@@ -1,5 +1,6 @@
-from flask import Flask, redirect
+from flask import Flask, redirect, request
 from flask_cors import CORS
+import requests
 from src.controllers.database import database_controller
 from src.controllers.spotify import spotify_controller
 from src.controllers.music_data import music_controller
@@ -8,11 +9,15 @@ from src.flask_config import Config
 from src.musicbrainz import MusicbrainzClient
 from src.spotify import SpotifyClient
 from src.controllers.auth import auth_controller
-from src.database.models import db_wrapper
+from src.database.models import DbUser, db_wrapper
 from loggly.handlers import HTTPSHandler
 from pythonjsonlogger.json import JsonFormatter
+from authlib.integrations.flask_oauth2 import ResourceProtector
 from logging import getLogger
 import logging
+from playhouse.shortcuts import model_to_dict
+
+from src.validator import Auth0JWTBearerTokenValidator
 
 
 class EnvironmentFilter(logging.Filter):
@@ -58,6 +63,12 @@ def create_app():
         db_handler.addFilter(EnvironmentFilter(app.config["ENVIRONMENT"]))
         db_logger.addHandler(db_handler)
 
+    require_auth = ResourceProtector()
+    validator = Auth0JWTBearerTokenValidator(
+        "dev-3tozp8qy1u0rfxfm.us.auth0.com", "https://playmanbackend.com"
+    )
+    require_auth.register_token_validator(validator)
+
     spotify = SpotifyClient()
     musicbrainz = MusicbrainzClient(logger=app.logger)
     app.config["DATABASE"] = Config().DB_CONNECTION_STRING
@@ -90,12 +101,15 @@ def create_app():
     def handle_unauthorized_exception(_):
         resp = redirect("/login", 401)
         return resp
-
-    app.register_blueprint(auth_controller(spotify=spotify))
-    app.register_blueprint(spotify_controller(spotify=spotify))
-    app.register_blueprint(music_controller(spotify=spotify))
+    
+    app.register_blueprint(auth_controller(require_auth=require_auth, spotify=spotify))
+    app.register_blueprint(
+        spotify_controller(require_auth=require_auth, spotify=spotify)
+    )
+    app.register_blueprint(music_controller(require_auth=require_auth, spotify=spotify))
     app.register_blueprint(
         database_controller(
+            require_auth=require_auth,
             spotify=spotify,
             musicbrainz=musicbrainz,
             database=db_wrapper,
