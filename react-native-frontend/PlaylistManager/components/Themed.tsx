@@ -3,43 +3,50 @@
  * https://docs.expo.io/guides/color-schemes/
  */
 
-import { Text as DefaultText, View as DefaultView } from 'react-native';
+import { Text as DefaultText, View as DefaultView, TextInput as DefaultTextInput } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from './useColorScheme';
 
-type ThemeProps = {
-  lightColor?: string;
-  darkColor?: string;
-};
-
-export type TextProps = ThemeProps & DefaultText['props'];
-export type ViewProps = ThemeProps & DefaultView['props'];
-
-export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
-) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
-
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
-  }
-}
+export type TextProps = {noBackground?: boolean} & DefaultText['props'];
+export type TextInputProps = DefaultTextInput['props'];
+export type ViewProps = DefaultView['props'];
 
 export function Text(props: TextProps) {
-  const { style, lightColor, darkColor, ...otherProps } = props;
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const { style, noBackground, ...otherProps } = props;
+  const theme = Colors[useColorScheme() ?? 'light'];
 
-  return <DefaultText style={[{ color }, style]} {...otherProps} />;
+  const backgroundColor = noBackground ? theme.background.default :  theme.background.offset;
+
+  return <DefaultText 
+    style={[
+      { 
+        color: theme.text.primary, 
+        backgroundColor,
+        borderRadius: 5
+      }, style]} {...otherProps} />;
+}
+
+export function TextInput (props: TextInputProps) {
+  const { style, ...otherProps } = props;
+  const theme = Colors[useColorScheme() ?? 'light'];
+
+  return <DefaultTextInput 
+        style={[
+          { 
+            color: theme.text.primary, 
+            backgroundColor: theme.background.offset,
+            borderColor: theme.primary.default,
+            borderWidth: 1,
+            paddingHorizontal: 10,
+            paddingVertical: 0,
+            borderRadius: 5
+          }, style]} {...otherProps} />
 }
 
 export function View(props: ViewProps) {
-  const { style, lightColor, darkColor, ...otherProps } = props;
-  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');
+  const { style, ...otherProps } = props;
+  const theme = Colors[useColorScheme() ?? 'light'];
 
-  return <DefaultView style={[{ backgroundColor }, style]} {...otherProps} />;
+  return <DefaultView style={[{ backgroundColor: theme.background.default }, style]} {...otherProps} />;
 }

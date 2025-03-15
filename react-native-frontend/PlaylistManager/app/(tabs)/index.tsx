@@ -1,12 +1,12 @@
 import { Dimensions, StyleSheet, Image } from 'react-native';
 import { Text, View } from '@/components/Themed';
-import Carousel from 'react-native-reanimated-carousel';
 import { useState } from 'react';
 import { getRecentPlaylists, searchPlaylistsByAlbums } from '../../api';
 import { Playlist } from '../../interfaces/Playlist';
-import { useSharedValue } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 import { DebouncedTextInput } from '../../components/DebouncedTextInput';
+import PlaylistSlide from '../../components/Carousel/PlaylistSlide';
+import Carousel from '../../components/Carousel/Carousel';
 
 interface PaginationState {
   pageIndex: number;
@@ -16,7 +16,7 @@ interface PaginationState {
 const { width, height: screenHeight } = Dimensions.get('window')
 
 export default function TabOneScreen() {
-  const COUNT = 4;
+  const slidesPerPage = 4;
   const [playlistSearch, setPlaylistSearch] = useState<string>("")
   const [albumSearch, setAlbumSearch] = useState<string>("")
   const [pagination, ] = useState<PaginationState>({
@@ -38,61 +38,22 @@ export default function TabOneScreen() {
     },
   });
 
-  console.log(playlistSearch)
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <DebouncedTextInput value={playlistSearch} onChange={setPlaylistSearch}/>
-      <View style={{ flex: 1 }}>
-        <Carousel
-            loop={false}
-            overscrollEnabled={false}
-            width={width / COUNT}
-            style={{width: width}}
-            height={width / 2}
-            data={playlistQuery.data ?? []}
-            scrollAnimationDuration={500}
-            renderItem={({ item }) => (
-                <View
-                    style={{
-                        flex: 1,
-                        borderWidth: 1,
-                        justifyContent: 'center',
-                    }}
-                    nativeID={`playlist ${item.id}`}
-                >
-                    <Image style={{ width: "100%", height: "100%", objectFit: "contain"}} source={{uri: item.image_url}} />
-                    <Text style={{height: 100, wordWrap: "wrap"}}>{item.name}</Text>
-                </View>
-            )}
-        />
+      <View style={styles.separator} />
+      <View style={{margin: 12, gap: 12, width: "100%", display: "flex", flexDirection: "row", justifyContent: "center"}}>
+        <Text style={{ alignSelf: "flex-start", fontSize: 20}} noBackground>Playlist Search</Text>
+        <DebouncedTextInput style={{alignSelf: "flex-start", flexGrow: 1, }} value={playlistSearch} onChange={setPlaylistSearch}/>
       </View>
-      <DebouncedTextInput value={albumSearch} onChange={setAlbumSearch}/>
       <View style={{ flex: 1 }}>
-        <Carousel
-            loop={false}
-            overscrollEnabled={false}
-            width={width / COUNT}
-            style={{width: width}}
-            height={width / 2}
-            data={albumQuery.data ?? []}
-            scrollAnimationDuration={500}
-            renderItem={({ item }) => (
-                <View
-                    style={{
-                        flex: 1,
-                        borderWidth: 1,
-                        justifyContent: 'center',
-                    }}
-                    nativeID={`playlist ${item.id}`}
-                >
-                    <Image style={{ width: "100%", height: "100%", objectFit: "contain"}} source={{uri: item.image_url}} />
-                    <Text style={{height: 100, wordWrap: "wrap"}}>{item.name}</Text>
-                </View>
-            )}
-        />
+        <Carousel slidesPerPage={slidesPerPage} data={playlistQuery.data} renderItem={(playlist) => <PlaylistSlide playlist={playlist}/>}/>
+      </View>
+      <View style={{margin: 12, gap: 12, width: "100%", display: "flex", flexDirection: "row", justifyContent: "center"}}>
+        <Text style={{ alignSelf: "flex-start", fontSize: 20}} noBackground>Album / Artist Search</Text>
+        <DebouncedTextInput style={{alignSelf: "flex-start", flexGrow: 1, }} value={albumSearch} onChange={setAlbumSearch}/>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Carousel slidesPerPage={slidesPerPage} data={albumQuery.data} renderItem={(playlist) => <PlaylistSlide playlist={playlist}/>}/>
       </View>
     </View>
   );
