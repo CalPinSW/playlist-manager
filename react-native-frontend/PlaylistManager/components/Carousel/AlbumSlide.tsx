@@ -32,7 +32,8 @@ const AlbumSlide: React.FC<AlbumSlideProps> = ({ album, isSelected, onPress }) =
 
   return (
     <TouchableWithoutFeedback onPress={onPress}>
-      <View style={{ width: "100%", aspectRatio: 1, margin: 10}}>
+          
+      <View style={{ margin: 10 }}>
         <Animated.View style={[{ backfaceVisibility: "hidden" }, frontStyle]}>
           <Image source={{ uri: album.image_url }} style={{ width: "100%", aspectRatio: 1, borderRadius: 10 }} />
         </Animated.View>
@@ -59,27 +60,31 @@ const AlbumSlide: React.FC<AlbumSlideProps> = ({ album, isSelected, onPress }) =
 
 const AlbumInfo: React.FC<Album> = (album) => {
     const colorScheme = Colors[useColorScheme() ?? 'light']
-    const backgroundColor = colorScheme.background.default
+    const backgroundColor = colorScheme.background.offset
     const iconColour = colorScheme.primary.darker
     return (                
-        <View style={{position: "absolute", alignSelf:"flex-start", margin: 5, zIndex: 30, backgroundColor, borderRadius: 10, padding: 10, gap: 10, maxWidth: "100%"}}>
-          <View style={{ display: 'flex', flexDirection: "row", gap: 10, alignItems: "center", maxWidth: "100%"}}>
-            <AlbumIcon color={iconColour} />
-            <Text 
-                style={{ display: "flex", wordWrap: "wrap"}} 
-                noBackground
-            >
-                {album.name}
-            </Text>
-          </View>
-          <View style={{ display: 'flex', flexDirection: "row", gap: 10, alignItems: "center"}}>
-            <ArtistIcon color={iconColour} />
-            <Text 
-                style={{ display: "flex", wordWrap: "wrap"}} 
-                noBackground
-            >
-                {renderArtistList(album.artists)}
-            </Text>
+        <View style={{position: "absolute", zIndex: 30, padding: 5, maxWidth: "100%"}}>
+          <View style={{alignSelf:"flex-start", backgroundColor, borderRadius: 10, padding: 10, gap: 10, maxWidth: "100%"}}>
+            <View style={{ display: 'flex', flexDirection: "row", gap: 10, alignItems: "center", maxWidth: "100%"}}>
+              <AlbumIcon color={iconColour} />
+              <Text 
+                  style={{ display: "flex", wordWrap: "wrap" }} 
+                  noBackground
+              >
+                  {album.name}
+              </Text>
+            </View>
+            <View style={{ display: 'flex', flexDirection: "row", gap: 10, alignItems: "center", maxWidth: "100%"}}>
+              <ArtistIcon color={iconColour} />
+              <View style={{maxWidth: "100%",}}>
+              <Text 
+                  style={{ display: "flex", wordWrap: "wrap"}} 
+                  noBackground
+              >
+                  {renderArtistList(album.artists)}
+              </Text>
+              </View>
+            </View>
           </View>
         </View>
   )

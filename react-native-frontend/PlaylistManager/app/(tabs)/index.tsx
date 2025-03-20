@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    display: "flex"
   },
   separator: {
     marginVertical: 30,
@@ -84,6 +84,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   searchDescriptor: { alignSelf: "flex-start", fontSize: 20},
-  searchBox: {alignSelf: "flex-start", flexGrow: 1, },
-  carouselContainer: {flex: 1}
+  searchBox: {alignSelf: "flex-start", flexGrow: 1},
+  carouselContainer: {height: "auto"}
 });

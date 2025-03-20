@@ -14,6 +14,7 @@ const Carousel = <T,>({slidesPerPage, data, renderItem}: Props<T>) => {
           loop={false}
           overscrollEnabled={false}
           width={width / slidesPerPage}
+          height={width / 2}
           style={{width: width}}
           data={data ?? []}
           scrollAnimationDuration={500}
@@ -21,7 +22,6 @@ const Carousel = <T,>({slidesPerPage, data, renderItem}: Props<T>) => {
             <View
               style={{
                   display: "flex",
-                  flex: 1,
                   margin: 2,
                 }}
               nativeID={`slide ${index}`}
