@@ -23,8 +23,7 @@ const Carousel = <T,>({slidesPerPage, data, renderItem}: Props<T>) => {
                   display: "flex",
                   flex: 1,
                   margin: 2,
-                  justifyContent: 'center',
-              }}
+                }}
               nativeID={`slide ${index}`}
             >
               {renderItem(item)}

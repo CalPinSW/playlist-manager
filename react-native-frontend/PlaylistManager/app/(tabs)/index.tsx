@@ -41,18 +41,18 @@ export default function TabOneScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.separator} />
-      <View style={{margin: 12, gap: 12, width: "100%", display: "flex", flexDirection: "row", justifyContent: "center"}}>
-        <Text style={{ alignSelf: "flex-start", fontSize: 20}} noBackground>Playlist Search</Text>
-        <DebouncedTextInput style={{alignSelf: "flex-start", flexGrow: 1, }} value={playlistSearch} onChange={setPlaylistSearch}/>
+      <View style={styles.searchBar}>
+        <Text style={styles.searchDescriptor} noBackground>Playlist Search</Text>
+        <DebouncedTextInput style={styles.searchBox} value={playlistSearch} onChange={setPlaylistSearch}/>
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={styles.carouselContainer}>
         <Carousel slidesPerPage={slidesPerPage} data={playlistQuery.data} renderItem={(playlist) => <PlaylistSlide playlist={playlist}/>}/>
       </View>
-      <View style={{margin: 12, gap: 12, width: "100%", display: "flex", flexDirection: "row", justifyContent: "center"}}>
-        <Text style={{ alignSelf: "flex-start", fontSize: 20}} noBackground>Album / Artist Search</Text>
-        <DebouncedTextInput style={{alignSelf: "flex-start", flexGrow: 1, }} value={albumSearch} onChange={setAlbumSearch}/>
+      <View style={styles.searchBar}>
+        <Text style={styles.searchDescriptor} noBackground>Album / Artist Search</Text>
+        <DebouncedTextInput style={styles.searchBox} value={albumSearch} onChange={setAlbumSearch}/>
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={styles.carouselContainer}>
         <Carousel slidesPerPage={slidesPerPage} data={albumQuery.data} renderItem={(playlist) => <PlaylistSlide playlist={playlist}/>}/>
       </View>
     </View>
@@ -67,19 +67,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
   separator: {
     marginVertical: 30,
     height: 1,
     width: '80%',
   },
-  scrollViewContainerStyle: {
-    alignContent: 'center',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 600
-  }
+  playlistSearchRow: {
+
+  },
+  searchBar: {
+    display: "flex",
+    flexDirection: "row", 
+    margin: 12, 
+    gap: 12, 
+    width: width, 
+    justifyContent: "center",
+  },
+  searchDescriptor: { alignSelf: "flex-start", fontSize: 20},
+  searchBox: {alignSelf: "flex-start", flexGrow: 1, },
+  carouselContainer: {flex: 1}
 });

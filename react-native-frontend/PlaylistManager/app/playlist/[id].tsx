@@ -10,7 +10,7 @@ import { useLocalSearchParams } from 'expo-router';
 import Carousel from '../../components/Carousel/Carousel';
 import AlbumSlide from '../../components/Carousel/AlbumSlide';
 
-export default function PlaylistExplorer() {
+const PlaylistExplorer: React.FC = () => {
     const { id } = useLocalSearchParams<{id: string}>();
 
     const { data: playlistAlbums } = useQuery<Album[]>({
@@ -34,17 +34,27 @@ export default function PlaylistExplorer() {
         []
     );
 
+    const [activeAlbumId, setActiveAlbumId] = useState<string | null>(null);
+    
+    const onAlbumSelect = (albumId: string) => {
+        if (activeAlbumId === albumId) {
+            setActiveAlbumId(null)
+        } else {
+            setActiveAlbumId(albumId)
+        }
+    }
+
     return (
         <View style={styles.container}>
         <View style={styles.separator} />
-        <View style={{ flex: 1 }}>
-            <Carousel slidesPerPage={5} data={playlistAlbums} renderItem={(album) => <AlbumSlide album={album}/>}/>
+        <View style={{ flex: 1, alignSelf: "flex-start" }}>
+            <Carousel slidesPerPage={2.25} data={playlistAlbums} renderItem={
+                (album) => 
+                <AlbumSlide album={album} isSelected={activeAlbumId == album.id} onPress={() => onAlbumSelect(album.id)} />}/>
         </View>
         </View>
     );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -68,3 +78,5 @@ const styles = StyleSheet.create({
     height: 600
   }
 });
+
+export default PlaylistExplorer;

@@ -1,6 +1,6 @@
 import { Link } from "expo-router"
 import { Playlist } from "../../interfaces/Playlist"
-import FallbackImage from "../ImageWithFallback"
+import ImageWithFallback from "../ImageWithFallback"
 import { View, Text } from "../Themed"
 import { Pressable } from "react-native"
 
@@ -10,15 +10,20 @@ interface Props {
 
 const PlaylistSlide: React.FC<Props> = ({playlist}) => {
     return (
-        <Link style={{display: "flex", height:"100%"}} href={`/playlist/${playlist.id}`} asChild>
+        <Link style={{display: "flex", gap: 10}} href={`/playlist/${playlist.id}`} asChild>
             <Pressable>
                 <View 
                     style={{
                         display: "flex",
-                        flex: 1,
                         justifyContent: 'flex-start',
-                    }}>
-                    <FallbackImage style={{ width: "100%",aspectRatio: 1, objectFit: "fill"}} source={playlist.image_url ? {uri: playlist.image_url} : undefined} />
+                        borderRadius: 10
+                    }}
+                >
+                    <ImageWithFallback
+                        viewStyle={{ width: "100%", aspectRatio: 1}} 
+                        imageStyle={{borderRadius: 10}}
+                        source={playlist.image_url ? {uri: playlist.image_url} : undefined} 
+                    />
                 </View>
                 <Text style={{ display: "flex", wordWrap: "wrap", textAlign: "center" }} noBackground>{playlist.name}</Text>
             </Pressable>

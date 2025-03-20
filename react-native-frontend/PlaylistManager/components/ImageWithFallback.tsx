@@ -1,24 +1,39 @@
 import React, { useState } from "react";
-import { Image, View, StyleSheet, ImageSourcePropType } from "react-native";
+import { StyleSheet, ImageSourcePropType, StyleProp, ViewStyle, ImageProps, Image, View, ViewProps, ImageStyle, useColorScheme } from "react-native";
 import PlaylistIcon from "../assets/icons/PlaylistIcon";
+import Animated from "react-native-reanimated";
+import Colors from "../constants/Colors";
 
-const FallbackImage = ({ source, style }: { source: ImageSourcePropType | undefined; style?: any }) => {
-  const [imageError, setImageError] = useState(false);
 
+interface Props extends ImageProps {
+    source: ImageSourcePropType | undefined;
+    viewStyle?: StyleProp<ViewStyle> 
+    imageStyle?: StyleProp<ImageStyle> 
+} 
+
+
+const ImageWithFallback: React.FC<Props> = ({ source, viewStyle, imageStyle, ...props }) => {
+    
+    const [imageError, setImageError] = useState(false);
+    const fallbackColour = Colors[useColorScheme() ?? 'light'].primary.default
+    const fallbackBackgroundColour = Colors[useColorScheme() ?? 'light'].background.offset
   return (
-    <View style={style}>
+    <View style={viewStyle} >
       {!imageError && source ? (
         <Image
           source={source}
-          style={StyleSheet.absoluteFillObject} // Ensures the image takes full container space
+          style={[StyleSheet.absoluteFillObject, imageStyle]} // Ensures the image takes full container space
           onError={() => setImageError(true)} // Handle error and trigger fallback
           resizeMode="contain"
+          {...props}
         />
       ) : (
-        <PlaylistIcon width={style?.width} height={style?.height} fill="gray" />
+        <PlaylistIcon viewStyle={{backgroundColor: fallbackBackgroundColour, borderRadius: 10}} width={"100%"} height={"100%"} color={fallbackColour} />
       )}
     </View>
   );
 };
 
-export default FallbackImage;
+export default ImageWithFallback
+
+  

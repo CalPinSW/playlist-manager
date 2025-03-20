@@ -1,26 +1,88 @@
-import FallbackImage from "../ImageWithFallback"
-import { View, Text } from "../Themed"
-import { Pressable } from "react-native"
-import { Album } from "../../interfaces/Album"
+import React, { useEffect, useState } from "react";
+import { StyleSheet, View, Image, TouchableWithoutFeedback, FlatList, Dimensions, useColorScheme } from "react-native";
+import {Text} from '../Themed'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, useEvent } from "react-native-reanimated";
+import { BlurView } from "expo-blur";
+import { Album } from "../../interfaces/Album";
+import { renderArtistList } from "../../utils/album/renderArtistList";
+import Colors from "../../constants/Colors";
+import AlbumIcon from "../../assets/icons/AlbumIcon";
+import ArtistIcon from "../../assets/icons/ArtistIcon";
 
-interface Props {
-    album: Album
-}
+interface AlbumSlideProps {
+    album: Album;
+    isSelected: boolean;
+    onPress: () => void;
+  }
+  
+const AlbumSlide: React.FC<AlbumSlideProps> = ({ album, isSelected, onPress }) => {
+  const rotation = useSharedValue(0);
 
-const AlbumSlide: React.FC<Props> = ({album}) => {
-    return (
-        <View style={{display: "flex", justifyContent: 'flex-start',  height: "100%", width: "100%"}} >
-            <View 
-                style={{
-                    display: "flex",
-                    flex: 1,
-                    justifyContent: 'flex-start',
-                }}>
-                <FallbackImage style={{ width: "100%", aspectRatio: 1, objectFit: "fill"}} source={album.image_url ? {uri: album.image_url} : undefined} />
-            </View>
-            <Text style={{ display: "flex", wordWrap: "wrap", textAlign: "center", alignSelf: "flex-start", marginTop: 0 }} noBackground>{album.name}</Text>
+  useEffect(() => {
+      rotation.value = withTiming(isSelected ? 180 : 0, { duration: 500 });
+  }, [isSelected]);
+  
+  const frontStyle = useAnimatedStyle(() => {
+      return {transform: [{ rotateY: `${rotation.value}deg` }]}
+  });
+
+  const backStyle = useAnimatedStyle(() => {
+      return {transform: [{ rotateY: `${rotation.value-180}deg` }]}
+  });
+
+  return (
+    <TouchableWithoutFeedback onPress={onPress}>
+      <View style={{ width: "100%", aspectRatio: 1, margin: 10}}>
+        <Animated.View style={[{ backfaceVisibility: "hidden" }, frontStyle]}>
+          <Image source={{ uri: album.image_url }} style={{ width: "100%", aspectRatio: 1, borderRadius: 10 }} />
+        </Animated.View>
+        <Animated.View
+          style={[
+            {
+              position: "absolute",
+              width: "100%", 
+              aspectRatio: 1,
+              backfaceVisibility: "hidden",
+            },
+            backStyle,
+          ]}
+        >
+          <BlurView intensity={10} style={{...StyleSheet.absoluteFillObject, overflow: 'hidden', zIndex: 20, borderRadius: 10}} />
+          <Image source={{ uri: album.image_url }} style={{ width: "100%", aspectRatio: 1, borderRadius: 10, transform: [{rotateY: "180deg"}] }} />
+          <AlbumInfo {...album}/>
+        </Animated.View>
+      </View>
+    </TouchableWithoutFeedback>
+  );
+};
+
+
+const AlbumInfo: React.FC<Album> = (album) => {
+    const colorScheme = Colors[useColorScheme() ?? 'light']
+    const backgroundColor = colorScheme.background.default
+    const iconColour = colorScheme.primary.darker
+    return (                
+        <View style={{position: "absolute", alignSelf:"flex-start", margin: 5, zIndex: 30, backgroundColor, borderRadius: 10, padding: 10, gap: 10, maxWidth: "100%"}}>
+          <View style={{ display: 'flex', flexDirection: "row", gap: 10, alignItems: "center", maxWidth: "100%"}}>
+            <AlbumIcon color={iconColour} />
+            <Text 
+                style={{ display: "flex", wordWrap: "wrap"}} 
+                noBackground
+            >
+                {album.name}
+            </Text>
+          </View>
+          <View style={{ display: 'flex', flexDirection: "row", gap: 10, alignItems: "center"}}>
+            <ArtistIcon color={iconColour} />
+            <Text 
+                style={{ display: "flex", wordWrap: "wrap"}} 
+                noBackground
+            >
+                {renderArtistList(album.artists)}
+            </Text>
+          </View>
         </View>
-    );
+  )
 }
 
-export default AlbumSlide
+export default AlbumSlide;

@@ -16,7 +16,7 @@ export function Text(props: TextProps) {
   const { style, noBackground, ...otherProps } = props;
   const theme = Colors[useColorScheme() ?? 'light'];
 
-  const backgroundColor = noBackground ? theme.background.default :  theme.background.offset;
+  const backgroundColor = noBackground ? undefined :  theme.background.offset;
 
   return <DefaultText 
     style={[
