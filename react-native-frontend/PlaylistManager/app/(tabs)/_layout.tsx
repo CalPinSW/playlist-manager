@@ -16,7 +16,6 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  console.log(colorScheme)
   return (
     <Tabs
       screenOptions={{
@@ -29,13 +28,12 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Playlist Manager',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
           headerRight: () => (
-            <Link href="/modal" asChild>
+            <Link href="/userSettings" asChild>
               <Pressable>
                 {({ pressed }) => (
                   <FontAwesome
-                    name="info-circle"
+                    name="user"
                     size={25}
                     color={Colors[colorScheme ?? 'light'].text.primary}
                     style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
@@ -44,13 +42,6 @@ export default function TabLayout() {
               </Pressable>
             </Link>
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="two"
-        options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
         }}
       />
     </Tabs>

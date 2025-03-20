@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DebouncedTextInput } from '../../components/DebouncedTextInput';
 import PlaylistSlide from '../../components/Carousel/PlaylistSlide';
 import Carousel from '../../components/Carousel/Carousel';
+import MiniPlayer from '../../components/MiniPlayer/Miniplayer';
 
 interface PaginationState {
   pageIndex: number;
@@ -55,6 +56,8 @@ export default function TabOneScreen() {
       <View style={styles.carouselContainer}>
         <Carousel slidesPerPage={slidesPerPage} data={albumQuery.data} renderItem={(playlist) => <PlaylistSlide playlist={playlist}/>}/>
       </View>
+                  <MiniPlayer />
+      
     </View>
   );
 }

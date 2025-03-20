@@ -8,6 +8,8 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PlaybackContextProvider } from '../contexts/playbackContext';
+import MiniPlayer from '../components/MiniPlayer/Miniplayer';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -53,10 +55,11 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <QueryClientProvider client={queryClient}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </Stack>
+        <PlaybackContextProvider>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+        </PlaybackContextProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
