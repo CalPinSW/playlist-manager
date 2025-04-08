@@ -9,9 +9,10 @@
 		"dev:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify --watch",
 		"dev": "npm-run-all --parallel dev:*",
 		"prod:esbuild": "export NODE_ENV=production; node ./build/server.mjs",
-		"prod:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify",
 		"prod": "npm-run-all --parallel prod:*",
-		"build": "node build/build.mjs",
+		"build": "npm-run-all build:css build:js",
+		"build:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify",
+		"build:js": "node build/build.mjs",
 		"lint": "eslint",
 		"lint:fix": "eslint --fix",
 		"test": "echo \"Error: no test specified\" && exit 1"
