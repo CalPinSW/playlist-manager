@@ -1,15 +1,16 @@
-import React from "react";
-import { Outlet } from "react-router-dom";
+import React, { ReactNode } from "react";
 import PlaybackFooter from "./PlaybackFooter";
 import Header from "./Header/Header";
 
-const Layout = () => {
+interface LayoutProps {
+  children: ReactNode;
+};
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="flex flex-col h-screen w-screen text-text-primary bg-background  ">
+    <div className="flex flex-col h-screen w-screen text-text-primary bg-background">
       <Header />
-      <div className="flex-grow overflow-y-scroll">
-        <Outlet />
-      </div>
+      <div className="flex-grow overflow-y-scroll">{children}</div>
       <PlaybackFooter />
     </div>
   );

@@ -1,9 +1,10 @@
 import React, { FC, useEffect, useState } from "react";
 import { Playlist } from "../interfaces/Playlist";
-import { Link, useLoaderData } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Button from "../components/Button";
 import { Form, useForm } from "react-hook-form";
 import {
+  getPlaylist,
   getPlaylistAlbums,
   getPlaylistTracks,
   playlistSearch,
@@ -26,61 +27,85 @@ enum ViewMode {
 }
 
 export const PlaylistExplorer: FC = () => {
-  const playlist = useLoaderData() as Playlist;
-  const { control, register, getValues } = useForm({
-    defaultValues: playlist,
-  });
+  const { playlistId } = useParams();
+  const [playlist, setPlaylist] = useState<Playlist | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.ALBUM);
-
-  const { data: playlistAlbums } = useQuery<Album[]>({
-    queryKey: ["playlist albums info", playlist.id],
-    queryFn: () => {
-      return getPlaylistAlbums(playlist.id);
-    },
-    retry: false,
-  });
-
-  
-  const { data: playlistTracks } = useQuery<Track[]>({
-    queryKey: ["playlist track info", playlist.id],
-    queryFn: () => {
-      return getPlaylistTracks(playlist.id);
-    },
-    retry: false,
-  });
-
-  const [associatedPlaylists, setAssociatedPlaylists] = useState<Playlist[]>(
-    []
-  );
+  const [associatedPlaylists, setAssociatedPlaylists] = useState<Playlist[]>([]);
+  const { playbackInfo } = usePlaybackContext();
+  const [images, setImages] = useState<ImageLink[]>([]);
 
   useEffect(() => {
-    if (playlist.name.slice(0, 10) === "New Albums") {
-      playlistSearch(playlist.name.slice(11)).then(
-        (associatedPlaylists: Playlist[]) => {
-          setAssociatedPlaylists(associatedPlaylists.filter((associatedPlaylist) => associatedPlaylist.name !== playlist.name));
-        }
+    if (!playlistId) {
+      setError("Playlist ID is required");
+      setLoading(false);
+      return;
+    }
+
+    getPlaylist(playlistId)
+      .then((data) => {
+        setPlaylist(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching playlist:", err);
+        setError("Failed to load playlist");
+        setLoading(false);
+      });
+  }, [playlistId]);
+
+  const { control, register, getValues } = useForm({
+    defaultValues: playlist || {},
+  });
+
+  const { data: playlistAlbums } = useQuery<Album[]>({
+    queryKey: ["playlist albums info", playlistId],
+    queryFn: () => getPlaylistAlbums(playlistId!),
+    enabled: !!playlistId,
+    retry: false,
+  });
+
+  const { data: playlistTracks } = useQuery<Track[]>({
+    queryKey: ["playlist track info", playlistId],
+    queryFn: () => getPlaylistTracks(playlistId!),
+    enabled: !!playlistId,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (playlist?.name.startsWith("New Albums")) {
+      playlistSearch(playlist.name.slice(11)).then((associated) => {
+        setAssociatedPlaylists(
+          associated.filter((p) => p.name !== playlist.name)
+        );
+      });
+    }
+  }, [playlist]);
+
+  useEffect(() => {
+    if (playlistAlbums) {
+      setImages(
+        playlistAlbums.map((album, i) => ({
+          url: album.image_url,
+          name: `${i + 1}_${album.name} - ${album.artists
+            .map((artist) => artist.name)
+            .join(", ")}`,
+        }))
       );
     }
-  }, []);
+  }, [playlistAlbums]);
 
-  const { playbackInfo } = usePlaybackContext();
-  
-  const [images,setImages] = useState<ImageLink[]>([])
+  const { handleZip } = useDownloadImages();
 
-  useEffect(()=> {
-    if (playlistAlbums) {
-      setImages(playlistAlbums.map((album, i) => ({url: album.image_url, name: `${i+1}_${album.name} - ${album.artists.map((artist) => artist.name).join(", ")}`})))
-    }
-  }, playlistAlbums)
-
-  const {handleZip} = useDownloadImages()
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
+  if (!playlist) return <p>Playlist not found</p>;
 
   return (
     <div className="p-2 text-sm sm:text-base space-y-4">
       <Form
-        onSubmit={() => {
-          updatePlaylist(getValues());
-        }}
+        onSubmit={() => updatePlaylist(getValues())}
         control={control}
       >
         <div className="flex flex-col my-4 space-y-2">
@@ -108,21 +133,20 @@ export const PlaylistExplorer: FC = () => {
           </div>
         </div>
       </Form>
-      <ButtonAsync className="flex" onClick={() => populatePlaylist(playlist.id)}>
+      <ButtonAsync
+        className="flex"
+        onClick={() => populatePlaylist(playlist.id)}
+      >
         Sync new playlist data
       </ButtonAsync>
       <>
-        <div className=" mt-2">
+        <div className="mt-2">
           <button
             className="border-solid rounded-md border border-primary-500 w-full flex justify-between overflow-hidden"
             disabled={!playlistAlbums}
-            onClick={() => {
-              if (viewMode === ViewMode.ALBUM) {
-                setViewMode(ViewMode.TRACK);
-              } else {
-                setViewMode(ViewMode.ALBUM);
-              }
-            }}
+            onClick={() =>
+              setViewMode(viewMode === ViewMode.ALBUM ? ViewMode.TRACK : ViewMode.ALBUM)
+            }
           >
             <h2
               className={`p-2 flex grow text-right ${
@@ -141,7 +165,7 @@ export const PlaylistExplorer: FC = () => {
           </button>
         </div>
         <div className="my-2">
-          {viewMode == ViewMode.ALBUM && playlistAlbums && (
+          {viewMode === ViewMode.ALBUM && playlistAlbums && (
             <AlbumList
               albumList={playlistAlbums}
               activeAlbumId={playbackInfo?.album_id}
@@ -149,15 +173,16 @@ export const PlaylistExplorer: FC = () => {
               associatedPlaylists={associatedPlaylists}
             />
           )}
-          {viewMode == ViewMode.TRACK &&  playlistTracks &&(
-            <TrackList
-              trackList={playlistTracks}
-              activeTrackId={playbackInfo?.track_id}
-            />
+          {viewMode === ViewMode.TRACK && playlistTracks && (
+            <TrackList trackList={playlistTracks} activeTrackId={playbackInfo?.track_id} />
           )}
         </div>
       </>
-      {images.length > 0 && <Button onClick={() => handleZip(playlist.name, images)}>Download Album Images</Button>}
+      {images.length > 0 && (
+        <Button onClick={() => handleZip(playlist.name, images)}>
+          Download Album Images
+        </Button>
+      )}
     </div>
   );
 };
