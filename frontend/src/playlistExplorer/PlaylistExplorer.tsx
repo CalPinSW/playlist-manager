@@ -20,6 +20,7 @@ import { Track } from "../interfaces/Track";
 import InputWithLabelPlaceholder from "../components/Inputs/InputWithLabelPlaceholder";
 import ButtonAsync from "../components/ButtonAsync";
 import { ImageLink, useDownloadImages } from "../hooks/useDownload";
+import { toast, ToastContainer } from "react-toastify";
 
 enum ViewMode {
   ALBUM = "album",
@@ -97,7 +98,20 @@ export const PlaylistExplorer: FC = () => {
   }, [playlistAlbums]);
 
   const { handleZip } = useDownloadImages();
+  const copyAlbumArtistList = async (data: Album[]): Promise<void> => {
+    const albumArtistList = data.map(album => {
+      const artistNames = album.artists.map(artist => artist.name).join(", ");
+      return `${album.name} - ${artistNames}`;
+    }).join("\n");
 
+    try {
+      await navigator.clipboard.writeText(albumArtistList);
+      toast("Copied album list to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      toast("Failed to copy album list 😕", {type: "error"});
+    }
+  }
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
   if (!playlist) return <p>Playlist not found</p>;
@@ -181,6 +195,12 @@ export const PlaylistExplorer: FC = () => {
       {images.length > 0 && (
         <Button onClick={() => handleZip(playlist.name, images)}>
           Download Album Images
+        </Button>
+      )}
+      <ToastContainer />
+      {playlistAlbums && (
+        <Button onClick={() => void copyAlbumArtistList(playlistAlbums)}>
+          Copy Album List
         </Button>
       )}
     </div>
