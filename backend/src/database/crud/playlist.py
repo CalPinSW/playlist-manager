@@ -1,5 +1,6 @@
+from logging import Logger
 from typing import List, Optional
-from src.database.crud.album import create_album_or_none
+from src.database.crud.album import get_or_create_album
 from src.database.crud.track import create_track_or_none
 from src.database.models import (
     AlbumArtistRelationship,
@@ -13,7 +14,6 @@ from src.database.models import (
     PlaylistAlbumRelationship,
     TrackArtistRelationship,
 )
-from src.dataclasses.album import Album
 from src.dataclasses.playlist import Playlist
 from peewee import fn, prefetch
 
@@ -35,10 +35,10 @@ def create_playlist(playlist: Playlist, user: DbUser):
 
     album_index = 0
     for track in playlist.tracks.items:
-        create_album_or_none(track.track.album, ignore_tracks=True)
+        db_album = get_or_create_album(track.track.album, ignore_tracks=True)
         if PlaylistAlbumRelationship.get_or_create(
-            playlist=playlist.id,
-            album=track.track.album.id,
+            playlist=db_playlist,
+            album=db_album,
             defaults={"album_index": album_index},
         )[1]:
             album_index += 1
@@ -386,4 +386,4 @@ def create_playlist_album_relationship(playlist_id: str, album_id: str):
     result = PlaylistAlbumRelationship.create(
         playlist=playlist_id, album=album_id, album_index=max_album_index + 1
     )
-    return
+    return result

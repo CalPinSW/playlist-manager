@@ -1,3 +1,4 @@
+from logging import Logger
 import requests
 from typing import List
 from urllib.parse import quote_plus
@@ -10,6 +11,11 @@ from src.flask_config import Config
 
 ### Musicbrainz requests must be followed by a 1 second sleep if being sent in bulk to avoid rate limiting
 class MusicbrainzClient:
+    logger: Logger
+
+    def __init__(self, logger):
+        self.logger = logger
+
     request_headers = {
         "Accept": "application/json",
         "User-Agent": Config().MUSICBRAINZ_USER_AGENT,
@@ -53,8 +59,15 @@ class MusicbrainzClient:
             headers=self.request_headers,
         )
         if response.status_code != 200:
-            print(response.reason)
-            print(response.headers)
+            self.logger.error(
+                {
+                    "message": "Error getting album genres from Musicbrainz",
+                    "artist": artist_name,
+                    "album": album_title,
+                    "response_reason": response.reason,
+                    "response_headers": response.headers,
+                }
+            )
         data = response.json()
         release_group_response = ReleaseGroupResponse.model_validate(data)
         sleep(1)

@@ -70,3 +70,8 @@ Load env variables with `source .env`
 Run Python locally `python3`
 Import migration file >>>: `from src.database.migrations.(migration_file_name) import up, down`
 Run migration >>>: `up()` / `down()`
+
+
+## Logging
+
+Backend logs are sent in JSON format via an HTTPHandler to Loggly and 
