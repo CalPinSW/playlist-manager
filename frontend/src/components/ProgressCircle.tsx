@@ -9,7 +9,7 @@ export const ProgressCircle: FC<ProgressCircleProps> = ({
 }) => {
   return (
     <div className="relative">
-      <svg className="w-full h-full" viewBox="0 0 100 100">
+      <svg className="size-full" viewBox="0 0 100 100">
         <circle
           className="text-gray-200 stroke-current"
           strokeWidth="10"

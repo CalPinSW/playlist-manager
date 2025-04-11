@@ -18,14 +18,14 @@ export const AlbumContainer: FC<AlbumContainerProps> = ({
 }) => {
   return (
       <div
-        className={`group max-h-40 max-w-40 [perspective:1000px]`}
+        className={`group size-40 max-size-40 lg:size-72 lg:max-size-72 [perspective:1000px]`}
         onClick={() => {
           onClick(album)
         }}
       >
         <RotatingBorderBox active={active}>
           <div
-            className={`m-1 relative transition-all duration-500 [transform-style:preserve-3d] ${
+            className={`size-[100%-1px] m-1 relative transition-all duration-500 [transform-style:preserve-3d] ${
               selected && "[transform:rotateY(180deg)]"
             }`}
           >
@@ -54,11 +54,11 @@ export const AlbumCover: FC<AlbumCoverProps> = ({ album, blur }) => {
       <img
         src={album.image_url}
         title={album.name}
-        className={`w-full transition-all duration-500 ${
+        className={`size-full transition-all duration-500 ${
           blur && "opacity-70 blur-[2px]"
         }`}
       ></img>
     );
   }
-  return <PlaylistIcon className="w-full h-full fill-primary" />;
+  return <PlaylistIcon className="size-full fill-primary" />;
 };
