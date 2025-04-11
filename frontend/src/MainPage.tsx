@@ -8,6 +8,7 @@ import useWindowSize from "./hooks/useWindowSize";
 import SearchBar from "./components/SearchBar";
 import Carousel from "./components/Carousel/Carousel";
 import PlaylistSlide from "./components/Playlist/PlaylistSlide";
+import { useAuthorizedRequest } from "./hooks/useAuthorizedRequest";
 
 interface PaginationState {
   pageIndex: number;
@@ -22,18 +23,18 @@ export const Index: FC = () => {
     pageIndex: 0,
     pageSize: isMobileView ? 8 : 8,
   });
-
+  const authorizedRequest = useAuthorizedRequest()
   const playlistQuery = useQuery<Playlist[]>({
     queryKey: ["playlists", pagination, playlistSearch],
     queryFn: () => {
-      return getRecentPlaylists(playlistSearch, pagination.pageIndex, pagination.pageSize);
+      return authorizedRequest(getRecentPlaylists(playlistSearch, pagination.pageIndex, pagination.pageSize));
     },
   });
 
   const albumQuery = useQuery<Playlist[]>({
     queryKey: ["albums", pagination, albumSearch],
     queryFn: () => {
-      return searchPlaylistsByAlbums(albumSearch, pagination.pageIndex, pagination.pageSize);
+      return authorizedRequest(searchPlaylistsByAlbums(albumSearch, pagination.pageIndex, pagination.pageSize));
     },
   });
 
@@ -41,11 +42,21 @@ export const Index: FC = () => {
     <div className="py-4 px-2 space-y-2">
       <Box className="space-y-2">
         <SearchBar search={playlistSearch} setSearch={setPlaylistSearch}/>
-        <Carousel slides={(playlistQuery.data ?? createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />  
+        <Carousel slides={
+          (playlistQuery.data ?? 
+          createUndefinedArray(pagination.pageSize)).map(
+            (p, index) =><PlaylistSlide playlist={p} key={`playlistSearch ${index}`}/>
+          )} 
+        />  
       </Box>
       <Box className="space-y-2">
         <SearchBar search={albumSearch} setSearch={setAlbumSearch}/>
-        <Carousel slides={(albumQuery.data ?? createUndefinedArray(pagination.pageSize)).map(PlaylistSlide)} />  
+        <Carousel slides={
+          (albumQuery.data ?? 
+          createUndefinedArray(pagination.pageSize)).map(
+            (p, index) => <PlaylistSlide playlist={p} key={`albumSearch ${index}`}/>
+          )}
+        />  
       </Box>
       <Box>
         <AddPlaylistForm />

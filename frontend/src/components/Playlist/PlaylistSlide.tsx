@@ -4,7 +4,11 @@ import PlaylistIcon from '../PlaylistIcon';
 import { Link } from 'react-router-dom';
 import ImageWithFallback from '../ImageWithFallback';
 
-const PlaylistSlide: FC<Playlist | undefined> = (playlist) => {
+interface PlaylistSlideProps { 
+      playlist: Playlist | undefined
+}
+
+const PlaylistSlide: FC<PlaylistSlideProps> = ({playlist}) => {
       return (
       <Link className="flex-col space-y-2 max-w-32" to={playlist ? `edit/${playlist.id}` : "#"} >
             <ImageWithFallback 

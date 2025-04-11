@@ -13,6 +13,7 @@ class DbUser(db_wrapper.Model):
     id = CharField(primary_key=True)
     display_name = CharField()
     image_url = CharField(max_length=400)
+    auth0_id = CharField(unique=True)
     uri = CharField()
 
     class Meta:
@@ -124,3 +125,14 @@ class DbAccessToken(db_wrapper.Model):
 
     class Meta:
         db_table = "access_token"
+
+
+class DbAlbumNote(db_wrapper.Model):
+    id = CharField(primary_key=True)
+    text = CharField()
+    album = ForeignKeyField(
+        DbAlbum, backref="album", to_field="id", on_delete="CASCADE"
+    )
+
+    class Meta:
+        db_table = "album_notes"

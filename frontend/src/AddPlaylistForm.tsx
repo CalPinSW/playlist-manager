@@ -5,13 +5,15 @@ import Button from "./components/Button";
 import { Form, useForm } from "react-hook-form";
 import { addPlaylist } from "./api";
 import { Playlist } from "./interfaces/Playlist";
+import { useAuthorizedRequest } from "./hooks/useAuthorizedRequest";
 
 const AddPlaylistForm: FC = () => {
   const { control, register, getValues } = useForm<Playlist>({});
+  const authorizedRequest = useAuthorizedRequest()
   const onSubmit = () => {
     const values = getValues();
     if (values.name !== "") {
-      addPlaylist(values);
+      authorizedRequest(addPlaylist(values));
     }
   };
 

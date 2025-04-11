@@ -8,6 +8,7 @@ import React, {
 import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { useQuery } from "@tanstack/react-query";
 import { getPlaybackInfo } from "../api";
+import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
 
 interface PlaybackContext {
   playbackInfo?: PlaybackInfo;
@@ -22,18 +23,19 @@ interface PlaybackContextProviderProps {
 export const PlaybackContextProvider: FC<PlaybackContextProviderProps> = ({
   children,
 }) => {
-  const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(10000);
+  const authorizedRequest = useAuthorizedRequest()
+  const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(1000000);
   const { data: playbackInfo, isError } = useQuery<PlaybackInfo>({
     queryKey: ["playbackInfo"],
     queryFn: () => {
-      return getPlaybackInfo();
+      return authorizedRequest(getPlaybackInfo());
     },
     retryDelay: playbackRefetchInterval,
     refetchInterval: playbackRefetchInterval,
     refetchIntervalInBackground: false,
   });
   useEffect(() => {
-    if (isError) {setPlaybackRefetchInterval(30000)}
+    if (isError) {setPlaybackRefetchInterval(3000000)}
   }, [isError]);
 
   return (

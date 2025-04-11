@@ -20,6 +20,7 @@ import { Track } from "../interfaces/Track";
 import InputWithLabelPlaceholder from "../components/Inputs/InputWithLabelPlaceholder";
 import ButtonAsync from "../components/ButtonAsync";
 import { ImageLink, useDownloadImages } from "../hooks/useDownload";
+import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
 import { toast, ToastContainer } from "react-toastify";
 
 enum ViewMode {
@@ -29,6 +30,9 @@ enum ViewMode {
 
 export const PlaylistExplorer: FC = () => {
   const { playlistId } = useParams();
+  if (!playlistId) throw new Error()
+  const authorizedRequest = useAuthorizedRequest()
+
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +48,7 @@ export const PlaylistExplorer: FC = () => {
       return;
     }
 
-    getPlaylist(playlistId)
+    authorizedRequest(getPlaylist(playlistId))
       .then((data) => {
         setPlaylist(data);
         setLoading(false);
@@ -56,27 +60,30 @@ export const PlaylistExplorer: FC = () => {
       });
   }, [playlistId]);
 
+  
   const { control, register, getValues } = useForm({
     defaultValues: playlist || {},
   });
 
   const { data: playlistAlbums } = useQuery<Album[]>({
     queryKey: ["playlist albums info", playlistId],
-    queryFn: () => getPlaylistAlbums(playlistId!),
-    enabled: !!playlistId,
+    queryFn: () => {
+      return authorizedRequest(getPlaylistAlbums(playlistId));
+    },
     retry: false,
   });
 
   const { data: playlistTracks } = useQuery<Track[]>({
     queryKey: ["playlist track info", playlistId],
-    queryFn: () => getPlaylistTracks(playlistId!),
-    enabled: !!playlistId,
+    queryFn: () => {
+      return authorizedRequest(getPlaylistTracks(playlistId));
+    },
     retry: false,
   });
 
   useEffect(() => {
     if (playlist?.name.startsWith("New Albums")) {
-      playlistSearch(playlist.name.slice(11)).then((associated) => {
+      authorizedRequest(playlistSearch(playlist.name.slice(11))).then((associated) => {
         setAssociatedPlaylists(
           associated.filter((p) => p.name !== playlist.name)
         );
@@ -96,6 +103,16 @@ export const PlaylistExplorer: FC = () => {
       );
     }
   }, [playlistAlbums]);
+
+  useEffect(() => {
+    if (playlist?.name.slice(0, 10) === "New Albums") {
+        authorizedRequest(playlistSearch(playlist.name.slice(11))).then(
+          (associatedPlaylists: Playlist[]) => {
+            setAssociatedPlaylists(associatedPlaylists.filter((associatedPlaylist) => associatedPlaylist.name !== playlist.name));
+          }
+        );
+      }
+  }, []);
 
   const { handleZip } = useDownloadImages();
   const copyAlbumArtistList = async (data: Album[]): Promise<void> => {
@@ -119,7 +136,9 @@ export const PlaylistExplorer: FC = () => {
   return (
     <div className="p-2 text-sm sm:text-base space-y-4">
       <Form
-        onSubmit={() => updatePlaylist(getValues())}
+        onSubmit={() => {
+          authorizedRequest(updatePlaylist(getValues()));
+        }}
         control={control}
       >
         <div className="flex flex-col my-4 space-y-2">
@@ -147,13 +166,14 @@ export const PlaylistExplorer: FC = () => {
           </div>
         </div>
       </Form>
-      <ButtonAsync
-        className="flex"
-        onClick={() => populatePlaylist(playlist.id)}
+      <ButtonAsync 
+        className="flex" 
+        onClick={() => authorizedRequest(populatePlaylist(playlist.id))}
       >
         Sync new playlist data
       </ButtonAsync>
       <>
+        <div className="mt-2">
         <div className="mt-2">
           <button
             className="border-solid rounded-md border border-primary-500 w-full flex justify-between overflow-hidden"
@@ -190,6 +210,7 @@ export const PlaylistExplorer: FC = () => {
           {viewMode === ViewMode.TRACK && playlistTracks && (
             <TrackList trackList={playlistTracks} activeTrackId={playbackInfo?.track_id} />
           )}
+        </div>
         </div>
       </>
       {images.length > 0 && (
