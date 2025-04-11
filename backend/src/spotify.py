@@ -362,7 +362,12 @@ class SpotifyClient:
         return albums
 
     def get_current_playback(self, user_id) -> PlaybackState | None:
-        access_token = get_user_tokens(user_id=user_id).access_token
+        if user_id is None:
+            return None
+        user_tokens = get_user_tokens(user_id=user_id)
+        if user_tokens is None:
+            raise Exception("User tokens not found")
+        access_token = user_tokens.access_token
         response = requests.get(
             "https://api.spotify.com/v1/me/player",
             auth=BearerAuth(access_token),
