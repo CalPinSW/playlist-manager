@@ -6,7 +6,7 @@ import { User } from "../interfaces/User";
 import { jsonRequest, openInNewTab, request, RequestMethod } from "./jsonRequest";
 
 export const login = async (): Promise<void> => {
-	return request(`auth/login`).then(async response => {
+	return request(`auth/login/spotify`).then(async response => {
 		const redirectUrl = await response.text();
 		openInNewTab(redirectUrl);
 	});
