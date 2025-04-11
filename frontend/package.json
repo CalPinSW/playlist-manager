@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"type": "module",
 	"engines": {
-		"node": "22.x"
+		"node": "20.x"
 	},
 	"scripts": {
 		"dev:esbuild": "export NODE_ENV=development; node ./build/server.mjs",
