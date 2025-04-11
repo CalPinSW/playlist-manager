@@ -16,7 +16,7 @@ const App = () => {
         domain={auth0Domain}
         clientId={auth0ClientId}
         authorizationParams={{
-          redirect_uri: "http://localhost:8080/login",
+          redirect_uri: `${window.location.href}login`,
           audience: "https://playmanbackend.com"
         }}
       >
