@@ -36,17 +36,11 @@ def database_controller(
     )
 
     def get_requesting_db_user():
-        access_token = request.headers.get("Authorization").split(" ")[1]
-        url = f"https://dev-3tozp8qy1u0rfxfm.us.auth0.com/userinfo"
-        headers = {"Authorization": f"Bearer {access_token}"}
-        response = requests.get(url, headers=headers)
-        user_data = response.json()
-        auth0_id = user_data.get("sub")
-        db_user = get_user_by_auth0_id(auth0_id)
+        db_user = get_user_by_auth0_id(request.user["sub"])
         return db_user
 
     @database_controller.route("populate_user", methods=["GET"])
-    @require_auth()
+    @require_auth
     def populate_user():
         db_user = get_requesting_db_user()
         simplified_playlists = spotify.get_all_playlists(user_id=db_user.id)
@@ -106,7 +100,7 @@ def database_controller(
             )
 
     @database_controller.route("populate_playlist/<id>", methods=["GET"])
-    @require_auth()
+    @require_auth
     def populate_playlist(id):
         db_user = get_requesting_db_user()
         logger.info(
@@ -161,7 +155,7 @@ def database_controller(
             )
 
     @database_controller.route("populate_additional_album_details", methods=["GET"])
-    @require_auth()
+    @require_auth
     def populate_additional_album_details():
         db_user = get_requesting_db_user()
         logger.info(
@@ -206,14 +200,14 @@ def database_controller(
             )
 
     @database_controller.route("populate_universal_genre_list", methods=["GET"])
-    @require_auth()
+    @require_auth
     def populate_universal_genre_list():
         genre_list = musicbrainz.get_genre_list()
         [create_genre(genre) for genre in genre_list]
         return make_response("Genre data populated", 201)
 
     @database_controller.route("populate_user_album_genres", methods=["GET"])
-    @require_auth()
+    @require_auth
     def populate_user_album_genres():
         db_user = get_requesting_db_user()
         populate_album_genres_by_user_id(db_user.id, musicbrainz)

@@ -20,7 +20,7 @@ def auth_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return response.json()
 
     @auth_controller.route("spotify/login")
-    @require_auth()
+    @require_auth
     def login():
         state = str(uuid4())
         session["SpotifyState"] = state
@@ -28,7 +28,7 @@ def auth_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return "https://accounts.spotify.com/authorize?" + query_string
 
     @auth_controller.route("spotify/user-status")
-    @require_auth()
+    @require_auth
     def spotify_status():
         access_token = request.headers.get("Authorization").split(" ")[1]
         user_data = get_user_info(access_token)
@@ -40,7 +40,7 @@ def auth_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return jsonify({"spotifyLinked": bool(user and user_tokens.access_token)}), 200
 
     @auth_controller.route("logout")
-    @require_auth()
+    @require_auth
     def logout():
         resp = make_response("Logged out")
         resp.delete_cookie("spotify_access_token")
@@ -50,7 +50,7 @@ def auth_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return resp
 
     @auth_controller.route("get-user-code")
-    @require_auth()
+    @require_auth
     def auth_redirect():
         code = request.args.get("code")
         state = request.args.get("state")
@@ -60,7 +60,7 @@ def auth_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return spotify.request_access_token(code=code)
 
     @auth_controller.route("refresh-user-code")
-    @require_auth()
+    @require_auth
     def auth_refresh():
         user_id = request.cookies.get("user_id")
         (user_id, _, _) = spotify.refresh_access_token(user_id=user_id)

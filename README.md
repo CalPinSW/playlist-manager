@@ -73,7 +73,12 @@ With the exception of the database, infrastructure is managed by terraform in th
 
 Pipelines will run when pull requests are created or commits are pushed to the origin.
 
+
 ## Deployment
+
+The frontend is now deployed to [Vercel](https://vercel.com/calums-projects-8679c2fb/playlist-manager-frontend) and the backend to [Render](https://dashboard.render.com/). Any pushes to the main branch automatically trigger redeployment of the applications.
+
+### Deployment (Legacy)
 
 The frontend and backend applications are deployed to two Azure Web Applications. The frontend can be accessed [here](https://playman.azurewebsites.net/). Any pushes to the main branch will be deployed automatically, but they can also be updated locally by:
 

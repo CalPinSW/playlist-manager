@@ -13,18 +13,11 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
     )
 
     def get_requesting_db_user():
-        access_token = request.headers.get("Authorization").split(" ")[1]
-        url = f"https://dev-3tozp8qy1u0rfxfm.us.auth0.com/userinfo"
-        headers = {"Authorization": f"Bearer {access_token}"}
-        response = requests.get(url, headers=headers)
-        user_data = response.json()
-        print(user_data)
-        auth0_id = user_data.get("sub")
-        db_user = get_user_by_auth0_id(auth0_id)
+        db_user = get_user_by_auth0_id(request.user["sub"])
         return db_user
 
     @spotify_controller.route("current-user")
-    @require_auth()
+    @require_auth
     def get_user_info():
         db_user = get_requesting_db_user()
         user = spotify.get_user_by_id(db_user.id)

@@ -13,6 +13,7 @@ class Config:
         self.LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL")
         self.LOGGLY_TOKEN = os.environ.get("LOGGLY_TOKEN")
         self.ENVIRONMENT = os.environ.get("ENVIRONMENT")
+        self.AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
 
         if not self.SECRET_KEY:
             raise ValueError(

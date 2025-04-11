@@ -1,3 +1,4 @@
+from functools import wraps
 from flask import Flask, redirect, request
 from flask_cors import CORS
 import requests
@@ -9,25 +10,14 @@ from src.flask_config import Config
 from src.musicbrainz import MusicbrainzClient
 from src.spotify import SpotifyClient
 from src.controllers.auth import auth_controller
-from src.database.models import DbUser, db_wrapper
-from loggly.handlers import HTTPSHandler
-from pythonjsonlogger.json import JsonFormatter
+from src.database.models import db_wrapper
+from jose import jwt
 from authlib.integrations.flask_oauth2 import ResourceProtector
-from logging import getLogger
-import logging
-from playhouse.shortcuts import model_to_dict
 
+from src.utils.logging.configure_logging import configure_app_logging
 from src.validator import Auth0JWTBearerTokenValidator
 
-
-class EnvironmentFilter(logging.Filter):
-    def __init__(self, environment):
-        super().__init__()
-        self.environment = environment
-
-    def filter(self, record):
-        record.environment = self.environment
-        return True
+ALGORITHMS = ["RS256"]
 
 
 def create_app():
@@ -36,38 +26,47 @@ def create_app():
     app.config.from_object(Config())
     app.logger.setLevel(app.config["LOGGING_LEVEL"])
     if app.config["LOGGLY_TOKEN"] is not None:
-        jsonFormatter = JsonFormatter(
-            "[%(asctime)s] %(levelname)s in %(module)s [%(environment)s]: %(message)s"
-        )
-        loggly_url = f'https://logs-01.loggly.com/inputs/{app.config["LOGGLY_TOKEN"]}/tag/playman'
+        configure_app_logging(app)
 
-        # Default Logging
-        handler = HTTPSHandler(loggly_url)
-        handler.setFormatter(jsonFormatter)
-        handler.addFilter(EnvironmentFilter(app.config["ENVIRONMENT"]))
-        app.logger.addHandler(handler)
+    def get_token_auth_header():
+        auth = request.headers.get("Authorization", None)
+        if not auth:
+            raise Exception("Authorization header is expected")
+        token = auth.split(" ")[1]
+        return token
 
-        # Request Logging
-        request_logger = getLogger("werkzeug")
-        request_logger.setLevel(app.config["LOGGING_LEVEL"])
-        request_handler = HTTPSHandler(loggly_url + "-requests")
-        request_handler.setFormatter(jsonFormatter)
-        request_handler.addFilter(EnvironmentFilter(app.config["ENVIRONMENT"]))
-        request_logger.addHandler(request_handler)
+    def requires_auth(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            token = get_token_auth_header()
+            jsonurl = requests.get(
+                f'https://{app.config["AUTH0_DOMAIN"]}/.well-known/jwks.json'
+            )
+            jwks = jsonurl.json()
+            unverified_header = jwt.get_unverified_header(token)
 
-        # DB Logging
-        db_logger = logging.getLogger("peewee")
-        db_logger.setLevel(app.config["LOGGING_LEVEL"])
-        db_handler = HTTPSHandler(loggly_url + "-db")
-        db_handler.setFormatter(jsonFormatter)
-        db_handler.addFilter(EnvironmentFilter(app.config["ENVIRONMENT"]))
-        db_logger.addHandler(db_handler)
+            rsa_key = {}
+            for key in jwks["keys"]:
+                if key["kid"] == unverified_header["kid"]:
+                    rsa_key = {
+                        "kty": key["kty"],
+                        "kid": key["kid"],
+                        "use": key["use"],
+                        "n": key["n"],
+                        "e": key["e"],
+                    }
 
-    require_auth = ResourceProtector()
-    validator = Auth0JWTBearerTokenValidator(
-        "dev-3tozp8qy1u0rfxfm.us.auth0.com", "https://playmanbackend.com"
-    )
-    require_auth.register_token_validator(validator)
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=ALGORITHMS,
+                audience="https://playmanbackend.com",
+                issuer=f'https://{app.config["AUTH0_DOMAIN"]}/',
+            )
+            request.user = payload
+            return f(*args, **kwargs)
+
+        return decorated
 
     spotify = SpotifyClient()
     musicbrainz = MusicbrainzClient(logger=app.logger)
@@ -101,15 +100,17 @@ def create_app():
     def handle_unauthorized_exception(_):
         resp = redirect("/login", 401)
         return resp
-    
-    app.register_blueprint(auth_controller(require_auth=require_auth, spotify=spotify))
+
+    app.register_blueprint(auth_controller(require_auth=requires_auth, spotify=spotify))
     app.register_blueprint(
-        spotify_controller(require_auth=require_auth, spotify=spotify)
+        spotify_controller(require_auth=requires_auth, spotify=spotify)
     )
-    app.register_blueprint(music_controller(require_auth=require_auth, spotify=spotify))
+    app.register_blueprint(
+        music_controller(require_auth=requires_auth, spotify=spotify)
+    )
     app.register_blueprint(
         database_controller(
-            require_auth=require_auth,
+            require_auth=requires_auth,
             spotify=spotify,
             musicbrainz=musicbrainz,
             database=db_wrapper,

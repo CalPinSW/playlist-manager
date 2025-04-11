@@ -24,6 +24,7 @@ psycopg2 = "^2.9.9"
 tenacity = "^9.0.0"
 loggly-python-handler = "^1.0.1"
 python-json-logger = "^3.2.1"
+python-jose = "^3.4.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"

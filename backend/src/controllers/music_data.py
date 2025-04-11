@@ -24,18 +24,11 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
     )
 
     def get_requesting_db_user():
-        access_token = request.headers.get("Authorization").split(" ")[1]
-        url = f"https://dev-3tozp8qy1u0rfxfm.us.auth0.com/userinfo"
-        headers = {"Authorization": f"Bearer {access_token}"}
-        response = requests.get(url, headers=headers)
-        user_data = response.json()
-        print(user_data)
-        auth0_id = user_data.get("sub")
-        db_user = get_user_by_auth0_id(auth0_id)
+        db_user = get_user_by_auth0_id(request.user["sub"])
         return db_user
 
     @music_controller.route("playlist_album_search")
-    @require_auth()
+    @require_auth
     def album_search():
         db_user = get_requesting_db_user()
         limit = request.args.get("limit", type=int)
@@ -56,7 +49,7 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         )
 
     @music_controller.route("playlists")
-    @require_auth()
+    @require_auth
     def index():
         db_user = get_requesting_db_user()
         limit = request.args.get("limit", type=int)
@@ -77,7 +70,7 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         )
 
     @music_controller.route("playlists/recent")
-    @require_auth()
+    @require_auth
     def recent_playlists():
         db_user = get_requesting_db_user()
         limit = request.args.get("limit", type=int)
@@ -91,7 +84,7 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         )
 
     @music_controller.route("playlist/<id>", methods=["GET"])
-    @require_auth()
+    @require_auth
     def get_playlist(id):
         db_user = get_requesting_db_user()
         db_playlist = get_playlist_by_id_or_none(id)
@@ -103,7 +96,7 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
             return make_response(jsonify(playlist.model_dump()), 200)
 
     @music_controller.route("playlist/<id>", methods=["POST"])
-    @require_auth()
+    @require_auth
     def post_edit_playlist(id):
         db_user = get_requesting_db_user()
         name = request.json.get("name")
@@ -118,7 +111,7 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return make_response("playlist updated", 204)
 
     @music_controller.route("playlist/<id>/albums", methods=["GET"])
-    @require_auth()
+    @require_auth
     def get_playlist_album_info(id):
         db_user = get_requesting_db_user()
         db_playlist = get_playlist_by_id_or_none(id)
@@ -132,7 +125,7 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
             ]
 
     @music_controller.route("playlist/<id>/tracks", methods=["GET"])
-    @require_auth()
+    @require_auth
     def get_playlist_tracks(id):
         db_user = get_requesting_db_user()
         db_playlist = get_playlist_by_id_or_none(id)
@@ -146,14 +139,14 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
             ]
 
     @music_controller.route("playlist/search", methods=["POST"])
-    @require_auth()
+    @require_auth
     def find_associated_playlists():
         db_user = get_requesting_db_user()
         search = request.json
         return search_playlist_names(db_user.id, search)
 
     @music_controller.route("add_album_to_playlist", methods=["POST"])
-    @require_auth()
+    @require_auth
     def add_album_to_playlist():
         db_user = get_requesting_db_user()
         request_body = request.json
@@ -169,7 +162,7 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         )
 
     @music_controller.route("playback", methods=["GET"])
-    @require_auth()
+    @require_auth
     def get_playback_info():
         db_user = get_requesting_db_user()
         playback_info = spotify.get_my_current_playback(user_id=db_user.id)
