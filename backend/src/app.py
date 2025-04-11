@@ -9,21 +9,21 @@ from src.exceptions.Unauthorized import UnauthorizedException
 from src.flask_config import Config
 from src.musicbrainz import MusicbrainzClient
 from src.spotify import SpotifyClient
+import jwt
+from jwt import PyJWKClient
 from src.controllers.auth import auth_controller
 from src.database.models import db_wrapper
-from jose import jwt
-from authlib.integrations.flask_oauth2 import ResourceProtector
 
 from src.utils.logging.configure_logging import configure_app_logging
-from src.validator import Auth0JWTBearerTokenValidator
 
 ALGORITHMS = ["RS256"]
 
 
 def create_app():
     app = Flask(__name__)
-
     app.config.from_object(Config())
+    jwks_url = f'https://{app.config["AUTH0_DOMAIN"]}/.well-known/jwks.json'
+    jwks_client = PyJWKClient(jwks_url)
     app.logger.setLevel(app.config["LOGGING_LEVEL"])
     if app.config["LOGGLY_TOKEN"] is not None:
         configure_app_logging(app)
@@ -39,31 +39,24 @@ def create_app():
         @wraps(f)
         def decorated(*args, **kwargs):
             token = get_token_auth_header()
-            jsonurl = requests.get(
-                f'https://{app.config["AUTH0_DOMAIN"]}/.well-known/jwks.json'
-            )
-            jwks = jsonurl.json()
-            unverified_header = jwt.get_unverified_header(token)
 
-            rsa_key = {}
-            for key in jwks["keys"]:
-                if key["kid"] == unverified_header["kid"]:
-                    rsa_key = {
-                        "kty": key["kty"],
-                        "kid": key["kid"],
-                        "use": key["use"],
-                        "n": key["n"],
-                        "e": key["e"],
-                    }
+            signing_key = jwks_client.get_signing_key_from_jwt(token).key
+            try:
+                payload = jwt.decode(
+                    token,
+                    signing_key,
+                    algorithms=ALGORITHMS,
+                    audience="https://playmanbackend.com",
+                    issuer=f'https://{app.config["AUTH0_DOMAIN"]}/',
+                )
+            except jwt.ExpiredSignatureError:
+                return {"message": "token expired"}, 401
+            except jwt.JWTClaimsError:
+                return {"message": "incorrect claims"}, 401
+            except Exception as e:
+                return {"message": "invalid token", "error": str(e)}, 401
 
-            payload = jwt.decode(
-                token,
-                rsa_key,
-                algorithms=ALGORITHMS,
-                audience="https://playmanbackend.com",
-                issuer=f'https://{app.config["AUTH0_DOMAIN"]}/',
-            )
-            request.user = payload
+            request.user = payload  # store decoded token
             return f(*args, **kwargs)
 
         return decorated
