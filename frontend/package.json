@@ -4,6 +4,9 @@
 	"description": "A place to manage music",
 	"main": "index.js",
 	"type": "module",
+	"engines": {
+		"node": "22.x"
+	},
 	"scripts": {
 		"dev:esbuild": "export NODE_ENV=development; node ./build/server.mjs",
 		"dev:css": "npx tailwindcss -i ./src/index.css -o ./public/index.css --minify --watch",
