@@ -7,6 +7,7 @@ import { Text as DefaultText, View as DefaultView, TextInput as DefaultTextInput
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from './useColorScheme';
+import { useColorTheme } from '../hooks/useColorTheme';
 
 export type TextProps = {noBackground?: boolean} & DefaultText['props'];
 export type TextInputProps = DefaultTextInput['props'];
@@ -14,7 +15,7 @@ export type ViewProps = DefaultView['props'];
 
 export function Text(props: TextProps) {
   const { style, noBackground, ...otherProps } = props;
-  const theme = Colors[useColorScheme() ?? 'light'];
+  const theme = useColorTheme();
 
   const backgroundColor = noBackground ? undefined :  theme.background.offset;
 
@@ -29,7 +30,7 @@ export function Text(props: TextProps) {
 
 export function TextInput (props: TextInputProps) {
   const { style, ...otherProps } = props;
-  const theme = Colors[useColorScheme() ?? 'light'];
+  const theme = useColorTheme();
 
   return <DefaultTextInput 
         style={[
@@ -46,7 +47,7 @@ export function TextInput (props: TextInputProps) {
 
 export function View(props: ViewProps) {
   const { style, ...otherProps } = props;
-  const theme = Colors[useColorScheme() ?? 'light'];
+  const theme = useColorTheme();
 
   return <DefaultView style={[{ backgroundColor: theme.background.default }, style]} {...otherProps} />;
 }

@@ -1,14 +1,14 @@
 import { Dimensions, StyleSheet, Image } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { useState } from 'react';
-import { getRecentPlaylists, searchPlaylistsByAlbums } from '../../../api';
-import { Playlist } from '../../../interfaces/Playlist';
+import { getRecentPlaylists, searchPlaylistsByAlbums } from '../../api';
+import { Playlist } from '../../interfaces/Playlist';
 import { useQuery } from '@tanstack/react-query';
-import { DebouncedTextInput } from '../../../components/DebouncedTextInput';
-import PlaylistSlide from '../../../components/Carousel/PlaylistSlide';
-import Carousel from '../../../components/Carousel/Carousel';
-import MiniPlayer from '../../../components/MiniPlayer/Miniplayer';
-import { useAuthorizedRequest } from '../../../hooks/useAuthorizedRequest';
+import { DebouncedTextInput } from '../../components/DebouncedTextInput';
+import PlaylistSlide from '../../components/Carousel/PlaylistSlide';
+import Carousel from '../../components/Carousel/Carousel';
+import MiniPlayer from '../../components/MiniPlayer/Miniplayer';
+import { useAuthorizedRequest } from '../../hooks/useAuthorizedRequest';
 
 interface PaginationState {
   pageIndex: number;
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     display: "flex"
   },
   separator: {
-    marginVertical: 30,
+    marginVertical: 10,
     height: 1,
     width: '80%',
   },
