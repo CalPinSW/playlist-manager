@@ -1,13 +1,14 @@
 import { Dimensions, StyleSheet, Image } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { useState } from 'react';
-import { getRecentPlaylists, searchPlaylistsByAlbums } from '../../api';
-import { Playlist } from '../../interfaces/Playlist';
+import { getRecentPlaylists, searchPlaylistsByAlbums } from '../../../api';
+import { Playlist } from '../../../interfaces/Playlist';
 import { useQuery } from '@tanstack/react-query';
-import { DebouncedTextInput } from '../../components/DebouncedTextInput';
-import PlaylistSlide from '../../components/Carousel/PlaylistSlide';
-import Carousel from '../../components/Carousel/Carousel';
-import MiniPlayer from '../../components/MiniPlayer/Miniplayer';
+import { DebouncedTextInput } from '../../../components/DebouncedTextInput';
+import PlaylistSlide from '../../../components/Carousel/PlaylistSlide';
+import Carousel from '../../../components/Carousel/Carousel';
+import MiniPlayer from '../../../components/MiniPlayer/Miniplayer';
+import { useAuthorizedRequest } from '../../../hooks/useAuthorizedRequest';
 
 interface PaginationState {
   pageIndex: number;
@@ -18,6 +19,7 @@ const { width, height: screenHeight } = Dimensions.get('window')
 
 export default function TabOneScreen() {
   const slidesPerPage = 4;
+  const authorizedRequest = useAuthorizedRequest()
   const [playlistSearch, setPlaylistSearch] = useState<string>("")
   const [albumSearch, setAlbumSearch] = useState<string>("")
   const [pagination, ] = useState<PaginationState>({
@@ -27,16 +29,12 @@ export default function TabOneScreen() {
 
   const playlistQuery = useQuery<Playlist[]>({
     queryKey: ["playlists", pagination, playlistSearch],
-    queryFn: () => {
-      return getRecentPlaylists(playlistSearch, pagination.pageIndex, pagination.pageSize);
-    },
+    queryFn: () => authorizedRequest(getRecentPlaylists(playlistSearch, pagination.pageIndex, pagination.pageSize)),
   });
 
   const albumQuery = useQuery<Playlist[]>({
     queryKey: ["albums", pagination, albumSearch],
-    queryFn: () => {
-      return searchPlaylistsByAlbums(albumSearch, pagination.pageIndex, pagination.pageSize);
-    },
+    queryFn: () => authorizedRequest(searchPlaylistsByAlbums(albumSearch, pagination.pageIndex, pagination.pageSize)),
   });
 
   return (
@@ -56,8 +54,7 @@ export default function TabOneScreen() {
       <View style={styles.carouselContainer}>
         <Carousel slidesPerPage={slidesPerPage} data={albumQuery.data} renderItem={(playlist) => <PlaylistSlide playlist={playlist}/>}/>
       </View>
-                  <MiniPlayer />
-      
+      {/* <MiniPlayer /> */}
     </View>
   );
 }

@@ -20,7 +20,7 @@ import { Track } from "../interfaces/Track";
 import InputWithLabelPlaceholder from "../components/Inputs/InputWithLabelPlaceholder";
 import ButtonAsync from "../components/ButtonAsync";
 import { ImageLink, useDownloadImages } from "../hooks/useDownload";
-import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
+import { useAuthorizedRequest } from "../../../react-native-frontend/PlaylistManager/hooks/useAuthorizedRequest";
 import { toast, ToastContainer } from "react-toastify";
 
 enum ViewMode {

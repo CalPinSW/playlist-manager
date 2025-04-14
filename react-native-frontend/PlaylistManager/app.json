@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "playlistmanager",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -14,13 +14,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.calpin.playlistmanager"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.calpin.playlistmanager"
     },
     "web": {
       "bundler": "metro",
@@ -28,12 +30,21 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "react-native-auth0",
+        {
+          "domain": "dev-3tozp8qy1u0rfxfm.us.auth0.com"
+        }
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
+      "auth0Domain": "dev-3tozp8qy1u0rfxfm.us.auth0.comIN.auth0.com",
+      "auth0ClientId": "vlvk6JVXllIpfJEElGtEZnjmfG5NvVo3",
       "router": {
         "origin": false
       },

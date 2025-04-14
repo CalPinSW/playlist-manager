@@ -1,32 +1,30 @@
 import { StyleSheet } from 'react-native';
 import { View, Text } from '@/components/Themed';
 import { useState } from 'react';
-import { getPlaylistAlbums, getPlaylistTracks } from '../../api';
-import { Playlist } from '../../interfaces/Playlist';
+import { getPlaylistAlbums, getPlaylistTracks } from '../../../api';
+import { Playlist } from '../../../interfaces/Playlist';
 import { useQuery } from '@tanstack/react-query';
-import { Track } from '../../interfaces/Track';
-import { Album } from '../../interfaces/Album';
+import { Track } from '../../../interfaces/Track';
+import { Album } from '../../../interfaces/Album';
 import { useLocalSearchParams } from 'expo-router';
-import Carousel from '../../components/Carousel/Carousel';
-import AlbumSlide from '../../components/Carousel/AlbumSlide';
+import Carousel from '../../../components/Carousel/Carousel';
+import AlbumSlide from '../../../components/Carousel/AlbumSlide';
+import { useAuthorizedRequest } from '../../../hooks/useAuthorizedRequest';
 
 const PlaylistExplorer: React.FC = () => {
     const { id } = useLocalSearchParams<{id: string}>();
+    const authorizedRequest = useAuthorizedRequest()
 
     const { data: playlistAlbums } = useQuery<Album[]>({
         queryKey: ["playlist albums info", id],
-        queryFn: () => {
-            return getPlaylistAlbums(id);
-        },
+        queryFn: () => authorizedRequest(getPlaylistAlbums(id)),
         retry: false,
     });
 
         
     const { data: playlistTracks } = useQuery<Track[]>({
     queryKey: ["playlist track info", id],
-    queryFn: () => {
-        return getPlaylistTracks(id);
-    },
+    queryFn: () => authorizedRequest(getPlaylistTracks(id)),
     retry: false,
     });
 

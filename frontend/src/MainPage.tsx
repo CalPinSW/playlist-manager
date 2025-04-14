@@ -8,7 +8,7 @@ import useWindowSize from "./hooks/useWindowSize";
 import SearchBar from "./components/SearchBar";
 import Carousel from "./components/Carousel/Carousel";
 import PlaylistSlide from "./components/Playlist/PlaylistSlide";
-import { useAuthorizedRequest } from "./hooks/useAuthorizedRequest";
+import { useAuthorizedRequest } from "../../react-native-frontend/PlaylistManager/hooks/useAuthorizedRequest";
 
 interface PaginationState {
   pageIndex: number;

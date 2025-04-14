@@ -7,7 +7,7 @@ import { Index } from "./MainPage";
 import { SettingsPage } from "./settingsPage/SettingsPage";
 import { ProtectedRoute } from "./presentational/ProtectedRoutes";
 import { PlaybackContextProvider } from "./context/PlaybackContext";
-import { useAuthorizedRequest } from "./hooks/useAuthorizedRequest";
+import { useAuthorizedRequest } from "../../react-native-frontend/PlaylistManager/hooks/useAuthorizedRequest";
 import { getPlaylist } from "./api";
 
 
