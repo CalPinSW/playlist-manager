@@ -3,5 +3,4 @@ import Colors from "../constants/Colors";
 
 export const useColorTheme = () => {
     return Colors[useColorScheme() ?? 'light'];
-
 };

@@ -1,75 +1,87 @@
 import { StyleSheet } from 'react-native';
-import React, { useState, useCallback, useMemo, useRef } from "react";
-import { View, Text, Image, TouchableOpacity } from "react-native";
-import BottomSheet from "@gorhom/bottom-sheet";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { usePlaybackContext } from "../../hooks/usePlaybackContext";
+import React, { useState, useMemo, useRef, FC } from "react";
+import { Image } from "react-native";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { pauseOrStartPlayback } from "../../api";
-import { renderArtistList } from '../../utils/album/renderArtistList';
+import { useColorTheme } from '../../hooks/useColorTheme';
+import { View, Text } from '../Themed';
+import PlaybackProgressCircle from './PlaybackProgressCircle';
+import { PlaybackInfo } from '../../interfaces/PlaybackInfo';
+import TrackIcon from '../../assets/icons/TrackIcon';
+import { usePlaybackContext } from '../../hooks/usePlaybackContext';
+
 
 const MiniPlayer = () => {
     const { playbackInfo } = usePlaybackContext();
-    console.log(playbackInfo)
-    if (!playbackInfo) return null;
-  
+    const theme = useColorTheme()
     const handlePausePlayClick = (): void => {
       pauseOrStartPlayback()
     }
-  
+    const [activeSnapPoint, setActiveSnapPoint] = useState(0);
+    const onChange = (index: number) => {
+      setActiveSnapPoint(index)
+    }
     const bottomSheetRef = useRef<BottomSheet>(null);
 
-    // Define the snap points for the bottom sheet
-    const snapPoints = useMemo(() => ["10%", "50%"], []);
+    const snapPoints = useMemo(() => ["20%", "40%"], []);
 
-    // Function to handle expanding the bottom sheet
-    const handleExpand = useCallback(() => {
-    bottomSheetRef.current?.expand();
-    }, []);
-
+    if (!playbackInfo) return null;
     return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-        <BottomSheet ref={bottomSheetRef} index={0} snapPoints={snapPoints}>
-        {/* Collapsed Mini Player */}
-        <TouchableOpacity onPress={handleExpand} style={styles.miniPlayer}>
-            <Image source={{ uri: playbackInfo.artwork_url }} style={styles.artwork} />
-            <View style={styles.info}>
-            <Text style={styles.title}>{playbackInfo.album_title}</Text>
-            <Text style={styles.artist}>{playbackInfo.track_artists.join(", ")}</Text>
-            </View>
-        </TouchableOpacity>
-
-        {/* Expanded Player */}
-        <View style={styles.expandedContainer}>
-            <Image source={{ uri: playbackInfo.artwork_url }} style={styles.artwork} />
-            <Text style={styles.title}>{playbackInfo.album_title}</Text>
-            <Text style={styles.artist}>{playbackInfo.track_artists.join(", ")}</Text>
-        </View>
+        <BottomSheet
+          ref={bottomSheetRef}
+          snapPoints={snapPoints}
+          onChange={onChange}
+          enableDynamicSizing={false}
+          backgroundStyle={{backgroundColor: theme.background.offset}}
+        >
+        <BottomSheetView style={[styles.contentContainer]}>
+          {activeSnapPoint ? <MiniPlayerMaximized playbackInfo={playbackInfo} /> : <MiniPlayerMinimized playbackInfo={playbackInfo} />}
+        </BottomSheetView>
         </BottomSheet>
-    </GestureHandlerRootView>
     );
 };
 
 const styles = StyleSheet.create({
+  contentContainer: {
+    flex: 1,
+  },
   miniPlayer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
+    padding: 5,
+  },
+  columns: {
+    display: "flex",
+    flexDirection: "row"
+  },
+  rows: {
+    display: "flex",
+    flexDirection: "row",
+    gap: 20
   },
   artwork: {
-    width: 50,
-    height: 50,
     borderRadius: 5,
   },
   info: {
-    marginLeft: 10,
+    display: "flex",
+    flex: 1,
+    gap: 10,
+    flexDirection: "column",
+    alignContent: "center"
+  },
+  icons: {
+    width: "100%",
+    display: "flex",
+    justifyContent: "center",
+    gap: 10,
+    flexDirection: "row"
   },
   title: {
-    fontSize: 16,
-    fontWeight: "bold",
+    textAlign: "center",
+    fontSize: 14,
   },
   artist: {
     fontSize: 14,
-    color: "gray",
   },
   expandedContainer: {
     alignItems: "center",
@@ -83,3 +95,82 @@ const styles = StyleSheet.create({
 });
 
 export default MiniPlayer;
+
+interface MiniPlayerPresentationalProps {
+  playbackInfo: PlaybackInfo
+}
+
+const MiniPlayerMinimized: FC<MiniPlayerPresentationalProps> = ({playbackInfo}) => {
+  const theme = useColorTheme()
+  return (
+    <View noBackground style={styles.miniPlayer}>
+      <View noBackground style={styles.rows}>
+        <View noBackground style={styles.info}>
+          <View noBackground style={styles.icons}>
+            <TrackIcon color={theme.primary.darker} height={50} width={50} />
+            <PlaybackProgressCircle 
+              progress={playbackInfo.track_progress / playbackInfo.track_duration} 
+            />
+          </View>
+          <Text noBackground style={styles.title}>{playbackInfo.track_title}</Text>
+        </View>
+        <View noBackground style={styles.info}>
+          <View noBackground style={styles.icons}>
+            <Image source={{ uri: playbackInfo.artwork_url }} style={styles.artwork} height={50} width={50} />
+            <PlaybackProgressCircle 
+              progress={playbackInfo.album_progress / playbackInfo.album_duration} 
+            />
+          </View>
+          <Text noBackground style={styles.title}>{playbackInfo.album_title}</Text>
+        </View>
+        {playbackInfo.playlist && 
+          <View noBackground style={styles.info}>
+            <View noBackground style={styles.icons}>
+              <Image source={{ uri: playbackInfo.playlist.artwork_url }} style={styles.artwork} height={50} width={50} />
+            <PlaybackProgressCircle 
+                progress={playbackInfo.playlist.progress / playbackInfo.playlist.duration} 
+              />
+            </View>
+            <Text noBackground style={styles.title}>{playbackInfo.playlist.title}</Text>
+            
+          </View>
+        } 
+      </View>
+  </View>
+  )
+}
+
+const MiniPlayerMaximized: FC<MiniPlayerPresentationalProps> = ({playbackInfo}) => {
+  return (
+    <View noBackground style={styles.miniPlayer}>
+            <View noBackground style={styles.columns}>
+              <View noBackground style={styles.rows}>
+                <Image source={{ uri: playbackInfo.artwork_url }} style={styles.artwork} />
+                <Text noBackground style={styles.artist}>{playbackInfo.track_artists.join(", ")}</Text>
+              </View>
+              <View noBackground style={styles.rows}>
+                <View noBackground style={styles.info}>
+                  <Text noBackground style={styles.title}>{playbackInfo.track_title}</Text>
+                  <PlaybackProgressCircle 
+                    progress={playbackInfo.track_progress / playbackInfo.track_duration} 
+                  />
+                </View>
+                <View noBackground style={styles.info}>
+                  <Text noBackground style={styles.title}>{playbackInfo.album_title}</Text>
+                  <PlaybackProgressCircle 
+                    progress={playbackInfo.album_progress / playbackInfo.album_duration} 
+                  />
+                </View>
+                {playbackInfo.playlist && 
+                  <View noBackground style={styles.info}>
+                    <Text noBackground style={styles.title}>{playbackInfo.playlist.title}</Text>
+                    <PlaybackProgressCircle 
+                      progress={playbackInfo.playlist.progress / playbackInfo.playlist.duration} 
+                    />
+                  </View>
+                } 
+              </View>
+            </View>
+          </View>
+  )
+}

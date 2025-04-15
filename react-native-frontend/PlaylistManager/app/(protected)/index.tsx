@@ -1,4 +1,4 @@
-import { Dimensions, StyleSheet, Image } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { useState } from 'react';
 import { getRecentPlaylists, searchPlaylistsByAlbums } from '../../api';
@@ -15,7 +15,7 @@ interface PaginationState {
   pageSize: number;
 }
 
-const { width, height: screenHeight } = Dimensions.get('window')
+const { width } = Dimensions.get('window')
 
 export default function TabOneScreen() {
   const slidesPerPage = 4;
@@ -28,12 +28,12 @@ export default function TabOneScreen() {
   });
 
   const playlistQuery = useQuery<Playlist[]>({
-    queryKey: ["playlists", pagination, playlistSearch],
+    queryKey: ["playlists", {page: pagination, search: playlistSearch}],
     queryFn: () => authorizedRequest(getRecentPlaylists(playlistSearch, pagination.pageIndex, pagination.pageSize)),
   });
 
   const albumQuery = useQuery<Playlist[]>({
-    queryKey: ["albums", pagination, albumSearch],
+    queryKey: ["albums", {page: pagination, search: albumSearch}],
     queryFn: () => authorizedRequest(searchPlaylistsByAlbums(albumSearch, pagination.pageIndex, pagination.pageSize)),
   });
 
@@ -54,7 +54,7 @@ export default function TabOneScreen() {
       <View style={styles.carouselContainer}>
         <Carousel slidesPerPage={slidesPerPage} data={albumQuery.data} renderItem={(playlist) => <PlaylistSlide playlist={playlist}/>}/>
       </View>
-      {/* <MiniPlayer /> */}
+       <MiniPlayer />
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { View, Text } from '@/components/Themed';
+import { View } from '@/components/Themed';
 import { useState } from 'react';
 import { getPlaylistAlbums, getPlaylistTracks } from '../../../api';
 import { Playlist } from '../../../interfaces/Playlist';

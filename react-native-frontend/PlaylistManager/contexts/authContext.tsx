@@ -1,43 +1,36 @@
-import { createContext, useContext, useEffect, useState } from "react"
-import { useAuth0, WebAuthorizeParameters } from "react-native-auth0"
+import React, { createContext, useContext, useEffect } from "react"
+import { useAuth0 } from "react-native-auth0"
 import { router, useSegments, useRootNavigationState } from "expo-router"
 
-// Define the shape of our auth context
 type AuthContextType = {
   signIn: () => Promise<void>
   signOut: () => Promise<void>
+  authorizedRequest: <T>(request: (token: string) => Promise<T>) => Promise<T>
   isAuthenticated: boolean
   isLoading: boolean
   user: any
   error: Error | null
 }
 
-// Create the context with a default value
 const AuthContext = createContext<AuthContextType | null>(null)
 
-// Provider component that wraps the app
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { authorize, clearSession, user, error, isLoading } =
-    useAuth0()
+  const { authorize, clearSession, user, error, isLoading, getCredentials } = useAuth0();
   
   const segments = useSegments()
   const navigationState = useRootNavigationState()
 
-  // Check if the user is authenticated and redirect accordingly
   useEffect(() => {
     if (!navigationState?.key) return
     
     const inAuthGroup = segments[0] === "(public)"
     if (!!user && inAuthGroup) {
-      // Redirect authenticated users from auth screens to the main app
       router.replace("/(protected)")
     } else if (!user && !inAuthGroup) {
-      // Redirect unauthenticated users to the login screen
       router.replace("/(public)")
     }
   }, [user, segments, navigationState?.key])
 
-  // Sign in function
   const signIn = async () => {
     try {
       await authorize({audience: "https://playmanbackend.com"})
@@ -46,7 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Sign out function
   const signOut = async () => {
     try {
       await clearSession()
@@ -55,11 +47,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function authorizedRequest <T>(request: (token: string) => Promise<T>) {
+    const credentials = await getCredentials()
+    if (credentials) {
+        const token = await credentials?.accessToken;
+        return request(token);
+    } else {
+        await clearSession()
+        router.push("/")
+        throw Error("Error sending authorized request, signing out")
+    }
+    
+};
+
   return (
     <AuthContext.Provider
       value={{
         signIn,
         signOut,
+        authorizedRequest,
         isAuthenticated: !!user,
         isLoading,
         user,
@@ -71,7 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Custom hook to use the auth context
 export function useAuth() {
   const context = useContext(AuthContext)
   if (!context) {

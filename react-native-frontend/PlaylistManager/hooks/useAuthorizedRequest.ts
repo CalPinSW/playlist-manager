@@ -3,11 +3,10 @@ import { useAuth0 } from "react-native-auth0";
 
 export const useAuthorizedRequest = () => {
     const { getCredentials, clearSession } = useAuth0();
-
-    return async <T>(request: (token: string) => Promise<T>) => {
+    const authorizedRequest = async <T>(request: (token: string) => Promise<T>) => {
         const credentials = await getCredentials()
         if (credentials) {
-            const token = await credentials?.accessToken;
+            const token = credentials?.accessToken;
             return request(token);
         } else {
             await clearSession()
@@ -16,4 +15,5 @@ export const useAuthorizedRequest = () => {
         }
         
     };
+    return  authorizedRequest
 };

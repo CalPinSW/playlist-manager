@@ -1,21 +1,29 @@
-import { StatusBar } from 'expo-status-bar';
-import { Button, Platform, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
-
-import EditScreenInfo from '@/components/UserSettings/EditScreenInfo';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, View } from '@/components/Themed';
-import Colors from '../../constants/Colors';
-import { useAuth } from '../../contexts/sessionContext';
+import { useAuth } from '../../contexts/authContext';
 import { useColorTheme } from '../../hooks/useColorTheme';
+import { populateAdditionalAlbumDetails, populateUniversalGenreList, populateUserAlbumGenres, populateUserData } from '../../api';
+import AsyncButton from '../../components/ButtonWithLoadingState';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ModalScreen() {
   const theme = useColorTheme()
-  const {signOut, isLoading} = useAuth()
-
+  const {signOut, isLoading, authorizedRequest} = useAuth()
+  const queryClient = useQueryClient()
+  const invalidatePlaylistAndAlbumQueries = () => {
+    queryClient.invalidateQueries({queryKey: ['playlists']})
+    queryClient.invalidateQueries({queryKey: ['albums']})
+  }
   return (
     <View style={styles.container}>
       <Text noBackground style={styles.title}>User settings</Text>
       <View style={styles.separator}/>
-      <EditScreenInfo path="app/modal.tsx" />
+      <AsyncButton text="Populate user data" onPressAsync={async () => {await authorizedRequest(populateUserData());
+        invalidatePlaylistAndAlbumQueries()
+      }} />
+      <AsyncButton text="Populate additional album details" onPressAsync={async () => {await authorizedRequest(populateAdditionalAlbumDetails()); invalidatePlaylistAndAlbumQueries()}} />
+      <AsyncButton text="Populate universal genre list" onPressAsync={async () => {await authorizedRequest(populateUniversalGenreList()); invalidatePlaylistAndAlbumQueries();}} />
+      <AsyncButton text="Populate user album genres" onPressAsync={async () => {await authorizedRequest(populateUserAlbumGenres()); invalidatePlaylistAndAlbumQueries();}} />
       <TouchableOpacity
         style={[styles.button, {backgroundColor: theme.primary.default}]}
         onPress={signOut}
@@ -23,7 +31,6 @@ export default function ModalScreen() {
       >
         <Text noBackground style={styles.buttonText}>Sign out</Text>
       </TouchableOpacity>      
-      <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </View>
   );
 }

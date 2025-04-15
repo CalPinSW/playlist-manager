@@ -1,6 +1,6 @@
 import { TouchableOpacity, ActivityIndicator, useColorScheme } from "react-native";
 import { Text, View } from '@/components/Themed';
-import { useAuth } from "../../contexts/sessionContext";
+import { useAuth } from "../../contexts/authContext";
 import React from "react";
 import { StyleSheet } from 'react-native';
 import { useColorTheme } from "../../hooks/useColorTheme";
