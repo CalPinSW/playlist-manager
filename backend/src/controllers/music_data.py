@@ -186,6 +186,7 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
                     "title": playlist_name,
                     "progress": playlist_progress,
                     "duration": playlist_duration,
+                    "artwork_url": playlist_info.image_url,
                 }
                 return playback_info_with_playlist
 
