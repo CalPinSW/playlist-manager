@@ -24,7 +24,6 @@ export default function Home() {
             <Text noBackground style={styles.buttonText}>Sign In</Text>
           )}
         </TouchableOpacity>
-
         {error && (
           <Text noBackground style={[styles.errorText, {color: theme.warning.default}]}>{error.message}</Text>
         )}

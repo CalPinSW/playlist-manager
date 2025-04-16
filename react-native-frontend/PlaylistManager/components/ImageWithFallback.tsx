@@ -31,6 +31,4 @@ const ImageWithFallback: React.FC<Props> = ({ source, viewStyle, imageStyle, ...
   );
 };
 
-export default ImageWithFallback
-
-  
+export default ImageWithFallback;

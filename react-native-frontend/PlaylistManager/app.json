@@ -43,8 +43,6 @@
       "typedRoutes": true
     },
     "extra": {
-      "auth0Domain": "dev-3tozp8qy1u0rfxfm.us.auth0.comIN.auth0.com",
-      "auth0ClientId": "vlvk6JVXllIpfJEElGtEZnjmfG5NvVo3",
       "router": {
         "origin": false
       },

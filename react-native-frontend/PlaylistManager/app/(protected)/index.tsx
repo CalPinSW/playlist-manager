@@ -59,8 +59,6 @@ export default function TabOneScreen() {
   );
 }
 
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -71,9 +69,6 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     height: 1,
     width: '80%',
-  },
-  playlistSearchRow: {
-
   },
   searchBar: {
     display: "flex",

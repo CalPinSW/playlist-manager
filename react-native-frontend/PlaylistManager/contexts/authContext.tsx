@@ -50,15 +50,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function authorizedRequest <T>(request: (token: string) => Promise<T>) {
     const credentials = await getCredentials()
     if (credentials) {
-        const token = await credentials?.accessToken;
-        return request(token);
+      const token = await credentials?.accessToken;
+      return request(token);
     } else {
-        await clearSession()
-        router.push("/")
-        throw Error("Error sending authorized request, signing out")
-    }
-    
-};
+      await clearSession();
+      router.push("/");
+      throw Error("Error sending authorized request, signing out");
+      } 
+    };
 
   return (
     <AuthContext.Provider
@@ -83,4 +82,4 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider")
   }
   return context
-}
+};

@@ -15,5 +15,5 @@ export const useAuthorizedRequest = () => {
         }
         
     };
-    return  authorizedRequest
+    return authorizedRequest
 };

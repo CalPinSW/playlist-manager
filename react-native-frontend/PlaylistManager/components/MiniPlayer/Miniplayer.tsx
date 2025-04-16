@@ -173,4 +173,4 @@ const MiniPlayerMaximized: FC<MiniPlayerPresentationalProps> = ({playbackInfo}) 
             </View>
           </View>
   )
-}
+};

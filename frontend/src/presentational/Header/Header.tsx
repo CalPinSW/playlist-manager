@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { User } from "../../interfaces/User";
 import UserMenu from "./UserMenu";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useAuthorizedRequest } from "../../../../react-native-frontend/PlaylistManager/hooks/useAuthorizedRequest";
+import { useAuthorizedRequest } from "../../hooks/useAuthorizedRequest";
 
 const Header = () => {
   const { loginWithRedirect } = useAuth0();

@@ -25,4 +25,4 @@ const PlaybackProgressCircle: FC<PlaybackProgressCircleProps> = ({progress}) => 
     )
 }
 
-export default PlaybackProgressCircle
+export default PlaybackProgressCircle;

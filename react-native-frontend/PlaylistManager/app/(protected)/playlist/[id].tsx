@@ -21,7 +21,6 @@ const PlaylistExplorer: React.FC = () => {
         retry: false,
     });
 
-        
     const { data: playlistTracks } = useQuery<Track[]>({
     queryKey: ["playlist track info", id],
     queryFn: () => authorizedRequest(getPlaylistTracks(id)),

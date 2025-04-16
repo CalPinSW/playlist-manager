@@ -33,6 +33,5 @@ export default function AppLayout() {
         <Stack.Screen name="userSettings" options={{headerTitle: "Profile", headerStyle: {}}}/>
         <Stack.Screen name="two"/>
     </Stack>
-
   </PlaybackContextProvider>)
 }

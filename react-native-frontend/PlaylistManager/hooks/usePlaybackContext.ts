@@ -3,6 +3,5 @@ import { PlaybackContext } from "../contexts/playbackContext";
 
 export const usePlaybackContext = () => {
     const playbackContext = useContext(PlaybackContext) 
-
-    return playbackContext
+    return playbackContext;
 };

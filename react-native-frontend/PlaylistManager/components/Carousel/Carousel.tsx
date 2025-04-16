@@ -32,4 +32,4 @@ const Carousel = <T,>({slidesPerPage, data, renderItem}: Props<T>) => {
         />
 }
 
-export default Carousel
+export default Carousel;

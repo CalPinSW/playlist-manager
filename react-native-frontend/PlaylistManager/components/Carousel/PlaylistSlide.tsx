@@ -31,4 +31,4 @@ const PlaylistSlide: React.FC<Props> = ({playlist}) => {
     );
 }
 
-export default PlaylistSlide
+export default PlaylistSlide;

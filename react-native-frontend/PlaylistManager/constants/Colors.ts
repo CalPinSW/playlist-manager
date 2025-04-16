@@ -60,4 +60,4 @@ const Colours: ColourScheme = {
   },
 };
 
-export default Colours
+export default Colours;
