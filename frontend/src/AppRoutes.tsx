@@ -7,8 +7,8 @@ import { Index } from "./MainPage";
 import { SettingsPage } from "./settingsPage/SettingsPage";
 import { ProtectedRoute } from "./presentational/ProtectedRoutes";
 import { PlaybackContextProvider } from "./context/PlaybackContext";
-import { useAuthorizedRequest } from "./hooks/useAuthorizedRequest";
 import { getPlaylist } from "./api";
+import { useAuthorizedRequest } from "./hooks/useAuthorizedRequest";
 
 
 const AppRoutes = () => {

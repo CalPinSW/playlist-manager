@@ -1,17 +1,8 @@
-# Playlist Manager - Frontend
+# Playlist Manager - Mobile Frontend
 
 ## System Requirements
 
-This project requires NodeJS (version 18 or later) and NPM.
-[Node](http://nodejs.org/) and [NPM](https://npmjs.org/) are really easy to install.
-To make sure you have them available on your machine,
-try running the following command.
-
-```sh
-$ npm -v && node -v
-6.4.1
-v8.16.0
-```
+Requires an emulator
 
 ## Dependencies
 
@@ -30,7 +21,7 @@ Environment variables are set in a `.env` file and should match the `.env.templa
 Once the all dependencies have been installed, start the React app in development mode by running:
 
 ```bash
-$ npm run dev
+$ npm start
 ```
 
 You should see output similar to the following:

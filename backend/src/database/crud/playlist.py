@@ -18,8 +18,7 @@ from src.database.models import (
 from src.dataclasses.playlist import Playlist
 from peewee import fn, prefetch
 
-
-def get_playlist_by_id_or_none(id: str):
+def get_playlist_by_id_or_none(id: str) -> DbPlaylist | None:
     return DbPlaylist.get_or_none(DbPlaylist.id == id)
 
 

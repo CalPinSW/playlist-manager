@@ -3,142 +3,157 @@ import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { Playlist } from "../interfaces/Playlist";
 import { Track } from "../interfaces/Track";
 import { User } from "../interfaces/User";
-import { jsonRequest, openInNewTab, request, RequestMethod } from "./jsonRequest";
+import { backendUrl, jsonRequest, openInNewTab, request, RequestMethod } from "./jsonRequest";
 
-export const login = async (): Promise<void> => {
-	return request(`auth/login/spotify`).then(async response => {
+export const loginSpotify = async (): Promise<void> => {
+	return fetch(`${backendUrl}/auth/spotify/login`, {
+		credentials: "include",
+	}).then(async response => {
 		const redirectUrl = await response.text();
 		openInNewTab(redirectUrl);
 	});
 };
 
 export const logout = async (): Promise<void> => {
-	return request(`auth/logout`).then(async response => {
+	return fetch(`${backendUrl}/auth/logout`, {
+		credentials: "include",
+	}).then(async response => {
 		const redirectUrl = await response.text();
 		console.log(redirectUrl)
 		window.open("/", "_self");
 	});
 }
 
-export const getCurrentUserDetails = async (): Promise<User> => {
+export const getCurrentUserDetails = () => async (accessToken?: string): Promise<User> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 	return jsonRequest(
 		`spotify/current-user`,
 		RequestMethod.GET,
 		undefined,
+		headers,
 		false,
 	);
 };
 
-export const searchPlaylistsByAlbums = async (
+export const searchPlaylistsByAlbums = (
 	search: string,
 	offset: number,
 	limit: number,
-): Promise<Playlist[]> => {
+) => async (accessToken?: string): Promise<Playlist[]> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 	const searchParams = new URLSearchParams();
 	searchParams.append("limit", String(limit));
 	searchParams.append("offset", String(offset));
 	if (search !== "") {searchParams.append("search", search);}
 	searchParams.toString(); 
 	const endpoint = `music/playlist_album_search?${searchParams.toString()}`;
-	return jsonRequest(endpoint, RequestMethod.GET);
+	return jsonRequest(endpoint, RequestMethod.GET, undefined, headers);
 };
 
-export const getRecentPlaylists = async (
+export const getRecentPlaylists = (
 	search: string,
 	offset: number,
 	limit: number,
-): Promise<Playlist[]> => {
+) => async (accessToken?: string): Promise<Playlist[]> =>  {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 	const searchParams = new URLSearchParams();
 	searchParams.append("limit", String(limit));
 	searchParams.append("offset", String(offset));
 	if (search !== "") {searchParams.append("search", search);}
 	searchParams.toString();
 	const endpoint = `music/playlists/recent?${searchParams.toString()}`;
-	return jsonRequest(endpoint, RequestMethod.GET);
+	return jsonRequest(endpoint, RequestMethod.GET, undefined, headers);
 };
 
-export const getPlaylists = async (
-	search: string,
-	offset: number,
-	limit: number,
-): Promise<Playlist[]> => {
-	const searchParams = new URLSearchParams();
-	searchParams.append("limit", String(limit));
-	searchParams.append("offset", String(offset));
-	if (search !== "") {searchParams.append("search", search);}
-	searchParams.toString(); // "type=all&query=coins"
-	const endpoint = `music/playlists?${searchParams.toString()}`;
-	return jsonRequest(endpoint, RequestMethod.GET);
+export const addPlaylist = (playlist: Playlist) => async (accessToken?: string) : Promise<Playlist> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+	return jsonRequest("spotify/create-playlist", RequestMethod.POST, playlist, headers);
 };
 
-export const addPlaylist = async (playlist: Playlist): Promise<Playlist> => {
-	return jsonRequest("spotify/create-playlist", RequestMethod.POST, playlist);
+export const getPlaylist = (id: string) => async (accessToken?: string): Promise<Playlist> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+	return jsonRequest(`music/playlist/${id}`, RequestMethod.GET, undefined, headers);
 };
 
-export const getPlaylist = async (id: string): Promise<Playlist> => {
-	return jsonRequest(`music/playlist/${id}`, RequestMethod.GET);
-};
-
-export const updatePlaylist = async (playlist: Playlist): Promise<Playlist> => {
+export const updatePlaylist = (playlist: Playlist) => async (accessToken?: string): Promise<Playlist> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 	return jsonRequest(
 		`music/playlist/${playlist.id}`,
 		RequestMethod.POST,
 		playlist,
+		headers
 	);
 };
 
-export const deletePlaylist = async (playlist: Playlist): Promise<Response> => {
+export const deletePlaylist = (playlist: Playlist) =>  async (accessToken?: string): Promise<Response> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 	return jsonRequest(
 		`spotify/delete-playlist/${playlist.id}`,
 		RequestMethod.POST,
+		undefined,
+		headers
 	);
 };
 
-export const getPlaylistAlbums = async (
+export const getPlaylistAlbums = (
 	playlistId: string,
-): Promise<Album[]> => {
+) =>  async (accessToken?: string): Promise<Album[]> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 	return jsonRequest(
 		`music/playlist/${playlistId}/albums`,
 		RequestMethod.GET,
+		undefined,
+		headers
 	);
 };
 
 
-export const getPlaylistTracks = async (
+export const getPlaylistTracks = (
 	playlistId: string,
-): Promise<Track[]> => {
+) =>  async (accessToken?: string): Promise<Track[]> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 	return jsonRequest(
 		`music/playlist/${playlistId}/tracks`,
 		RequestMethod.GET,
+		undefined,
+		headers
 	);
 };
 
-export const getPlaybackInfo = async (): Promise<PlaybackInfo> => {
-	return jsonRequest(`music/playback`, RequestMethod.GET, undefined, false);
+export const getPlaybackInfo = () => async (accessToken?: string): Promise<PlaybackInfo> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+	return jsonRequest(`music/playback`, RequestMethod.GET, undefined, headers ,false);
 };
 
-export const playlistSearch = async (
+export const playlistSearch = (
 	search: string,
-): Promise<Playlist[]> => {
+) =>  async (accessToken?: string): Promise<Playlist[]> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+
 	return jsonRequest(
 		`music/playlist/search`,
 		RequestMethod.POST,
 		search,
+		headers
 	);
 };
 
-export const addAlbumToPlaylist = async (
+export const addAlbumToPlaylist = (
 	playlistId: string,
 	albumId: string,
-): Promise<Response> => {
+) =>  async(accessToken?: string): Promise<Response> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+
 	return jsonRequest(`spotify/add_album_to_playlist`, RequestMethod.POST, {
 		playlistId,
 		albumId,
-	});
+	}, headers);
 };
 
-export const pausePlayback = async (): Promise<Response> => {
-	return jsonRequest(`spotify/pause_playback`, RequestMethod.PUT);
+export const pausePlayback = () =>  async (accessToken?: string): Promise<Response> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+
+	return jsonRequest(`spotify/pause_playback`, RequestMethod.PUT, undefined, headers);
 };
 
 interface StartPlaybackRequest {
@@ -148,31 +163,41 @@ interface StartPlaybackRequest {
 	position_ms?: number
 }
 
-export const startPlayback = async (requestBody?: StartPlaybackRequest
-): Promise<Response> => {
-	return jsonRequest(`spotify/start_playback`, RequestMethod.PUT, requestBody);
+export const startPlayback = (requestBody?: StartPlaybackRequest
+) => async (accessToken?: string): Promise<Response> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+
+	return jsonRequest(`spotify/start_playback`, RequestMethod.PUT, requestBody, headers);
 };
 
-export const pauseOrStartPlayback = async (): Promise<Response> => {
-	return jsonRequest(`spotify/pause_or_start_playback`, RequestMethod.PUT);
+export const pauseOrStartPlayback = () =>  async (accessToken?: string): Promise<Response> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+
+	return jsonRequest(`spotify/pause_or_start_playback`, RequestMethod.PUT, undefined, headers);
 };
 
-export const populateUserData = async (): Promise<Response> => {
-	return request(`database/populate_user`, RequestMethod.GET);
+export const populateUserData = () =>  async (accessToken?: string): Promise<Response> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+
+	return request(`database/populate_user`, RequestMethod.GET, undefined, headers);
 }
 
-export const populateAdditionalAlbumDetails = async (): Promise<Response> => {
-	return request('database/populate_additional_album_details', RequestMethod.GET)
+export const populateAdditionalAlbumDetails = () =>  async (accessToken?: string): Promise<Response> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+	return request('database/populate_additional_album_details', RequestMethod.GET, undefined, headers)
 }
 
-export const populatePlaylist = async (id: string): Promise<Response> => {
-	return request(`database/populate_playlist/${id}`, RequestMethod.GET)
+export const populatePlaylist = (id: string) =>  async (accessToken?: string): Promise<Response> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+	return request(`database/populate_playlist/${id}`, RequestMethod.GET, undefined, headers)
 }
 
-export const populateUniversalGenreList = async (): Promise<Response> => {
-	return request('database/populate_universal_genre_list', RequestMethod.GET)
+export const populateUniversalGenreList = () =>  async (accessToken?: string): Promise<Response> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+	return request('database/populate_universal_genre_list', RequestMethod.GET, undefined, headers)
 }
 
-export const populateUserAlbumGenres = async (): Promise<Response> => {
-	return request('database/populate_user_album_genres', RequestMethod.GET)
+export const populateUserAlbumGenres = () =>  async (accessToken?: string): Promise<Response> => {
+	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
+	return request('database/populate_user_album_genres', RequestMethod.GET, undefined, headers)
 }

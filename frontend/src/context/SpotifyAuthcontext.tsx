@@ -4,10 +4,9 @@ import React, {
     createContext,
     useEffect,
     useState,
-  } from "react";
-  
-  import { useAuth0, User as Auth0User } from "@auth0/auth0-react";
-  import { getSpotifyStatus } from "../api/auth";
+  } from "react";  
+import { useAuth0, User as Auth0User } from "@auth0/auth0-react";
+import { getSpotifyStatus } from "../api/auth";
 import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
   
   interface SpotifyAuthContext {
