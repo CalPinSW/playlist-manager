@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as ReactDOM from "react-dom/client";
 import AppRoutes from "./AppRoutes";
 import { Auth0Provider } from "@auth0/auth0-react";
-import { SpotifyAuthContextProvider } from "./context/SpotifyAuthContext";
+import { SpotifyAuthContextProvider } from "./context/SpotifyAuthcontext";
 
 const auth0Domain = process.env.AUTH0_DOMAIN ?? "";
 const auth0ClientId = process.env.AUTH0_CLIENT_ID ?? "";
