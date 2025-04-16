@@ -17,79 +17,79 @@ jobs:
             - name: Run tests
               run: docker run --env-file backend/.env.test backend:test
 
-    publish:
-        name: Publish To Docker
-        runs-on: ubuntu-latest
-        needs: build
-        if: ${{ (github.event_name == 'push') }} 
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
-            - name: Login to Docker Hub
-              uses: docker/login-action@v3
-              with:
-                username: ${{ secrets.DOCKER_USERNAME }}
-                password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+    # publish:
+    #     name: Publish To Docker
+    #     runs-on: ubuntu-latest
+    #     needs: build
+    #     if: ${{ (github.event_name == 'push') }} 
+    #     steps:
+    #         - name: Checkout Repository
+    #           uses: actions/checkout@v4
+    #         - name: Login to Docker Hub
+    #           uses: docker/login-action@v3
+    #           with:
+    #             username: ${{ secrets.DOCKER_USERNAME }}
+    #             password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
                 
-            - name: Build frontend Docker image
-              working-directory: frontend 
-              run: docker build --target production --tag calpin/playlist-manager-frontend:prod .
-            - name: Push frontend Docker image
-              working-directory: frontend
-              run: docker push calpin/playlist-manager-frontend:prod
+    #         - name: Build frontend Docker image
+    #           working-directory: frontend 
+    #           run: docker build --target production --tag calpin/playlist-manager-frontend:prod .
+    #         - name: Push frontend Docker image
+    #           working-directory: frontend
+    #           run: docker push calpin/playlist-manager-frontend:prod
 
-            - name: Build backend Docker image
-              working-directory: backend 
-              run: docker build --target production --tag calpin/playlist-manager-backend:prod .
-            - name: Push backend Docker image
-              working-directory: backend
-              run: docker push calpin/playlist-manager-backend:prod
+    #         - name: Build backend Docker image
+    #           working-directory: backend 
+    #           run: docker build --target production --tag calpin/playlist-manager-backend:prod .
+    #         - name: Push backend Docker image
+    #           working-directory: backend
+    #           run: docker push calpin/playlist-manager-backend:prod
 
-    deploy:
-      name: Deploy to Azure
-      runs-on: ubuntu-latest
-      needs: publish
-      if:  ${{ (github.event_name == 'push') }}
-      env: 
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-        TF_VAR_environment: ${{vars.ENVIRONMENT}}
-        TF_VAR_arm_client_id: ${{ secrets.ARM_CLIENT_ID }}
-        TF_VAR_arm_client_secret: ${{ secrets.ARM_CLIENT_SECRET }}
-        TF_VAR_arm_subscription_id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        TF_VAR_arm_tenant_id: ${{ secrets.ARM_TENANT_ID }}
-        TF_VAR_musicbrainz_url: ${{secrets.MUSICBRAINZ_URL}}
-        TF_VAR_musicbrainz_user_agent: ${{secrets.MUSICBRAINZ_USER_AGENT}}
-        TF_VAR_flask_secret_key: ${{secrets.FLASK_SECRET_KEY}}
-        TF_VAR_spotify_client_id: ${{secrets.SPOTIFY_CLIENT_ID}}
-        TF_VAR_spotify_secret: ${{secrets.SPOTIFY_SECRET}}
-        TF_VAR_db_connection_string: ${{secrets.DB_CONNECTION_STRING}}
-        TF_VAR_frontend_url: ${{secrets.FRONTEND_URL}}
-        TF_VAR_backend_url: ${{secrets.BACKEND_URL}}
-        TF_VAR_neon_api_key: ${{secrets.NEON_API_KEY}}
-        TF_VAR_logging_level: ${{vars.LOGGING_LEVEL}}
-        TF_VAR_loggly_token: ${{secrets.LOGGLY_TOKEN}}
+    # deploy:
+    #   name: Deploy to Azure
+    #   runs-on: ubuntu-latest
+    #   needs: publish
+    #   if:  ${{ (github.event_name == 'push') }}
+    #   env: 
+    #     ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+    #     ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+    #     ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+    #     ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+    #     TF_VAR_environment: ${{vars.ENVIRONMENT}}
+    #     TF_VAR_arm_client_id: ${{ secrets.ARM_CLIENT_ID }}
+    #     TF_VAR_arm_client_secret: ${{ secrets.ARM_CLIENT_SECRET }}
+    #     TF_VAR_arm_subscription_id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+    #     TF_VAR_arm_tenant_id: ${{ secrets.ARM_TENANT_ID }}
+    #     TF_VAR_musicbrainz_url: ${{secrets.MUSICBRAINZ_URL}}
+    #     TF_VAR_musicbrainz_user_agent: ${{secrets.MUSICBRAINZ_USER_AGENT}}
+    #     TF_VAR_flask_secret_key: ${{secrets.FLASK_SECRET_KEY}}
+    #     TF_VAR_spotify_client_id: ${{secrets.SPOTIFY_CLIENT_ID}}
+    #     TF_VAR_spotify_secret: ${{secrets.SPOTIFY_SECRET}}
+    #     TF_VAR_db_connection_string: ${{secrets.DB_CONNECTION_STRING}}
+    #     TF_VAR_frontend_url: ${{secrets.FRONTEND_URL}}
+    #     TF_VAR_backend_url: ${{secrets.BACKEND_URL}}
+    #     TF_VAR_neon_api_key: ${{secrets.NEON_API_KEY}}
+    #     TF_VAR_logging_level: ${{vars.LOGGING_LEVEL}}
+    #     TF_VAR_loggly_token: ${{secrets.LOGGLY_TOKEN}}
 
-      steps: 
-        - name: Checkout Repository
-          uses: actions/checkout@v4
-        - uses: hashicorp/setup-terraform@v3
-        - name: Initialise Terraform
-          working-directory: terraform 
-          run: terraform init
-        - name: Apply Terraform
-          id: tf_apply
-          working-directory: terraform
-          shell: bash
-          run: terraform apply -auto-approve
-        - name: Trigger Azure frontend deployment webhook
-          working-directory: ./terraform 
-          shell: bash
-          run:  curl -dH -X POST "$(terraform output -raw frontend_webhook)"
-        - name: Trigger Azure backend deployment webhook
-          working-directory: ./terraform 
-          shell: bash
-          run:  curl -dH -X POST "$(terraform output -raw backend_webhook)"
+    #   steps: 
+    #     - name: Checkout Repository
+    #       uses: actions/checkout@v4
+    #     - uses: hashicorp/setup-terraform@v3
+    #     - name: Initialise Terraform
+    #       working-directory: terraform 
+    #       run: terraform init
+    #     - name: Apply Terraform
+    #       id: tf_apply
+    #       working-directory: terraform
+    #       shell: bash
+    #       run: terraform apply -auto-approve
+    #     - name: Trigger Azure frontend deployment webhook
+    #       working-directory: ./terraform 
+    #       shell: bash
+    #       run:  curl -dH -X POST "$(terraform output -raw frontend_webhook)"
+    #     - name: Trigger Azure backend deployment webhook
+    #       working-directory: ./terraform 
+    #       shell: bash
+    #       run:  curl -dH -X POST "$(terraform output -raw backend_webhook)"
               
