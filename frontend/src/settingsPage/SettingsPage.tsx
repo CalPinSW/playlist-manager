@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 import { ButtonWithLoadingState } from "./PopulateUserDatabaseButton";
 import { populateAdditionalAlbumDetails, populateUniversalGenreList, populateUserAlbumGenres, populateUserData} from "../api";
-import { useAuthorizedRequest } from "../../../react-native-frontend/PlaylistManager/hooks/useAuthorizedRequest";
+import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
 
 export const SettingsPage: FC = () => {
   const authorizedRequest = useAuthorizedRequest()

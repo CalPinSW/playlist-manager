@@ -8,7 +8,7 @@ import React, {
 import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { useQuery } from "@tanstack/react-query";
 import { getPlaybackInfo } from "../api";
-import { useAuthorizedRequest } from "../../../react-native-frontend/PlaylistManager/hooks/useAuthorizedRequest";
+import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
 
 interface PlaybackContext {
   playbackInfo?: PlaybackInfo;

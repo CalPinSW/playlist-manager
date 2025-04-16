@@ -8,7 +8,7 @@ import React, {
   
   import { useAuth0, User as Auth0User } from "@auth0/auth0-react";
   import { getSpotifyStatus } from "../api/auth";
-import { useAuthorizedRequest } from "../../../react-native-frontend/PlaylistManager/hooks/useAuthorizedRequest";
+import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
   
   interface SpotifyAuthContext {
     user?: Auth0User;

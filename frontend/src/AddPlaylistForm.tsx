@@ -5,7 +5,7 @@ import Button from "./components/Button";
 import { Form, useForm } from "react-hook-form";
 import { addPlaylist } from "./api";
 import { Playlist } from "./interfaces/Playlist";
-import { useAuthorizedRequest } from "../../react-native-frontend/PlaylistManager/hooks/useAuthorizedRequest";
+import { useAuthorizedRequest } from "./hooks/useAuthorizedRequest";
 
 const AddPlaylistForm: FC = () => {
   const { control, register, getValues } = useForm<Playlist>({});
