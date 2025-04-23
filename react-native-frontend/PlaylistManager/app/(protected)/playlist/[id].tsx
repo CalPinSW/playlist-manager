@@ -9,11 +9,11 @@ import { Album } from '../../../interfaces/Album';
 import { useLocalSearchParams } from 'expo-router';
 import Carousel from '../../../components/Carousel/Carousel';
 import AlbumSlide from '../../../components/Carousel/AlbumSlide';
-import { useAuthorizedRequest } from '../../../hooks/useAuthorizedRequest';
+import { useAuth } from '../../../contexts/authContext';
 
 const PlaylistExplorer: React.FC = () => {
     const { id } = useLocalSearchParams<{id: string}>();
-    const authorizedRequest = useAuthorizedRequest()
+    const { authorizedRequest } = useAuth()
 
     const { data: playlistAlbums } = useQuery<Album[]>({
         queryKey: ["playlist albums info", id],

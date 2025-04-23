@@ -7,10 +7,11 @@ import React, {
 import { useQuery } from "@tanstack/react-query";
 import { getPlaybackInfo } from "../api";
 import { PlaybackInfo } from "../interfaces/PlaybackInfo";
-import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
+import { useAuth } from "./authContext";
 
 interface PlaybackContextProps {
   playbackInfo?: PlaybackInfo;
+  reloadData?: () => Promise<void>;
 }
 
 export const PlaybackContext = createContext<PlaybackContextProps>({});
@@ -23,14 +24,20 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
   children,
 }) => {
   const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(10000);
-  const authorizedRequest = useAuthorizedRequest()
-  const { data: playbackInfo, isError } = useQuery<PlaybackInfo>({
+  const {authorizedRequest, isAuthenticated} = useAuth()
+  const { data: playbackInfo, isError, refetch } = useQuery<PlaybackInfo>({
     queryKey: ["playbackInfo"],
-    queryFn: () => authorizedRequest(getPlaybackInfo()),
+    queryFn: () => {
+      return authorizedRequest(getPlaybackInfo())},
+    enabled: isAuthenticated,
     retryDelay: playbackRefetchInterval,
     refetchInterval: playbackRefetchInterval,
     refetchIntervalInBackground: false,
   });
+
+  const reloadData = async (): Promise<void> => {
+    await refetch()
+  }
 
   useEffect(() => {
     if (isError) {
@@ -39,7 +46,7 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
   }, [isError]);
 
   return (
-    <PlaybackContext.Provider value={{ playbackInfo }}>
+    <PlaybackContext.Provider value={{ playbackInfo, reloadData }}>
       {children}
     </PlaybackContext.Provider>
   );

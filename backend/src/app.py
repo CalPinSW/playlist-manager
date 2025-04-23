@@ -1,7 +1,6 @@
 from functools import wraps
 from flask import Flask, redirect, request
 from flask_cors import CORS
-import requests
 from src.controllers.database import database_controller
 from src.controllers.spotify import spotify_controller
 from src.controllers.music_data import music_controller
@@ -50,10 +49,13 @@ def create_app():
                     issuer=f'https://{app.config["AUTH0_DOMAIN"]}/',
                 )
             except jwt.ExpiredSignatureError:
+                print("Expired")
                 return {"message": "token expired"}, 401
             except jwt.JWTClaimsError:
+                print("Claims")
                 return {"message": "incorrect claims"}, 401
             except Exception as e:
+                print("Invalid")
                 return {"message": "invalid token", "error": str(e)}, 401
 
             request.user = payload  # store decoded token

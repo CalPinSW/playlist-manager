@@ -24,6 +24,7 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return user.model_dump()
 
     @spotify_controller.route("playlists")
+    @require_auth
     def index():
         db_user = get_requesting_db_user()
         limit = request.args.get("limit")
@@ -38,6 +39,7 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return [playlist.model_dump() for playlist in playlists.items]
 
     @spotify_controller.route("create-playlist", methods=["POST"])
+    @require_auth
     def create_playlist():
         db_user = get_requesting_db_user()
         name = request.json.get("name")
@@ -50,18 +52,21 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return make_response("playlist created", 201)
 
     @spotify_controller.route("delete-playlist/<id>", methods=["POST"])
+    @require_auth
     def delete_playlist_by_id(id):
         db_user = get_requesting_db_user()
         spotify.delete_playlist(user_id=db_user.id, id=id)
         return make_response("playlist deleted", 200)
 
     @spotify_controller.route("playlist/<id>", methods=["GET"])
+    @require_auth
     def get_edit_playlist(id):
         db_user = get_requesting_db_user()
         playlist = spotify.get_playlist(user_id=db_user.id, id=id)
         return playlist.model_dump()
 
     @spotify_controller.route("edit-playlist/<id>", methods=["POST"])
+    @require_auth
     def post_edit_playlist(id):
         db_user = get_requesting_db_user()
         name = request.json.get("name")
@@ -75,6 +80,7 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return make_response("playlist updated", 204)
 
     @spotify_controller.route("playlist/<id>/albums", methods=["GET"])
+    @require_auth
     def get_playlist_album_info(id):
         db_user = get_requesting_db_user()
         return [
@@ -83,6 +89,7 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         ]
 
     @spotify_controller.route("playback", methods=["GET"])
+    @require_auth
     def get_playback_info():
         db_user = get_requesting_db_user()
         playback_info = spotify.get_my_current_playback(user_id=db_user.id)
@@ -91,6 +98,7 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return playback_info.model_dump_json()
 
     @spotify_controller.route("playlist_progress", methods=["POST"])
+    @require_auth
     def get_playlist_progress():
         db_user = get_requesting_db_user()
         api_playback = PlaybackInfo.model_validate(request.json)
@@ -102,6 +110,7 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         return playlist_progression.model_dump_json()
 
     @spotify_controller.route("find_associated_playlists/<id>", methods=["GET"])
+    @require_auth
     def find_associated_playlists(playlist_id):
         db_user = get_requesting_db_user()
         associated_playlists = spotify.find_associated_playlists(
@@ -113,6 +122,7 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         ]
 
     @spotify_controller.route("add_album_to_playlist", methods=["POST"])
+    @require_auth
     def add_album_to_playlist():
         db_user = get_requesting_db_user()
         request_body = request.json
@@ -127,11 +137,13 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         )
 
     @spotify_controller.route("pause_playback", methods=["PUT"])
+    @require_auth
     def pause_playback():
         db_user = get_requesting_db_user()
         return spotify.pause_playback(db_user.id)
 
     @spotify_controller.route("start_playback", methods=["PUT"])
+    @require_auth
     def start_playback():
         db_user = get_requesting_db_user()
         request_body = request.json
@@ -143,6 +155,7 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         )
 
     @spotify_controller.route("pause_or_start_playback", methods=["PUT"])
+    @require_auth
     def pause_or_start_playback():
         db_user = get_requesting_db_user()
         return spotify.pause_or_start_playback(user_id=db_user.id)

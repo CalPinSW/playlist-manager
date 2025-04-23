@@ -43,8 +43,8 @@ const Colours: ColourScheme = {
     background: { default: "#121212", offset: "#282828", interactive: "#3f3f3f" },
     primary: {
       default: "#7a5af5",
-      lighter: "#613286",
-      darker: "#5e43f3",
+      lighter: "#5e43f3",
+      darker: "#613286",
     },
     secondary: {
       default: "#ebd621",

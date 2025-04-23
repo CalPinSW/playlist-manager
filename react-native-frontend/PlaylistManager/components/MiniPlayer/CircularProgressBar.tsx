@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
+import Animated, { cancelAnimation, Easing, useAnimatedProps, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 
 interface CircularProgressBarProps {
@@ -9,6 +10,7 @@ interface CircularProgressBarProps {
   color: string;
   emptyColor?: string;
   progressLabel?: {text: string; color: string;}
+  animation?: {color: string, duration: number}
 }
 
 const CircularProgressBar: React.FC<CircularProgressBarProps> = ({
@@ -18,30 +20,52 @@ const CircularProgressBar: React.FC<CircularProgressBarProps> = ({
   color,
   emptyColor,
   progressLabel,
+  animation
 }) => {
-  const [circumference, setCircumference] = useState(0);
+  const circumference = 2 * Math.PI * radius;
+
+  const strokeDashoffset = circumference * (1 - progress) + 2 * strokeWidth;
+
+  const animatedStrokeDashoffset = useSharedValue(circumference);
 
   useEffect(() => {
-    const circumferenceValue = 2 * Math.PI * radius;
-    setCircumference(circumferenceValue);
-  }, [radius]);
+    if (animation) {
+      animatedStrokeDashoffset.value = withRepeat(
+          withTiming(
+            strokeDashoffset, 
+            { duration: animation.duration, easing: Easing.bezier(0.7, 0.1, 0.25, 1)}
+          ), 
+          -1
+        );
+    }
+    return () => {
+      cancelAnimation(animatedStrokeDashoffset);
+      animatedStrokeDashoffset.set(circumference);
+    }
+  }, [animation, circumference, progress]);
 
-  const strokeDashoffset = circumference * (1 - progress);
+  const animatedProps = useAnimatedProps(() => {
+    return {
+      strokeDashoffset: animatedStrokeDashoffset.value,
+    };
+  });
+  
+  const AnimatedCircle = Animated.createAnimatedComponent(Circle);
   return (
     <View style={{ aspectRatio: 1, width: radius * 2 }}>
       <Svg width={radius * 2} height={radius * 2}>
       { // Empty Circle that the progress bar fills
-            emptyColor && 
-                <Circle
-                    stroke={emptyColor}
-                    fill="transparent"
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={circumference}
-                    strokeDashoffset={0}
-                    cx={radius}
-                    cy={radius}
-                    r={radius - strokeWidth / 2}
-                />
+        emptyColor && 
+            <Circle
+                stroke={emptyColor}
+                fill="transparent"
+                strokeWidth={strokeWidth}
+                strokeDasharray={circumference}
+                strokeDashoffset={0}
+                cx={radius}
+                cy={radius}
+                r={radius - strokeWidth / 2}
+            />
         }
         <Circle
           stroke={color}
@@ -62,11 +86,24 @@ const CircularProgressBar: React.FC<CircularProgressBarProps> = ({
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="butt"
-
             cx={radius}
             cy={radius}
             r={radius - strokeWidth / 2}
         />
+        {
+          animation && 
+            <AnimatedCircle
+              animatedProps={animatedProps}
+              stroke={animation.color}
+              fill="transparent"
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${circumference}`}
+              strokeLinecap="butt"
+              cx={radius}
+              cy={radius}
+              r={radius - strokeWidth / 2}
+            />
+        }
         {progressLabel && 
             <SvgText
                 x="50%"

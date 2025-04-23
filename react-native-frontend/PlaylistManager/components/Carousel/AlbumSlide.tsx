@@ -61,7 +61,7 @@ const AlbumSlide: React.FC<AlbumSlideProps> = ({ album, isSelected, onPress }) =
 const AlbumInfo: React.FC<Album> = (album) => {
     const colorScheme = Colors[useColorScheme() ?? 'light']
     const backgroundColor = colorScheme.background.offset
-    const iconColour = colorScheme.primary.darker
+    const iconColour = colorScheme.primary.lighter
     return (                
         <View style={{position: "absolute", zIndex: 30, padding: 5, maxWidth: "100%"}}>
           <View style={{alignSelf:"flex-start", backgroundColor, borderRadius: 10, padding: 10, gap: 10, maxWidth: "100%"}}>
