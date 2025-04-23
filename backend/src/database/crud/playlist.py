@@ -217,7 +217,7 @@ def get_playlist_albums(playlist_id: str) -> List[DbAlbum]:
 
 def get_playlist_albums_with_genres(playlist_id: str) -> List[dict]:
     albums_query = (
-        DbAlbum.select(DbAlbum.id, DbAlbum.name, DbAlbum.image_url)
+        DbAlbum.select(DbAlbum.id, DbAlbum.name, DbAlbum.image_url, DbAlbum.uri)
         .join(
             PlaylistAlbumRelationship,
             on=(PlaylistAlbumRelationship.album == DbAlbum.id),
