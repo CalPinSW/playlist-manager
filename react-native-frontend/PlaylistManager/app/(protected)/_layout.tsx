@@ -1,4 +1,4 @@
-import { Pressable, Text } from 'react-native';
+import { Pressable, Text, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { PlaybackContextProvider } from '../../contexts/playbackContext';
 import { useEffect } from 'react';
@@ -25,7 +25,10 @@ export default function AppLayout() {
     <PlaybackContextProvider>
       <Stack
             screenOptions={{
-              headerRight: () => <Pressable onPress={() => {router.navigate('/userSettings')}}><Ionicons size={28} name="person" color={theme.text.primary} /></Pressable>,
+              headerRight: () => 
+                <TouchableOpacity onPressIn={() => router.navigate('/userSettings')}>
+                  <Ionicons size={28} name="person" color={theme.text.primary} />
+                </TouchableOpacity>,
               headerTitle: "Playlist Manager"
             }}
       >

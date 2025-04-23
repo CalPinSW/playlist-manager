@@ -364,15 +364,24 @@ class SpotifyClient:
     def get_current_playback(self, user_id) -> PlaybackState | None:
         if user_id is None:
             return None
-        user_tokens = get_user_tokens(user_id=user_id)
-        if user_tokens is None:
-            raise Exception("User tokens not found")
-        access_token = user_tokens.access_token
-        response = requests.get(
-            "https://api.spotify.com/v1/me/player",
-            auth=BearerAuth(access_token),
-        )
-        api_current_playback = self.response_handler(response)
+        try:
+            for attempt in Retrying(
+                wait=wait_fixed(2),
+                after=self.refresh_user_access_tokens(user_id=user_id),
+            ):
+                with attempt:
+                    user_tokens = get_user_tokens(user_id=user_id)
+                    if user_tokens is None:
+                        raise Exception("User tokens not found")
+                    access_token = user_tokens.access_token
+                    response = requests.get(
+                        "https://api.spotify.com/v1/me/player",
+                        auth=BearerAuth(access_token),
+                    )
+                    api_current_playback = self.response_handler(response)
+        except RetryError:
+            pass
+
         current_playback = (
             PlaybackState.model_validate(api_current_playback)
             if api_current_playback

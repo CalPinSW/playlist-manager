@@ -28,7 +28,7 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
   const { data: playbackInfo, isError, refetch } = useQuery<PlaybackInfo>({
     queryKey: ["playbackInfo"],
     queryFn: () => {
-      return authorizedRequest(getPlaybackInfo())
+      return authorizedRequest(getPlaybackInfo());
     },
     enabled: isAuthenticated,
     retryDelay: playbackRefetchInterval,
@@ -42,8 +42,7 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
     } else {
       await authorizedRequest(startPlayback());
     }
-    await refetch()
-
+    await refetch();
   }
 
   useEffect(() => {
