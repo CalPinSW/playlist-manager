@@ -585,8 +585,8 @@ class SpotifyClient:
         )
 
     def pause_or_start_playback(self, user_id) -> Response:
-        is_playing = self.get_current_playback(user_id=user_id).is_playing
-        if is_playing:
+        playback = self.get_current_playback(user_id=user_id)
+        if playback and playback.is_playing:
             return self.pause_playback(user_id=user_id)
         else:
             return self.start_playback(user_id=user_id)

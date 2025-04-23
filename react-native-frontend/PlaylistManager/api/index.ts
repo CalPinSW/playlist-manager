@@ -31,7 +31,6 @@ export const getCurrentUserDetails = () => async (accessToken?: string): Promise
 		RequestMethod.GET,
 		undefined,
 		headers,
-		false,
 	);
 };
 
@@ -122,7 +121,7 @@ export const getPlaylistTracks = (
 
 export const getPlaybackInfo = () => async (accessToken?: string): Promise<PlaybackInfo> => {
 	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
-	return jsonRequest(`music/playback`, RequestMethod.GET, undefined, headers ,false);
+	return jsonRequest(`music/playback`, RequestMethod.GET, undefined, headers);
 };
 
 export const playlistSearch = (
@@ -172,7 +171,6 @@ export const startPlayback = (requestBody?: StartPlaybackRequest
 
 export const pauseOrStartPlayback = () =>  async (accessToken?: string): Promise<Response> => {
 	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
-
 	return jsonRequest(`spotify/pause_or_start_playback`, RequestMethod.PUT, undefined, headers);
 };
 

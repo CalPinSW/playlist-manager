@@ -4,18 +4,14 @@ import { useColorTheme } from "../../hooks/useColorTheme";
 import { View, Text } from "../Themed";
 import { Ionicons } from '@expo/vector-icons';
 import { usePlaybackContext } from '../../hooks/usePlaybackContext';
-import { pauseOrStartPlayback } from '../../api';
 import TrackIcon from '../../assets/icons/TrackIcon';
 import ArtistIcon from '../../assets/icons/ArtistIcon';
-import { useAuth } from '../../contexts/authContext';
 
 const PlaybackControls: FC = () => {
-    const { playbackInfo, reloadData} = usePlaybackContext()
-    const {authorizedRequest } = useAuth();
+    const { playbackInfo, pauseOrPlay} = usePlaybackContext()
     const theme = useColorTheme()
     const handlePausePlayClick = async (): Promise<void> => {
-        await authorizedRequest(pauseOrStartPlayback())
-        reloadData?.()
+        pauseOrPlay?.()
     }
     if (!playbackInfo) return null
 

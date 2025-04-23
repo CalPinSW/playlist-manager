@@ -5,13 +5,13 @@ import React, {
   ReactNode,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getPlaybackInfo } from "../api";
+import { getPlaybackInfo, pauseOrStartPlayback } from "../api";
 import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { useAuth } from "./authContext";
 
 interface PlaybackContextProps {
   playbackInfo?: PlaybackInfo;
-  reloadData?: () => Promise<void>;
+  pauseOrPlay?: () => Promise<void>;
 }
 
 export const PlaybackContext = createContext<PlaybackContextProps>({});
@@ -35,8 +35,12 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
     refetchIntervalInBackground: false,
   });
 
-  const reloadData = async (): Promise<void> => {
+  const pauseOrPlay = async (): Promise<void> => {
+    console.log("refetching")
+    await authorizedRequest(pauseOrStartPlayback());
     await refetch()
+    console.log("refetched")
+
   }
 
   useEffect(() => {
@@ -46,7 +50,7 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
   }, [isError]);
 
   return (
-    <PlaybackContext.Provider value={{ playbackInfo, reloadData }}>
+    <PlaybackContext.Provider value={{ playbackInfo, pauseOrPlay }}>
       {children}
     </PlaybackContext.Provider>
   );
