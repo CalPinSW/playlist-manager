@@ -1,19 +1,24 @@
 import React, { FC } from "react";
-import { pauseOrStartPlayback } from "../api";
+import { pausePlayback, startPlayback } from "../api";
 import { ProgressCircle } from "../components/ProgressCircle";
 import SongIcon from "../components/SongIcon";
 import AlbumIcon from "../components/AlbumIcon";
 import PlaylistIcon from "../components/PlaylistIcon";
 import { usePlaybackContext } from "../hooks/usePlaybackContext";
 import { Link } from "react-router-dom";
+import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
 
 const PlaybackFooter: FC = () => {
   const { playbackInfo } = usePlaybackContext();
-
+  const authorizedRequest = useAuthorizedRequest();
   if (!playbackInfo) return null;
 
-  const handlePausePlayClick = (): void => {
-    pauseOrStartPlayback()
+  const handlePausePlayClick = async (): Promise<void> => {
+    if (playbackInfo.is_playing){
+      await authorizedRequest(pausePlayback());
+    } else {
+      await authorizedRequest(startPlayback());
+    }
   }
 
   return (

@@ -16,12 +16,9 @@ const AppRoutes = () => {
   
   return (
     <BrowserRouter>
-      <Layout>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-        </Routes>
-        <ProtectedRoute>
-          <PlaybackContextProvider>
+      <ProtectedRoute>
+        <PlaybackContextProvider>
+          <Layout withFooter>
             <Routes>
               <Route index element={<Index />} />
               <Route path="/settings" element={<SettingsPage />} />
@@ -36,9 +33,15 @@ const AppRoutes = () => {
                 }}
               />
             </Routes>
-          </PlaybackContextProvider>
-        </ProtectedRoute>
-      </Layout>
+          </Layout>
+        </PlaybackContextProvider>
+      </ProtectedRoute>
+        <Layout>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+          </Routes>
+        </Layout>
+        
     </BrowserRouter>
   );
 };

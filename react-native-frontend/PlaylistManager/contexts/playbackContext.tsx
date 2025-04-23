@@ -5,7 +5,7 @@ import React, {
   ReactNode,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getPlaybackInfo, pauseOrStartPlayback } from "../api";
+import { getPlaybackInfo, pauseOrStartPlayback, pausePlayback, startPlayback } from "../api";
 import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { useAuth } from "./authContext";
 
@@ -28,7 +28,8 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
   const { data: playbackInfo, isError, refetch } = useQuery<PlaybackInfo>({
     queryKey: ["playbackInfo"],
     queryFn: () => {
-      return authorizedRequest(getPlaybackInfo())},
+      return authorizedRequest(getPlaybackInfo())
+    },
     enabled: isAuthenticated,
     retryDelay: playbackRefetchInterval,
     refetchInterval: playbackRefetchInterval,
@@ -36,10 +37,12 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
   });
 
   const pauseOrPlay = async (): Promise<void> => {
-    console.log("refetching")
-    await authorizedRequest(pauseOrStartPlayback());
+    if (playbackInfo?.is_playing) {
+      await authorizedRequest(pausePlayback());
+    } else {
+      await authorizedRequest(startPlayback());
+    }
     await refetch()
-    console.log("refetched")
 
   }
 

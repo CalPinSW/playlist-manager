@@ -160,7 +160,7 @@ export const addAlbumToPlaylist = (
 export const pausePlayback = () =>  async (accessToken?: string): Promise<Response> => {
 	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 
-	return jsonRequest(`spotify/pause_playback`, RequestMethod.PUT, undefined, headers);
+	return request(`spotify/pause_playback`, RequestMethod.PUT, undefined, headers);
 };
 
 interface StartPlaybackRequest {
@@ -174,13 +174,13 @@ export const startPlayback = (requestBody?: StartPlaybackRequest
 ) => async (accessToken?: string): Promise<Response> => {
 	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 
-	return jsonRequest(`spotify/start_playback`, RequestMethod.PUT, requestBody, headers);
+	return request(`spotify/start_playback`, RequestMethod.PUT, requestBody, headers);
 };
 
 export const pauseOrStartPlayback = () =>  async (accessToken?: string): Promise<Response> => {
 	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 
-	return jsonRequest(`spotify/pause_or_start_playback`, RequestMethod.PUT, undefined, headers);
+	return request(`spotify/pause_or_start_playback`, RequestMethod.PUT, undefined, headers);
 };
 
 export const populateUserData = () =>  async (accessToken?: string): Promise<Response> => {

@@ -1,5 +1,4 @@
 from flask import Blueprint, make_response, request
-import requests
 from src.database.crud.user import get_user_by_auth0_id
 from src.dataclasses.playback_info import PlaybackInfo
 from src.dataclasses.playback_request import StartPlaybackRequest
@@ -146,7 +145,8 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
     @require_auth
     def start_playback():
         db_user = get_requesting_db_user()
-        request_body = request.json
+        request_body = request.json if request.content_length > 0 else None
+        print(request_body)
         start_playback_request_body = (
             StartPlaybackRequest.model_validate(request_body) if request_body else None
         )
