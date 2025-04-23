@@ -146,7 +146,6 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
     def start_playback():
         db_user = get_requesting_db_user()
         request_body = request.json if request.content_length > 0 else None
-        print(request_body)
         start_playback_request_body = (
             StartPlaybackRequest.model_validate(request_body) if request_body else None
         )

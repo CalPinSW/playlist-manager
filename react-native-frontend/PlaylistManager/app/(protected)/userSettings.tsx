@@ -3,7 +3,7 @@ import { Text, View } from '@/components/Themed';
 import { useAuth } from '../../contexts/authContext';
 import { useColorTheme } from '../../hooks/useColorTheme';
 import { populateAdditionalAlbumDetails, populateUniversalGenreList, populateUserAlbumGenres, populateUserData } from '../../api';
-import AsyncButton from '../../components/ButtonWithLoadingState';
+import AsyncButton from '../../components/AsyncButton';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function ModalScreen() {

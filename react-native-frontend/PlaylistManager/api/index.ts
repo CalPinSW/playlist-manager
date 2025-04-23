@@ -155,7 +155,7 @@ export const pausePlayback = () =>  async (accessToken?: string): Promise<Respon
 	return request(`spotify/pause_playback`, RequestMethod.PUT, undefined, headers);
 };
 
-interface StartPlaybackRequest {
+export interface StartPlaybackRequest {
 	context_uri?: string, 
 	uris?: string[], 
 	offset?: {position: number} | {uri: string} | {album_id: string}, 

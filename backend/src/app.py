@@ -49,13 +49,10 @@ def create_app():
                     issuer=f'https://{app.config["AUTH0_DOMAIN"]}/',
                 )
             except jwt.ExpiredSignatureError:
-                print("Expired")
                 return {"message": "token expired"}, 401
             except jwt.JWTClaimsError:
-                print("Claims")
                 return {"message": "incorrect claims"}, 401
             except Exception as e:
-                print("Invalid")
                 return {"message": "invalid token", "error": str(e)}, 401
 
             request.user = payload  # store decoded token

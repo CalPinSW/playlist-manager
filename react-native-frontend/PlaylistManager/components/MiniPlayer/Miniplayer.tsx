@@ -9,6 +9,7 @@ import { PlaybackInfo } from '../../interfaces/PlaybackInfo';
 import TrackIcon from '../../assets/icons/TrackIcon';
 import PlaybackControls from './PlaybackControls';
 import { usePlaybackContext } from '../../hooks/usePlaybackContext';
+import ExpandableImage from '../ExpandableImage';
 
 const MiniPlayer = () => {
     const { playbackInfo } = usePlaybackContext();
@@ -20,7 +21,7 @@ const MiniPlayer = () => {
     }
     const bottomSheetRef = useRef<BottomSheet>(null);
 
-    const snapPoints = useMemo(() => [150, 300], []);
+    const snapPoints = useMemo(() => [150, 320], []);
 
     if (!playbackInfo) return null;
     return (
@@ -108,7 +109,7 @@ const MiniPlayerContent: FC<MiniPlayerContentProps> = ({playbackInfo, activeSnap
         </View>
         <View noBackground style={styles.info}>
           <View noBackground style={styles.icons}>
-            <Image source={{ uri: playbackInfo.artwork_url }} style={styles.artwork} height={50} width={50} />
+            <ExpandableImage source={{ uri: playbackInfo.artwork_url }} style={styles.artwork} height={50} width={50} />
             <PlaybackProgressCircle 
               progress={playbackInfo.album_progress / playbackInfo.album_duration} 
               animation={playbackInfo.is_playing ? {duration: 2400} : undefined}
@@ -119,7 +120,7 @@ const MiniPlayerContent: FC<MiniPlayerContentProps> = ({playbackInfo, activeSnap
         {playbackInfo.playlist && 
           <View noBackground style={styles.info}>
             <View noBackground style={styles.icons}>
-              <Image source={{ uri: playbackInfo.playlist.artwork_url }} style={styles.artwork} height={50} width={50} />
+              <ExpandableImage source={{ uri: playbackInfo.playlist.artwork_url }} style={styles.artwork} height={50} width={50} />
             <PlaybackProgressCircle 
                 progress={playbackInfo.playlist.progress / playbackInfo.playlist.duration} 
                 animation={playbackInfo.is_playing ? {duration: 3200} : undefined}

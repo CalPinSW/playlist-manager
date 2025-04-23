@@ -10,7 +10,7 @@ interface Props {
 
 const PlaylistSlide: React.FC<Props> = ({playlist}) => {
     return (
-        <Link style={{display: "flex", gap: 10}} href={`/playlist/${playlist.id}`} asChild>
+        <Link style={{display: "flex", gap: 10}} href={{pathname: `/playlist/[id]`, params: {id: playlist.id, name: playlist.name, uri: playlist.uri}}} asChild>
             <Pressable>
                 <View 
                     style={{

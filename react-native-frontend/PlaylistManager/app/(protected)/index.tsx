@@ -54,7 +54,6 @@ export default function TabOneScreen() {
       <View style={styles.carouselContainer}>
         <Carousel slidesPerPage={slidesPerPage} data={albumQuery.data} renderItem={(playlist) => <PlaylistSlide playlist={playlist}/>}/>
       </View>
-       <MiniPlayer />
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import { Dimensions, View } from 'react-native';
-import RnrCarousel from 'react-native-reanimated-carousel';
+import RnrCarousel, { ICarouselInstance } from 'react-native-reanimated-carousel';
 
 const { width } = Dimensions.get('window')
 
@@ -7,17 +7,18 @@ interface Props<T> {
     slidesPerPage: number
     data: T[] | undefined
     renderItem: (item: T) => JSX.Element
+    forwardRef?: React.Ref<ICarouselInstance>
 }
 
-const Carousel = <T,>({slidesPerPage, data, renderItem}: Props<T>) => {
+const Carousel = <T,>({slidesPerPage, data, renderItem, forwardRef}: Props<T>) => {
     return <RnrCarousel
+          ref={forwardRef}
           loop={false}
-          overscrollEnabled={false}
+          overscrollEnabled={true}
           width={width / slidesPerPage}
           height={width / 2}
           style={{width: width}}
           data={data ?? []}
-          scrollAnimationDuration={500}
           renderItem={({ item, index }) => (
             <View
               style={{

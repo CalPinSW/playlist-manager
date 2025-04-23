@@ -18,6 +18,7 @@ from src.database.models import (
 from src.dataclasses.playlist import Playlist
 from peewee import fn, prefetch
 
+
 def get_playlist_by_id_or_none(id: str) -> DbPlaylist | None:
     return DbPlaylist.get_or_none(DbPlaylist.id == id)
 
@@ -246,6 +247,7 @@ def get_playlist_albums_with_genres(playlist_id: str) -> List[dict]:
             "genres": genres,
             "artists": artists,
             "notes": notes,
+            "uri": album.uri,
         }
 
         albums_with_details.append(album_details)

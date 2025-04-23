@@ -5,6 +5,12 @@ import { useEffect } from 'react';
 import { useAuth } from '../../contexts/authContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorTheme } from '../../hooks/useColorTheme';
+import MiniPlayer from '../../components/MiniPlayer/Miniplayer';
+
+type PlaylistExplorerParams = {
+  id: string;
+  name?: string;
+}
 
 export default function AppLayout() {
   const { user, isLoading } = useAuth();
@@ -34,7 +40,8 @@ export default function AppLayout() {
       >
         <Stack.Screen name="index" options={{headerStyle: {}}}/>
         <Stack.Screen name="userSettings" options={{headerTitle: "Profile", headerStyle: {}}}/>
-        <Stack.Screen name="two"/>
+        <Stack.Screen name="playlist/[id]" options={({route}) => ({headerTitle: (route.params as PlaylistExplorerParams).name ?? "Playlist Explorer"})}/>
     </Stack>
+    <MiniPlayer />
   </PlaybackContextProvider>)
 }

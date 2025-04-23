@@ -5,16 +5,17 @@ import React, {
   ReactNode,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getPlaybackInfo, pauseOrStartPlayback, pausePlayback, startPlayback } from "../api";
+import { getPlaybackInfo, pauseOrStartPlayback, pausePlayback, startPlayback, StartPlaybackRequest } from "../api";
 import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { useAuth } from "./authContext";
 
 interface PlaybackContextProps {
   playbackInfo?: PlaybackInfo;
-  pauseOrPlay?: () => Promise<void>;
+  pauseOrPlay: () => Promise<void>;
+  playItem: (requestBody?: StartPlaybackRequest) => Promise<void>;
 }
 
-export const PlaybackContext = createContext<PlaybackContextProps>({});
+export const PlaybackContext = createContext<PlaybackContextProps>({pauseOrPlay: () => Promise.resolve(), playItem: () => Promise.resolve() });
 
 interface PlaybackContextProviderProps {
   children: ReactNode;
@@ -45,6 +46,11 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
     await refetch();
   }
 
+  const playItem = async (requestBody?: StartPlaybackRequest): Promise<void> => {
+    await authorizedRequest(startPlayback(requestBody));
+    await refetch();
+  }
+
   useEffect(() => {
     if (isError) {
       setPlaybackRefetchInterval(30000);
@@ -52,7 +58,7 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
   }, [isError]);
 
   return (
-    <PlaybackContext.Provider value={{ playbackInfo, pauseOrPlay }}>
+    <PlaybackContext.Provider value={{ playbackInfo, pauseOrPlay, playItem }}>
       {children}
     </PlaybackContext.Provider>
   );
