@@ -37,7 +37,23 @@
           "domain": "dev-3tozp8qy1u0rfxfm.us.auth0.com"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "react-native-share",
+        {
+          "ios": [
+            "fb",
+            "instagram",
+            "twitter"
+          ],
+          "android": [
+            "com.facebook.katana",
+            "com.instagram.android",
+            "com.twitter.android"
+          ]
+        }
+      ],
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true

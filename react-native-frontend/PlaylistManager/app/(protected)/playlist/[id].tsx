@@ -11,13 +11,16 @@ import Carousel from '../../../components/Carousel/Carousel';
 import AlbumSlide from '../../../components/Carousel/AlbumSlide/AlbumSlide';
 import { useAuth } from '../../../contexts/authContext';
 import { ICarouselInstance } from 'react-native-reanimated-carousel';
-import PlaylistButtons from '../../../components/PlaylistExplorer/PlaylistButtons';
+import PlaylistButtons from '../../../components/PlaylistExplorer/PlaylistAlbumButtons';
+import PlaylistManagementButtons from '../../../components/PlaylistExplorer/PlaylistManagementButtons';
+import { Toast } from 'toastify-react-native';
+import * as Clipboard from 'expo-clipboard';
 
 const PlaylistExplorer: React.FC = () => {
     const playlist = useLocalSearchParams<{id: string, name: string, uri: string}>();
     const { authorizedRequest } = useAuth()
     const carouselRef = useRef<ICarouselInstance>(null);
-    const { data: playlistAlbums } = useQuery<Album[]>({
+    const { data: playlistAlbums, refetch: refetchAlbums } = useQuery<Album[]>({
         queryKey: ["playlist albums info", playlist.id],
         queryFn: () => authorizedRequest(getPlaylistAlbums(playlist.id)),
         retry: false,
@@ -56,11 +59,31 @@ const PlaylistExplorer: React.FC = () => {
         }
     }
 
+    const copyAlbumArtistList = async (): Promise<void> => {
+      if (playlistAlbums){
+      const albumArtistList = playlistAlbums.map(album => {
+        const artistNames = album.artists.map(artist => artist.name).join(", ");
+        return `${album.name} - ${artistNames}`;
+      }).join("\n");
+  
+      try {
+        await Clipboard.setStringAsync(albumArtistList);
+        Toast.success("Copied album list to clipboard!");
+      } catch (err) {
+        Toast.error("Failed to copy album list.");
+      }} else {
+        Toast.error("Albums not loaded yet.");
+      }
+    }
     const activeAlbum = playlistAlbums?.find((album) => album.id === activeAlbumId);
 
     return (
       <View style={styles.container}>
-        <View style={styles.separator} />
+        <PlaylistManagementButtons 
+          albums={playlistAlbums ?? []} 
+          playlistId={playlist.id} 
+          refetchAlbums={async () => {await refetchAlbums()}} 
+          copyAlbumArtists={copyAlbumArtistList} />
         <View style={{ flex: 1, alignSelf: "flex-start" }}>
             <Carousel slidesPerPage={2.25} data={playlistAlbums} forwardRef={carouselRef} renderItem={
                 (album) => 

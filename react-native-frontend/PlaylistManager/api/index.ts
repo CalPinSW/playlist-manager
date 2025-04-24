@@ -143,7 +143,7 @@ export const addAlbumToPlaylist = (
 ) =>  async(accessToken?: string): Promise<Response> => {
 	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 
-	return jsonRequest(`spotify/add_album_to_playlist`, RequestMethod.POST, {
+	return request(`spotify/add_album_to_playlist`, RequestMethod.POST, {
 		playlistId,
 		albumId,
 	}, headers);

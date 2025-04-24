@@ -35,8 +35,13 @@ export const jsonRequest = async <I, O>(
 			};
 	}
 	const response = await fetch(`${backendUrl}/${endpoint}`, fetchOptions);
-	const apiResponse = response.json().then((data) => data as O);
-	return apiResponse;
+	if (response.ok) {
+		const apiResponse = response.json().then((data) => data as O);
+		return apiResponse;
+	}
+	else {
+		throw new Error(`${response.status}: ${response.statusText}`);
+	}
 };
 
 export const request = async <I>(
