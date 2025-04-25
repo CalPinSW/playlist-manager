@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from 'react-native';
 export { ErrorBoundary } from 'expo-router';
+import Constants from 'expo-constants';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -50,14 +51,17 @@ const queryClient = new QueryClient();
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const auth0Scheme = "playlistmanager"
+
+  const { auth0Domain, auth0ClientId } = Constants.expoConfig?.extra ?? {};
+
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <QueryClientProvider client={queryClient}>
           <Auth0Provider 
-            domain={process.env.EXPO_PUBLIC_AUTH0_DOMAIN} 
-            clientId={process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID}
-            redirectUri={`${auth0Scheme}://${process.env.EXPO_PUBLIC_AUTH0_DOMAIN}/android/${process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID}/callback`}
+            domain={auth0Domain} 
+            clientId={auth0ClientId}
+            redirectUri={`${auth0Scheme}://${auth0Domain}/android/${auth0ClientId}/callback`}
           >
             <AuthProvider>
               <Stack>
