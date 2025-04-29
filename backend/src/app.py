@@ -77,7 +77,15 @@ def create_app():
 
     CORS(
         app,
-        resources={r"/*": {"origins": "*"}},
+        resources={
+            r"/*": {
+                "origins": [
+                    f"{Config().FRONTEND_URL}",
+                    "https://z9i1dqk-calpin-8081.exp.direct",
+                    "exp://*:*",
+                ]
+            }
+        },
         supports_credentials=True,
     )
 
