@@ -1,5 +1,6 @@
-export const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
-export const useCors = process.env.EXPO_PUBLIC_USE_CORS;
+import Constants from 'expo-constants';
+
+export const { backendUrl, useCors } = Constants.expoConfig?.extra ?? {};
 
 export enum RequestMethod {
 	GET = "get",
