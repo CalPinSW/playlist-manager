@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return request(token);
     } else {
       await clearSession();
-      router.push("/");
+      router.replace("/");
       throw Error("Error sending authorized request, signing out");
       } 
     };

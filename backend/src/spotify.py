@@ -3,6 +3,12 @@ from time import sleep
 import requests
 import os
 import urllib.parse
+from src.database.crud.playback_state import (
+    get_playback_state_for_album,
+    get_playback_state_for_playlist,
+    upsert_playback_state_for_album,
+    upsert_playback_state_for_playlist,
+)
 from tenacity import RetryError, Retrying, stop_after_attempt, wait_fixed
 from typing import List, Optional
 from flask import Response, make_response, redirect
@@ -11,8 +17,11 @@ from src.database.crud.user import get_user_tokens, upsert_user_tokens
 from src.dataclasses.album import Album
 from src.dataclasses.playback_info import PlaybackInfo, PlaylistProgression
 from src.dataclasses.playback_request import (
+    AlbumIdOffset,
+    PositionOffset,
+    ResumePlaybackRequest,
     StartPlaybackRequest,
-    StartPlaybackRequestUriOffset,
+    UriOffset,
 )
 from src.dataclasses.playback_state import PlaybackState
 from src.dataclasses.playlist import Playlist
@@ -391,7 +400,6 @@ class SpotifyClient:
 
     def get_my_current_playback(self, user_id) -> PlaybackInfo | None:
         api_playback = self.get_current_playback(user_id=user_id)
-
         if api_playback is None:
             return None
         context = api_playback.context
@@ -412,6 +420,23 @@ class SpotifyClient:
             )
             + api_playback.progress_ms
         )
+
+        upsert_playback_state_for_album(
+            user_id=user_id,
+            album_id=album.id,
+            item_id=api_playback.item.id,
+            progress_ms=api_playback.progress_ms,
+            timestamp=api_playback.timestamp,
+        )
+        if playlist_id is not None:
+            upsert_playback_state_for_playlist(
+                user_id=user_id,
+                playlist_id=playlist_id,
+                item_id=api_playback.item.id,
+                progress_ms=api_playback.progress_ms,
+                timestamp=api_playback.timestamp,
+            )
+
         return PlaybackInfo.model_validate(
             {
                 "track_title": api_playback.item.name,
@@ -563,24 +588,20 @@ class SpotifyClient:
 
         if not start_playback_request_body:
             data = None
-        else:
-            if start_playback_request_body.offset.album_id:
-                track_offset = StartPlaybackRequestUriOffset.model_validate(
-                    {
-                        "uri": (
-                            self.get_album(
-                                user_id=user_id,
-                                id=start_playback_request_body.offset.album_id,
-                            )
-                            .tracks.items[0]
-                            .uri
-                        )
-                    }
-                )
+        elif start_playback_request_body.offset:
+            offset = start_playback_request_body.offset
 
-                start_playback_request_body.offset = track_offset
+            # Handle different offset types dynamically
+            if isinstance(offset, AlbumIdOffset):
+                album = self.get_album(user_id=user_id, id=offset.album_id)
+                track_uri = album.tracks.items[0].uri
+                start_playback_request_body.offset = UriOffset(uri=track_uri)
+            elif isinstance(offset, PositionOffset):
+                pass
+            elif isinstance(offset, UriOffset):
+                pass
+
             data = start_playback_request_body.model_dump_json(exclude_none=True)
-
         response = requests.put(
             url="https://api.spotify.com/v1/me/player/play",
             data=data,
@@ -593,12 +614,88 @@ class SpotifyClient:
             make_response("", response.status_code), jsonify=False
         )
 
+    def resume_playback(
+        self,
+        user_id,
+        resume_playback_request_body: ResumePlaybackRequest,
+    ) -> Response:
+        playlist_playback_state = get_playback_state_for_playlist(
+            user_id=user_id, playlist_id=resume_playback_request_body.id
+        )
+        album_playback_state = get_playback_state_for_album(
+            user_id=user_id, album_id=resume_playback_request_body.id
+        )
+        if playlist_playback_state:
+            start_playback_request_body = StartPlaybackRequest.model_validate(
+                {
+                    "context_uri": "spotify:playlist:"
+                    + resume_playback_request_body.id,
+                    "offset": UriOffset.model_validate(
+                        {
+                            "uri": "spotify:track:" + playlist_playback_state.item.id,
+                        }
+                    ),
+                    "position_ms": playlist_playback_state.progress_ms,
+                }
+            )
+        elif album_playback_state:
+            start_playback_request_body = StartPlaybackRequest.model_validate(
+                {
+                    "context_uri": (
+                        resume_playback_request_body.context_uri
+                        if resume_playback_request_body.context_uri
+                        else "spotify:album:" + resume_playback_request_body.id
+                    ),
+                    "offset": UriOffset.model_validate(
+                        {
+                            "uri": "spotify:track:" + album_playback_state.item.id,
+                        }
+                    ),
+                    "position_ms": album_playback_state.progress_ms,
+                }
+            )
+        else:
+            start_playback_request_body = StartPlaybackRequest.model_validate(
+                {
+                    "context_uri": resume_playback_request_body.uri,
+                }
+            )
+        return self.start_playback(
+            user_id=user_id, start_playback_request_body=start_playback_request_body
+        )
+
     def pause_or_start_playback(self, user_id) -> Response:
         playback = self.get_current_playback(user_id=user_id)
         if playback and playback.is_playing:
             return self.pause_playback(user_id=user_id)
         else:
             return self.start_playback(user_id=user_id)
+
+    def next_playback(self, user_id) -> Response:
+        access_token = get_user_tokens(user_id=user_id).access_token
+        response = requests.put(
+            url="https://api.spotify.com/v1/me/player/next",
+            headers={
+                "content-type": "application/json",
+            },
+            auth=BearerAuth(access_token),
+        )
+        return self.response_handler(
+            make_response("", response.status_code), jsonify=False
+        )
+
+    def previous_playback(self, user_id) -> Response:
+        access_token = get_user_tokens(user_id=user_id).access_token
+        response = requests.put(
+            url="https://api.spotify.com/v1/me/player/previous",
+            headers={
+                "content-type": "application/json",
+            },
+            auth=BearerAuth(access_token),
+        )
+        return self.response_handler(
+            make_response("", response.status_code), jsonify=False
+        )
 
     def refresh_user_access_tokens(self, user_id):
         if not user_id:

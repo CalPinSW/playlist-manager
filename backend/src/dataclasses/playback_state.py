@@ -1,5 +1,6 @@
+from datetime import datetime
 from typing import Literal, Optional
-from pydantic import BaseModel, ValidationInfo, field_validator, root_validator
+from pydantic import BaseModel, ValidationInfo, field_validator
 from src.dataclasses.device import Device
 from src.dataclasses.track import Track
 
@@ -35,7 +36,7 @@ class PlaybackState(BaseModel):
     progress_ms: Optional[int]
     is_playing: bool
     item: Optional[Track | Episode]
-    timestamp: int
+    timestamp: datetime
     currently_playing_type: str
     device: Device
     shuffle_state: bool
@@ -49,3 +50,7 @@ class PlaybackState(BaseModel):
             return Episode.model_validate(v)
         else:
             return Track.model_validate(v)
+
+    @field_validator("timestamp", mode="plain")
+    def convert_timestamp_to_datetime(cls, v):
+        return datetime.fromtimestamp(v / 1000)

@@ -14,14 +14,13 @@ import ExpandableImage from '../ExpandableImage';
 const MiniPlayer = () => {
     const { playbackInfo } = usePlaybackContext();
     const theme = useColorTheme()
-
-    const [activeSnapPoint, setActiveSnapPoint] = useState(0);
+    const snapPoints = useMemo(() => [0, 150, 320], []);
+    const [activeSnapPoint, setActiveSnapPoint] = useState(1);
     const onChange = (index: number) => {
       setActiveSnapPoint(index)
     }
     const bottomSheetRef = useRef<BottomSheet>(null);
 
-    const snapPoints = useMemo(() => [150, 320], []);
 
     if (!playbackInfo) return null;
     return (

@@ -5,9 +5,10 @@ import { useColorTheme } from '../hooks/useColorTheme';
 interface AsyncButtonProps {
     onPressAsync: () => Promise<void>
     text: string
+    disabled?: boolean
 }
 
-const AsyncButton: FC<AsyncButtonProps> = ({ onPressAsync, text}) => {
+const AsyncButton: FC<AsyncButtonProps> = ({ onPressAsync, text, disabled}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const theme = useColorTheme()
@@ -19,6 +20,7 @@ const AsyncButton: FC<AsyncButtonProps> = ({ onPressAsync, text}) => {
       await onPressAsync();
     } catch (err) {
       setError('Something went wrong');
+      console.error(err)
     } finally {
       setLoading(false);
     }
@@ -27,9 +29,9 @@ const AsyncButton: FC<AsyncButtonProps> = ({ onPressAsync, text}) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.button,  {backgroundColor: theme.primary.default}, loading &&  {backgroundColor: theme.background.offset}]}
+        style={[styles.button,  {backgroundColor: (disabled || loading) ? theme.background.offset : theme.primary.default}]}
         onPress={handlePress}
-        disabled={loading}
+        disabled={disabled || loading}
       >
         {loading ? (
           <ActivityIndicator color={theme.text.primary} />

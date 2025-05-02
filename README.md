@@ -91,6 +91,7 @@ The frontend and backend applications are deployed to two Azure Web Applications
 
 ## Database Migrations
 
+Database is hosted with [Neon](https://neon.tech/)  
 Database migrations can be run with the following steps:
 1. Navigate to the /backend folder.
 3. Run Python locally (e.g. `python3`). 

@@ -29,6 +29,9 @@ const PlaylistManagementButtons: FC<PlaylistManagementButtonsProps> = ({playlist
                 <AsyncButton text={"Copy Album Artists"} onPressAsync={copyAlbumArtists}/>
                 <AsyncButton text={"Sync with Spotify"} onPressAsync={handleSyncClick}/>
             </View>
+            <View style={styles.buttonRow}>
+                <AsyncButton text={"Resume Playlist"} onPressAsync={handleSyncClick}/>
+            </View>
         </View>
     )
 }
@@ -36,6 +39,7 @@ const PlaylistManagementButtons: FC<PlaylistManagementButtonsProps> = ({playlist
 const styles = StyleSheet.create({
     container: {
         display: "flex",
+        flexWrap: "wrap",
         gap: 8,
         flexDirection: "column",
     },

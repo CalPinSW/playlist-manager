@@ -1,6 +1,8 @@
 from peewee import (
+    AutoField,
     CharField,
     IntegerField,
+    BigIntegerField,
     DateField,
     ForeignKeyField,
 )
@@ -25,7 +27,7 @@ class DbPlaylist(db_wrapper.Model):
     description = CharField()
     image_url = CharField(null=True)
     name = CharField()
-    user = ForeignKeyField(DbUser, backref="owner", to_field="id", on_delete="CASCADE")
+    user = ForeignKeyField(DbUser, backref="owner", on_delete="CASCADE")
     snapshot_id = CharField()
     uri = CharField()
 
@@ -68,9 +70,7 @@ class DbGenre(db_wrapper.Model):
 class DbTrack(db_wrapper.Model):
     id = CharField(primary_key=True)
     name = CharField()
-    album = ForeignKeyField(
-        DbAlbum, backref="album", to_field="id", on_delete="CASCADE"
-    )
+    album = ForeignKeyField(DbAlbum, backref="album", on_delete="CASCADE")
     disc_number = IntegerField()
     track_number = IntegerField()
     duration_ms = IntegerField()
@@ -117,9 +117,7 @@ class TrackArtistRelationship(db_wrapper.Model):
 
 
 class DbAccessToken(db_wrapper.Model):
-    user = ForeignKeyField(
-        DbUser, backref="owner", to_field="id", on_delete="CASCADE", unique=True
-    )
+    user = ForeignKeyField(DbUser, backref="owner", on_delete="CASCADE", unique=True)
     access_token = CharField(max_length=400, null=True)
     refresh_token = CharField(max_length=200, null=True)
 
@@ -130,9 +128,42 @@ class DbAccessToken(db_wrapper.Model):
 class DbAlbumNote(db_wrapper.Model):
     id = CharField(primary_key=True)
     text = CharField()
-    album = ForeignKeyField(
-        DbAlbum, backref="album", to_field="id", on_delete="CASCADE"
-    )
+    album = ForeignKeyField(DbAlbum, backref="album", on_delete="CASCADE")
 
     class Meta:
         db_table = "album_notes"
+
+
+class DbPlaybackState(db_wrapper.Model):
+    id = AutoField(primary_key=True)
+    item = ForeignKeyField(DbTrack, backref="track", on_delete="CASCADE", null=True)
+    progress_ms = BigIntegerField(null=True)
+    timestamp = DateField()
+    type = CharField()
+
+    class Meta:
+        db_table = "playback_state"
+
+
+class PlaybackStateAlbumRelationship(db_wrapper.Model):
+    playback_state = ForeignKeyField(
+        DbPlaybackState, backref="playback_state", on_delete="CASCADE"
+    )
+    album = ForeignKeyField(DbAlbum, backref="playback_state", on_delete="CASCADE")
+    user = ForeignKeyField(DbUser, backref="playback_state", on_delete="CASCADE")
+
+    class Meta:
+        indexes = ((("playback_state", "album", "user"), True),)
+
+
+class PlaybackStatePlaylistRelationship(db_wrapper.Model):
+    playback_state = ForeignKeyField(
+        DbPlaybackState, backref="playback_state", on_delete="CASCADE"
+    )
+    playlist = ForeignKeyField(
+        DbPlaylist, backref="playback_state", on_delete="CASCADE"
+    )
+    user = ForeignKeyField(DbUser, backref="playback_state", on_delete="CASCADE")
+
+    class Meta:
+        indexes = ((("playback_state", "playlist", "user"), True),)

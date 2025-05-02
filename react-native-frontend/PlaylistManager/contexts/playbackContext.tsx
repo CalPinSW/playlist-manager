@@ -5,7 +5,7 @@ import React, {
   ReactNode,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getPlaybackInfo, pauseOrStartPlayback, pausePlayback, startPlayback, StartPlaybackRequest } from "../api";
+import { getPlaybackInfo, pausePlayback, resumePlayback, ResumePlaybackRequest, startPlayback, StartPlaybackRequest } from "../api";
 import { PlaybackInfo } from "../interfaces/PlaybackInfo";
 import { useAuth } from "./authContext";
 
@@ -13,9 +13,10 @@ interface PlaybackContextProps {
   playbackInfo?: PlaybackInfo;
   pauseOrPlay: () => Promise<void>;
   playItem: (requestBody?: StartPlaybackRequest) => Promise<void>;
+  resumeItem: (requestBody: ResumePlaybackRequest) => Promise<void>;
 }
 
-export const PlaybackContext = createContext<PlaybackContextProps>({pauseOrPlay: () => Promise.resolve(), playItem: () => Promise.resolve() });
+export const PlaybackContext = createContext<PlaybackContextProps>({pauseOrPlay: () => Promise.resolve(), playItem: () => Promise.resolve(), resumeItem: () => Promise.resolve()});
 
 interface PlaybackContextProviderProps {
   children: ReactNode;
@@ -26,6 +27,7 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
 }) => {
   const [playbackRefetchInterval, setPlaybackRefetchInterval] = useState(10000);
   const {authorizedRequest, isAuthenticated} = useAuth()
+
   const { data: playbackInfo, isError, refetch } = useQuery<PlaybackInfo>({
     queryKey: ["playbackInfo"],
     queryFn: () => {
@@ -51,6 +53,12 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
     await refetch();
   }
 
+
+  const resumeItem = async (requestBody: ResumePlaybackRequest): Promise<void> => {
+    await authorizedRequest(resumePlayback(requestBody));
+    await refetch();
+  }
+
   useEffect(() => {
     if (isError) {
       setPlaybackRefetchInterval(30000);
@@ -58,7 +66,7 @@ export const PlaybackContextProvider: React.FC<PlaybackContextProviderProps> = (
   }, [isError]);
 
   return (
-    <PlaybackContext.Provider value={{ playbackInfo, pauseOrPlay, playItem }}>
+    <PlaybackContext.Provider value={{ playbackInfo, pauseOrPlay, playItem, resumeItem }}>
       {children}
     </PlaybackContext.Provider>
   );
