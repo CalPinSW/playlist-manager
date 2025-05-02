@@ -7,7 +7,6 @@ import { useQuery } from '@tanstack/react-query';
 import { DebouncedTextInput } from '../../components/DebouncedTextInput';
 import PlaylistSlide from '../../components/Carousel/PlaylistSlide';
 import Carousel from '../../components/Carousel/Carousel';
-import MiniPlayer from '../../components/MiniPlayer/Miniplayer';
 import { useAuth } from '../../contexts/authContext';
 
 interface PaginationState {
@@ -20,6 +19,7 @@ const { width } = Dimensions.get('window')
 export default function TabOneScreen() {
   const slidesPerPage = 4;
   const { authorizedRequest } = useAuth()
+  
   const [playlistSearch, setPlaylistSearch] = useState<string>("")
   const [albumSearch, setAlbumSearch] = useState<string>("")
   const [pagination, ] = useState<PaginationState>({

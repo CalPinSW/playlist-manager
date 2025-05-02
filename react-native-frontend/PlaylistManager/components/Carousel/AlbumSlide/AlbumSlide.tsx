@@ -1,9 +1,10 @@
 import React, { useEffect } from "react";
 import { Image, Pressable, StyleSheet } from "react-native";
-import { View} from '../../Themed'
+import { View, Text } from '../../Themed'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { Album } from "../../../interfaces/Album";
 import AlbumInfo from "./AlbumInfo";
+import { renderArtistList } from "../../../utils/album/renderArtistList";
 
 interface AlbumSlideProps {
     album: Album;
@@ -39,6 +40,14 @@ const AlbumSlide: React.FC<AlbumSlideProps> = ({ album, isSelected, onPress }) =
           <AlbumInfo {...album}/>
         </Animated.View>
       </View>
+      <View style={styles.albumInfo}>
+        <Text noBackground style={styles.albumDescriptor}>
+          {album.name}
+        </Text>
+        <Text noBackground style={styles.albumDescriptor}>
+          {renderArtistList(album.artists)}
+        </Text>
+      </View>
     </Pressable>
   );
 };
@@ -52,6 +61,15 @@ const styles = StyleSheet.create({
     width: "100%", 
     aspectRatio: 1,
     backfaceVisibility: "hidden",
+  },
+  albumInfo: {
+    display: "flex",
+    height: 200,
+    gap: 8,
+  },
+  albumDescriptor: {
+    textAlign: "center",
+    display: "flex"
   }
 });
 

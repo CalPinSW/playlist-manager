@@ -17,9 +17,9 @@ interface PlaylistButtonsProps {
 
 const PlaylistButtons: FC<PlaylistButtonsProps> = ({playlistId, playlistUri, album, associatedPlaylists}) => {
     const { authorizedRequest } = useAuth()
-    const { playItem } = usePlaybackContext();
+    const { resumeItem } = usePlaybackContext();
     const handlePlayClick = async () => {
-        await playItem({context_uri: playlistUri, offset: {album_id: album.id}})
+        await resumeItem({context_uri: playlistUri, id: album.id })
     }
     return (
         <View style={styles.container}>
@@ -30,7 +30,6 @@ const PlaylistButtons: FC<PlaylistButtonsProps> = ({playlistId, playlistUri, alb
                     text={`Add to ${playlist.name}`} 
                     onPressAsync={async () => {await authorizedRequest(addAlbumToPlaylist(playlist.id, album.id))}} 
                 />
-
             )}
         </View>
     )

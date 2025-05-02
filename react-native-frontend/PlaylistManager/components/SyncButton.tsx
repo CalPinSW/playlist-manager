@@ -3,17 +3,19 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useColorTheme } from '../hooks/useColorTheme';
 
 interface SyncButtonProps {
-    onPress: () => void
-    text: string
+    onPress: () => void;
+    text: string;
+    disabled?: boolean;
 }
 
-const SyncButton: FC<SyncButtonProps> = ({ onPress, text}) => {
+const SyncButton: FC<SyncButtonProps> = ({ onPress, text, disabled}) => {
   const theme = useColorTheme()
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.button, {backgroundColor: theme.primary.default}]}
+        disabled
+        style={[styles.button, {backgroundColor: disabled ? theme.background.interactive : theme.primary.default}]}
         onPress={onPress}
       >
         <Text style={styles.buttonText}>{text}</Text>

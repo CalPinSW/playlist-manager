@@ -9,6 +9,7 @@ import {
   getPlaylistTracks,
   playlistSearch,
   populatePlaylist,
+  resumePlayback,
   updatePlaylist,
 } from "../api";
 import { useQuery } from "@tanstack/react-query";
@@ -172,6 +173,11 @@ export const PlaylistExplorer: FC = () => {
       >
         Sync new playlist data
       </ButtonAsync>
+      <Button
+        onClick={() => authorizedRequest(resumePlayback({id: playlist.id }))}
+            >
+                Resume Playlist
+            </Button>
       <>
         <div className="mt-2">
         <div className="mt-2">

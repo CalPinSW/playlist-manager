@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/authContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorTheme } from '../../hooks/useColorTheme';
 import MiniPlayer from '../../components/MiniPlayer/Miniplayer';
+import { View } from '../../components/Themed';
 
 type PlaylistExplorerParams = {
   id: string;
@@ -32,9 +33,14 @@ export default function AppLayout() {
       <Stack
             screenOptions={{
               headerRight: () => 
-                <TouchableOpacity onPressIn={() => router.navigate('/userSettings')}>
-                  <Ionicons size={28} name="person" color={theme.text.primary} />
-                </TouchableOpacity>,
+                (<View noBackground style={{display: "flex", flexDirection: "row", gap: 12}}>
+                  {/* <TouchableOpacity onPressIn={() => router.navigate('/backgroundTaskManager')}>
+                    <Ionicons size={28} name="settings" color={theme.text.primary} />
+                  </TouchableOpacity> */}
+                  <TouchableOpacity onPressIn={() => router.navigate('/userSettings')}>
+                    <Ionicons size={28} name="person" color={theme.text.primary} />
+                  </TouchableOpacity>
+                </View>),
               headerTitle: "Playlist Manager"
             }}
       >

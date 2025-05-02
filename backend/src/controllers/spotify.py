@@ -1,7 +1,7 @@
 from flask import Blueprint, make_response, request
 from src.database.crud.user import get_user_by_auth0_id
 from src.dataclasses.playback_info import PlaybackInfo
-from src.dataclasses.playback_request import StartPlaybackRequest
+from src.dataclasses.playback_request import ResumePlaybackRequest, StartPlaybackRequest
 from src.spotify import SpotifyClient
 from authlib.integrations.flask_oauth2 import ResourceProtector
 
@@ -87,15 +87,6 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
             for album in spotify.get_playlist_album_info(user_id=db_user.id, id=id)
         ]
 
-    @spotify_controller.route("playback", methods=["GET"])
-    @require_auth
-    def get_playback_info():
-        db_user = get_requesting_db_user()
-        playback_info = spotify.get_my_current_playback(user_id=db_user.id)
-        if playback_info is None:
-            return ("", 204)
-        return playback_info.model_dump_json()
-
     @spotify_controller.route("playlist_progress", methods=["POST"])
     @require_auth
     def get_playlist_progress():
@@ -135,13 +126,22 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
             user_id=db_user.id, playlist_id=playlist_id, album_id=album_id
         )
 
-    @spotify_controller.route("pause_playback", methods=["PUT"])
+    @spotify_controller.route("playback", methods=["GET"])
+    @require_auth
+    def get_playback_info():
+        db_user = get_requesting_db_user()
+        playback_info = spotify.get_my_current_playback(user_id=db_user.id)
+        if playback_info is None:
+            return ("", 204)
+        return playback_info.model_dump_json()
+
+    @spotify_controller.route("playback/pause", methods=["PUT"])
     @require_auth
     def pause_playback():
         db_user = get_requesting_db_user()
         return spotify.pause_playback(db_user.id)
 
-    @spotify_controller.route("start_playback", methods=["PUT"])
+    @spotify_controller.route("playback/start", methods=["PUT"])
     @require_auth
     def start_playback():
         db_user = get_requesting_db_user()
@@ -153,10 +153,35 @@ def spotify_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
             user_id=db_user.id, start_playback_request_body=start_playback_request_body
         )
 
-    @spotify_controller.route("pause_or_start_playback", methods=["PUT"])
+    @spotify_controller.route("playback/resume", methods=["PUT"])
+    @require_auth
+    def resume_playback():
+        db_user = get_requesting_db_user()
+        request_body = request.json
+        resume_playback_request_body = ResumePlaybackRequest.model_validate(
+            request_body
+        )
+        return spotify.resume_playback(
+            user_id=db_user.id,
+            resume_playback_request_body=resume_playback_request_body,
+        )
+
+    @spotify_controller.route("playback/pause_or_start", methods=["PUT"])
     @require_auth
     def pause_or_start_playback():
         db_user = get_requesting_db_user()
         return spotify.pause_or_start_playback(user_id=db_user.id)
+
+    @spotify_controller.route("playback/next", methods=["PUT"])
+    @require_auth
+    def next_playback():
+        db_user = get_requesting_db_user()
+        return spotify.next_playback(user_id=db_user.id)
+
+    @spotify_controller.route("playback/previous", methods=["PUT"])
+    @require_auth
+    def previous_playback():
+        db_user = get_requesting_db_user()
+        return spotify.previous_playback(user_id=db_user.id)
 
     return spotify_controller

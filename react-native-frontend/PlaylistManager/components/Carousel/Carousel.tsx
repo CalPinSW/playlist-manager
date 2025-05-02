@@ -16,8 +16,7 @@ const Carousel = <T,>({slidesPerPage, data, renderItem, forwardRef}: Props<T>) =
           loop={false}
           overscrollEnabled={true}
           width={width / slidesPerPage}
-          height={width / 2}
-          style={{width: width}}
+          style={{width: width, height: 300}}
           data={data ?? []}
           renderItem={({ item, index }) => (
             <View
