@@ -105,7 +105,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   separator: {
-    marginVertical: 30,
     height: 1,
     width: '80%',
   },
@@ -113,7 +112,6 @@ const styles = StyleSheet.create({
     alignContent: 'center',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 600
   }
 });
 

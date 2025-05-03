@@ -18,7 +18,9 @@ interface PlaylistButtonsProps {
 const PlaylistButtons: FC<PlaylistButtonsProps> = ({playlistId, playlistUri, album, associatedPlaylists}) => {
     const { authorizedRequest } = useAuth()
     const { resumeItem } = usePlaybackContext();
+    
     const handlePlayClick = async () => {
+        resumeItem({id: album.id, context_uri: playlistUri })
         await resumeItem({context_uri: playlistUri, id: album.id })
     }
     return (

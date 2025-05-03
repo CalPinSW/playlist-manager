@@ -9,6 +9,7 @@ from src.database.crud.playback_state import (
     upsert_playback_state_for_album,
     upsert_playback_state_for_playlist,
 )
+from src.dataclasses.device import Device
 from tenacity import RetryError, Retrying, stop_after_attempt, wait_fixed
 from typing import List, Optional
 from flask import Response, make_response, redirect
@@ -384,7 +385,7 @@ class SpotifyClient:
                         raise Exception("User tokens not found")
                     access_token = user_tokens.access_token
                     response = requests.get(
-                        "https://api.spotify.com/v1/me/player",
+                        "https://api.spotify.com/v1/me/player?additional_types=track,episode",
                         auth=BearerAuth(access_token),
                     )
                     api_current_playback = self.response_handler(response)
@@ -403,59 +404,81 @@ class SpotifyClient:
         if api_playback is None:
             return None
         context = api_playback.context
-        if context.type == "playlist":
+        if context and context.type == "playlist":
             playlist_id = context.uri.replace("spotify:playlist:", "")
         else:
             playlist_id = None
-        album = self.get_album(user_id=user_id, id=api_playback.item.album.id)
-        album_duration = sum([track.duration_ms for track in album.tracks.items])
-        album_progress = (
-            sum(
-                [
-                    track.duration_ms
-                    for track in album.tracks.items[
-                        0 : api_playback.item.track_number - 1
-                    ]
-                ]
+        if api_playback.currently_playing_type == "episode":
+            return PlaybackInfo.model_validate(
+                {
+                    "type": "episode",
+                    "track_title": api_playback.item.name,
+                    "track_id": api_playback.item.id,
+                    "album_title": api_playback.item.show.name,
+                    "album_id": api_playback.item.show.id,
+                    "track_artists": [api_playback.item.show.publisher],
+                    "album_artists": [api_playback.item.show.publisher],
+                    "artwork_url": api_playback.item.images[0].url,
+                    "track_progress": api_playback.progress_ms,
+                    "track_duration": api_playback.item.duration_ms,
+                    "album_progress": 0,
+                    "album_duration": api_playback.item.show.total_episodes,
+                    "is_playing": api_playback.is_playing,
+                }
             )
-            + api_playback.progress_ms
-        )
+        else:
+            album = self.get_album(user_id=user_id, id=api_playback.item.album.id)
+            album_duration = sum([track.duration_ms for track in album.tracks.items])
+            album_progress = (
+                sum(
+                    [
+                        track.duration_ms
+                        for track in album.tracks.items[
+                            0 : api_playback.item.track_number - 1
+                        ]
+                    ]
+                )
+                + api_playback.progress_ms
+            )
 
-        upsert_playback_state_for_album(
-            user_id=user_id,
-            album_id=album.id,
-            item_id=api_playback.item.id,
-            progress_ms=api_playback.progress_ms,
-            timestamp=api_playback.timestamp,
-        )
-        if playlist_id is not None:
-            upsert_playback_state_for_playlist(
+            upsert_playback_state_for_album(
                 user_id=user_id,
-                playlist_id=playlist_id,
+                album_id=album.id,
                 item_id=api_playback.item.id,
                 progress_ms=api_playback.progress_ms,
                 timestamp=api_playback.timestamp,
             )
+            if playlist_id is not None:
+                upsert_playback_state_for_playlist(
+                    user_id=user_id,
+                    playlist_id=playlist_id,
+                    item_id=api_playback.item.id,
+                    progress_ms=api_playback.progress_ms,
+                    timestamp=api_playback.timestamp,
+                )
 
-        return PlaybackInfo.model_validate(
-            {
-                "track_title": api_playback.item.name,
-                "track_id": api_playback.item.id,
-                "album_title": api_playback.item.album.name,
-                "album_id": api_playback.item.album.id,
-                "playlist_id": playlist_id,
-                "track_artists": [artist.name for artist in api_playback.item.artists],
-                "album_artists": [
-                    artist.name for artist in api_playback.item.album.artists
-                ],
-                "artwork_url": api_playback.item.album.images[0].url,
-                "track_progress": api_playback.progress_ms,
-                "track_duration": api_playback.item.duration_ms,
-                "album_progress": album_progress,
-                "album_duration": album_duration,
-                "is_playing": api_playback.is_playing,
-            }
-        )
+            return PlaybackInfo.model_validate(
+                {
+                    "type": "track",
+                    "track_title": api_playback.item.name,
+                    "track_id": api_playback.item.id,
+                    "album_title": api_playback.item.album.name,
+                    "album_id": api_playback.item.album.id,
+                    "playlist_id": playlist_id,
+                    "track_artists": [
+                        artist.name for artist in api_playback.item.artists
+                    ],
+                    "album_artists": [
+                        artist.name for artist in api_playback.item.album.artists
+                    ],
+                    "artwork_url": api_playback.item.album.images[0].url,
+                    "track_progress": api_playback.progress_ms,
+                    "track_duration": api_playback.item.duration_ms,
+                    "album_progress": album_progress,
+                    "album_duration": album_duration,
+                    "is_playing": api_playback.is_playing,
+                }
+            )
 
     def get_playlist_progression(self, user_id, api_playback: PlaybackInfo):
         playlist_tracks = self.get_playlist_tracks(
@@ -566,6 +589,35 @@ class SpotifyClient:
         album_track_ids = [track.id for track in album.tracks.items]
         return all(e in playlist_track_ids for e in album_track_ids)
 
+    def get_devices(self, user_id) -> List[Device]:
+        access_token = get_user_tokens(user_id=user_id).access_token
+        response = requests.get(
+            url="https://api.spotify.com/v1/me/player/devices",
+            headers={
+                "content-type": "application/json",
+            },
+            auth=BearerAuth(access_token),
+        )
+        api_results = self.response_handler(response)
+        devices = [Device.model_validate(device) for device in api_results["devices"]]
+        return devices
+
+    def get_device_for_user(self, user_id) -> Device | None:
+        devices = self.get_devices(user_id=user_id)
+        if not devices:
+            return None
+
+        active_device = next((device for device in devices if device.is_active), None)
+        if active_device:
+            device_id = active_device.id
+        else:
+            smartphone_device = next(
+                (device for device in devices if device.type.lower() == "smartphone"),
+                None,
+            )
+            device_id = smartphone_device.id if smartphone_device else devices[0].id
+        return device_id
+
     def pause_playback(self, user_id) -> Response:
         access_token = get_user_tokens(user_id=user_id).access_token
         response = requests.put(
@@ -586,6 +638,10 @@ class SpotifyClient:
     ) -> Response:
         access_token = get_user_tokens(user_id=user_id).access_token
 
+        device_id = self.get_device_for_user(user_id=user_id)
+        if not device_id:
+            return make_response("No devices found to resume on", 400)
+
         if not start_playback_request_body:
             data = None
         elif start_playback_request_body.offset:
@@ -602,8 +658,11 @@ class SpotifyClient:
                 pass
 
             data = start_playback_request_body.model_dump_json(exclude_none=True)
+        url = "https://api.spotify.com/v1/me/player/play" + (
+            f"?device_id={device_id}" if device_id else ""
+        )
         response = requests.put(
-            url="https://api.spotify.com/v1/me/player/play",
+            url=url,
             data=data,
             headers={
                 "content-type": "application/json",

@@ -1,13 +1,16 @@
 import { FC } from "react";
-import { View } from "../Themed";
+import { View, Text } from "../Themed";
 import { StyleSheet} from "react-native";
 import Share from 'react-native-share'
-import AsyncButton from "../AsyncButton";
 import { useAuth } from "../../contexts/authContext";
 import { populatePlaylist } from "../../api";
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { Album } from "../../interfaces/Album";
+import { usePlaybackContext } from "../../hooks/usePlaybackContext";
+import SmallAsyncButton from "../SmallAsyncButton";
+import { Ionicons } from "@expo/vector-icons";
+import { useColorTheme } from "../../hooks/useColorTheme";
 
 interface PlaylistManagementButtonsProps {
     playlistId: string;
@@ -18,20 +21,38 @@ interface PlaylistManagementButtonsProps {
 
 const PlaylistManagementButtons: FC<PlaylistManagementButtonsProps> = ({playlistId, refetchAlbums, copyAlbumArtists,albums}) => {
     const { authorizedRequest } = useAuth()
+    const theme = useColorTheme();
+    const { resumeItem } = usePlaybackContext();
+        
     const handleSyncClick = async () => {
         await authorizedRequest(populatePlaylist(playlistId))
         await refetchAlbums()
     }
 
+    const handleResumePlaylist = async () => {
+        await resumeItem({id: playlistId})
+    };
+
     return (
-        <View style={styles.container}>
-            <View style={styles.buttonRow}>
-                <AsyncButton text={"Copy Album Artists"} onPressAsync={copyAlbumArtists}/>
-                <AsyncButton text={"Sync with Spotify"} onPressAsync={handleSyncClick}/>
-            </View>
-            <View style={styles.buttonRow}>
-                <AsyncButton text={"Resume Playlist"} onPressAsync={handleSyncClick}/>
-            </View>
+        <View style={[styles.container, {borderColor: theme.background.offset}]}>
+            <SmallAsyncButton onPressAsync={copyAlbumArtists}>
+                <View style={styles.buttonContent} >
+                    <Ionicons size={28} name="copy-outline" color={theme.text.primary} />
+                    <Text noBackground style={styles.buttonText}>Copy Album Artists</Text>
+                </View>
+            </SmallAsyncButton>
+            <SmallAsyncButton onPressAsync={handleSyncClick}>
+                <View style={styles.buttonContent} >
+                    <Ionicons size={28} name="sync" color={theme.text.primary} />
+                    <Text noBackground style={styles.buttonText} >Sync with Spotify</Text>
+                </View>
+            </SmallAsyncButton>
+            <SmallAsyncButton onPressAsync={handleResumePlaylist}>
+                <View style={styles.buttonContent} >
+                    <Ionicons size={28} name="play" color={theme.text.primary} />
+                    <Text noBackground style={styles.buttonText} >Resume Playlist</Text>
+                </View>
+            </SmallAsyncButton>
         </View>
     )
 }
@@ -41,13 +62,12 @@ const styles = StyleSheet.create({
         display: "flex",
         flexWrap: "wrap",
         gap: 8,
-        flexDirection: "column",
-    },
-    buttonRow: {
-        display: "flex",
-        gap: 8,
         flexDirection: "row",
-    }
+        borderWidth: 2,
+        borderRadius: 8,
+    },
+    buttonContent: {display: "flex", flexDirection: "column", gap: 8, alignItems: "center"},
+    buttonText: {fontSize: 12}
 })
 
 const downloadAlbumImage = async (album: Album, index: number ): Promise<string | null> => {

@@ -17,9 +17,7 @@ export const loginSpotify = async (): Promise<void> => {
 export const logout = async (): Promise<void> => {
 	return fetch(`${backendUrl}/auth/logout`, {
 		credentials: "include",
-	}).then(async response => {
-		const redirectUrl = await response.text();
-		console.log(redirectUrl)
+	}).then(() => {
 		window.open("/", "_self");
 	});
 }
@@ -178,7 +176,6 @@ export const startPlayback = (requestBody?: StartPlaybackRequest
 export const resumePlayback = (requestBody: ResumePlaybackRequest
 ) => async (accessToken?: string): Promise<Response> => {
 	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
-
 	return request(`spotify/playback/resume`, RequestMethod.PUT, requestBody, headers);
 };
 

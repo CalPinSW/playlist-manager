@@ -1,4 +1,5 @@
 export interface PlaybackInfo {
+  type: "track" | "episode";
   track_title: string;
   track_id: string;
   album_title: string;

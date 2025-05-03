@@ -168,6 +168,10 @@ def music_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
         playback_info = spotify.get_my_current_playback(user_id=db_user.id)
         if playback_info is None:
             return ("", 204)
+
+        if playback_info.type == "episode":
+            return playback_info.model_dump_json()
+
         if playback_info.playlist_id is not None:
             playlist_info = get_playlist_by_id_or_none(playback_info.playlist_id)
             if playlist_info:

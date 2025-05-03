@@ -3,7 +3,6 @@ import { Image, Pressable, StyleSheet } from "react-native";
 import { View, Text } from '../../Themed'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { Album } from "../../../interfaces/Album";
-import AlbumInfo from "./AlbumInfo";
 import { renderArtistList } from "../../../utils/album/renderArtistList";
 
 interface AlbumSlideProps {
@@ -37,7 +36,6 @@ const AlbumSlide: React.FC<AlbumSlideProps> = ({ album, isSelected, onPress }) =
           style={[styles.albumBack,backStyle]}
         >
           <Image source={{ uri: album.image_url }} style={[styles.albumImage, { transform: [{rotateY: "180deg"}] }]} />
-          <AlbumInfo {...album}/>
         </Animated.View>
       </View>
       <View style={styles.albumInfo}>

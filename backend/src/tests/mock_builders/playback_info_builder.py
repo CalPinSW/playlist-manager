@@ -15,6 +15,7 @@ def playback_info_builder(
 ):
     return PlaybackInfo.model_validate(
         {
+            "type": "track",
             "track_title": "track title",
             "track_id": track_id,
             "album_id": album_id,

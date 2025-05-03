@@ -51,7 +51,7 @@ const PlaybackFooter: FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-row justify-between">
+          {playbackInfo.type == "track" && <div className="flex flex-row justify-between">
             <div className="flex flex-row space-x-2">
               <AlbumIcon className="my-auto size-8 stroke-primary-darker" />
               <div className="my-auto text-balance">
@@ -67,6 +67,7 @@ const PlaybackFooter: FC = () => {
               />
             </div>
           </div>
+          }
 
           {playbackInfo.playlist?.id && (
             <div

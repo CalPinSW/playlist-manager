@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Literal, Optional
 from src.text_formatting import format_ms_as_mins_and_secs
 
 
@@ -11,6 +11,7 @@ class PlaylistProgression(BaseModel):
 
 
 class PlaybackInfo(BaseModel):
+    type: Literal["track", "episode"]
     track_title: str
     track_id: str
     album_title: str

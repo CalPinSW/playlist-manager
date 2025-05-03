@@ -29,7 +29,10 @@ const AsyncButton: FC<AsyncButtonProps> = ({ onPressAsync, text, disabled}) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.button,  {backgroundColor: (disabled || loading) ? theme.background.offset : theme.primary.default}]}
+        style={[
+          styles.button, 
+          {backgroundColor: (disabled || loading) ? theme.background.offset : theme.primary.default}
+        ]}
         onPress={handlePress}
         disabled={disabled || loading}
       >

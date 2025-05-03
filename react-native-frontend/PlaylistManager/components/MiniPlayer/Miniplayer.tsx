@@ -1,6 +1,5 @@
 import { StyleSheet } from 'react-native';
 import React, { useState, useMemo, useRef, FC } from "react";
-import { Image } from "react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { useColorTheme } from '../../hooks/useColorTheme';
 import { View, Text } from '../Themed';
@@ -14,8 +13,9 @@ import ExpandableImage from '../ExpandableImage';
 const MiniPlayer = () => {
     const { playbackInfo } = usePlaybackContext();
     const theme = useColorTheme()
-    const snapPoints = useMemo(() => [0, 150, 320], []);
-    const [activeSnapPoint, setActiveSnapPoint] = useState(1);
+    const snapPoints = useMemo(() => [150, 320], []);
+    const [activeSnapPoint, setActiveSnapPoint] = useState(0);
+
     const onChange = (index: number) => {
       setActiveSnapPoint(index)
     }
@@ -106,6 +106,7 @@ const MiniPlayerContent: FC<MiniPlayerContentProps> = ({playbackInfo, activeSnap
           </View>
           <Text noBackground style={styles.title}>{playbackInfo.track_title}</Text>
         </View>
+        {playbackInfo.type == "track" && 
         <View noBackground style={styles.info}>
           <View noBackground style={styles.icons}>
             <ExpandableImage source={{ uri: playbackInfo.artwork_url }} style={styles.artwork} height={50} width={50} />
@@ -116,6 +117,7 @@ const MiniPlayerContent: FC<MiniPlayerContentProps> = ({playbackInfo, activeSnap
           </View>
           <Text noBackground style={styles.title}>{playbackInfo.album_title}</Text>
         </View>
+}
         {playbackInfo.playlist && 
           <View noBackground style={styles.info}>
             <View noBackground style={styles.icons}>

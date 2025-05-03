@@ -5,6 +5,7 @@ from peewee import (
     BigIntegerField,
     DateField,
     ForeignKeyField,
+    BooleanField,
 )
 from playhouse.flask_utils import FlaskDB
 

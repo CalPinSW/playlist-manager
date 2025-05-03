@@ -4,7 +4,7 @@ export default {
   expo: {
     name: 'PlaylistManager',
     slug: 'playlistmanager',
-    version: '1.0.1',
+    version: '1.0.2',
     orientation: 'portrait',
     icon: './assets/images/playlist-manager-icon.png',
     scheme: 'playlistmanager',
