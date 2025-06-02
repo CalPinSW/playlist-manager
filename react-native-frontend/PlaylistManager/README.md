@@ -46,3 +46,8 @@ Done in 159ms.
 ```
 
 If the [backend](../backend/README.md) is running you should be able to access the site at http://localhost:8080
+
+## Building the preview version of the app
+Run
+```eas build --platform android --profile preview```
+to build the app for preview (which can be distributed to android devices without the need for a development server)
