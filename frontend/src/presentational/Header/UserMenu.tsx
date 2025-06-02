@@ -11,6 +11,10 @@ interface UserMenuProps {
 
 const UserMenu: FC<UserMenuProps> = ({userData}) => {
   const {logout} = useAuth0();
+  const logoutParams = {
+    returnTo: window.location.origin,
+  };
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
     <DropdownMenu isMenuOpen={isMenuOpen} closeMenu={() => setIsMenuOpen(false)} trigger={
@@ -26,7 +30,7 @@ const UserMenu: FC<UserMenuProps> = ({userData}) => {
         }
       >
         <LinkButton className={"flex w-full"} href={'/settings'}>Settings</LinkButton>
-        <Button className={"flex w-full"} onClick={() => void logout()}>Logout</Button>
+        <Button className={"flex w-full"} onClick={() => void logout({logoutParams})}>Logout</Button>
       </DropdownMenu>)
 }
 
