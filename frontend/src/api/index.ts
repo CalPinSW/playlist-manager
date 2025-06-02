@@ -21,16 +21,6 @@ export const loginSpotify = async (): Promise<void> => {
 	});
 };
 
-export const logout = async (): Promise<void> => {
-	return fetch(`${backendUrl}/auth/logout`, {
-		credentials: "include",
-	}).then(async response => {
-		const redirectUrl = await response.text();
-		console.log(redirectUrl)
-		window.open("/", "_self");
-	});
-}
-
 export const getCurrentUserDetails = () => async (accessToken?: string): Promise<User> => {
 	const headers: HeadersInit = accessToken ? {Authorization: `Bearer ${accessToken}`} : {}
 	return jsonRequest(

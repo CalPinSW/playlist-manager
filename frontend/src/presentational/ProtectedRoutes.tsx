@@ -7,10 +7,13 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const {isSpotifyLinked} = useSpotifyAuthContext()
+  const {user, isSpotifyLinked} = useSpotifyAuthContext()
 
-  if (!isSpotifyLinked) {
-    return <Navigate to="/login" />;
-  }
-  return children;
+  return user && isSpotifyLinked ? children : <Navigate to="/login" />;
+};
+
+export const UnprotectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const {user, isSpotifyLinked} = useSpotifyAuthContext()
+
+  return user && isSpotifyLinked ? <Navigate to="/" /> : children;
 };

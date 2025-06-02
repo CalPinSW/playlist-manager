@@ -5,7 +5,7 @@ import Layout from "./presentational/Layout";
 import { Login } from "./Login";
 import { Index } from "./MainPage";
 import { SettingsPage } from "./settingsPage/SettingsPage";
-import { ProtectedRoute } from "./presentational/ProtectedRoutes";
+import { ProtectedRoute, UnprotectedRoute } from "./presentational/ProtectedRoutes";
 import { PlaybackContextProvider } from "./context/PlaybackContext";
 import { getPlaylist } from "./api";
 import { useAuthorizedRequest } from "./hooks/useAuthorizedRequest";
@@ -16,32 +16,25 @@ const AppRoutes = () => {
   
   return (
     <BrowserRouter>
-      <ProtectedRoute>
-        <PlaybackContextProvider>
-          <Layout withFooter>
-            <Routes>
-              <Route index element={<Index />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route
-                path="/edit/:playlistId"
-                element={<PlaylistExplorer />}
-                loader={async ({ params }) => {
-                  if (!params.playlistId) {
-                    throw new Error("Playlist ID is required");
-                  }
-                  return authorizedRequest(getPlaylist(params.playlistId));
-                }}
-              />
-            </Routes>
-          </Layout>
-        </PlaybackContextProvider>
-      </ProtectedRoute>
-        <Layout>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-          </Routes>
-        </Layout>
-        
+      <Routes>
+        <Route path="/login" element={<UnprotectedRoute><Layout /></UnprotectedRoute>}> 
+          <Route index element={<Login />} />
+        </Route>
+        <Route path="/" element={<ProtectedRoute><PlaybackContextProvider><Layout withFooter /></PlaybackContextProvider></ProtectedRoute>} >
+          <Route index element={<Index />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route
+            path="/edit/:playlistId"
+            element={<PlaylistExplorer />}
+            loader={async ({ params }) => {
+              if (!params.playlistId) {
+                throw new Error("Playlist ID is required");
+              }
+              return authorizedRequest(getPlaylist(params.playlistId));
+            }}
+          />
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 };

@@ -39,16 +39,6 @@ def auth_controller(require_auth: ResourceProtector, spotify: SpotifyClient):
 
         return jsonify({"spotifyLinked": bool(user and user_tokens.access_token)}), 200
 
-    @auth_controller.route("logout")
-    @require_auth
-    def logout():
-        resp = make_response("Logged out")
-        resp.delete_cookie("spotify_access_token")
-        resp.delete_cookie("spotify_refresh_token")
-        resp.delete_cookie("user_id")
-        resp.delete_cookie("session")
-        return resp
-
     @auth_controller.route("get-user-code")
     @require_auth
     def auth_redirect():
