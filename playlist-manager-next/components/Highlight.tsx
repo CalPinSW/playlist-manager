@@ -1,12 +1,17 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, FC } from 'react';
 import hljs from 'highlight.js/lib/core';
 import json from 'highlight.js/lib/languages/json';
 
 import 'highlight.js/styles/monokai-sublime.css';
 
-const Highlight = ({ children, testId }) => {
+interface HighlightProps {
+  children: string;
+  testId?: string;
+}
+
+const Highlight: FC<HighlightProps> = ({ children, testId }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const codeNode = useRef();
   const language = 'json';

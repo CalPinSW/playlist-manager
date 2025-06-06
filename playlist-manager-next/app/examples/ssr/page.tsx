@@ -1,7 +1,7 @@
 import React from 'react';
-import { auth0 } from '../../lib/auth0';
+import { auth0 } from '../../../lib/auth0';
 
-import Highlight from '../../components/Highlight';
+import Highlight from '../../../components/Highlight';
 
 export default async function SSRPage() {
   const { user } = await auth0.getSession();

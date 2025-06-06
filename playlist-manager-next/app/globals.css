@@ -37,3 +37,5 @@ p code {
 .result-block-container .result-block {
   opacity: 1;
 }
+
+@import 'tailwindcss';

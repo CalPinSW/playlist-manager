@@ -1,4 +1,3 @@
-'use client';
 
 import './globals.css';
 import NavBar from '../components/NavBar';
@@ -6,6 +5,12 @@ import { Container } from 'reactstrap';
 import Footer from '../components/Footer';
 import React from 'react';
 import { Auth0Provider } from '@auth0/nextjs-auth0';
+import type { Metadata } from 'next'
+
+// export const metadata: Metadata = {
+//   title: 'Playlist Manager',
+//   description: 'Service to manage your playlists',
+// }
 
 export default function RootLayout({ children }) {
   return (

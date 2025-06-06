@@ -36,7 +36,7 @@ To do this, first copy `.env.local.example` into a new file in the same folder c
 # A long secret value used to encrypt the session cookie
 AUTH0_SECRET='LONG_RANDOM_VALUE'
 # The base url of your application
-APP_BASE_URL='http://localhost:3000'
+NEXT_APP_BASE_URL='http://localhost:3000'
 # Your Auth0 tenant domain
 AUTH0_DOMAIN='YOUR_AUTH0_DOMAIN.auth0.com'
 # Your Auth0 application's Client ID

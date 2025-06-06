@@ -21,7 +21,7 @@ export default function Profile() {
                 src={user.picture}
                 alt="Profile"
                 className="rounded-circle img-fluid profile-picture mb-3 mb-md-0"
-                decode="async"
+                // decode="async"
                 data-testid="profile-picture"
               />
             </Col>

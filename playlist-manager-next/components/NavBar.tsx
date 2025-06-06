@@ -1,5 +1,4 @@
-'use  client';
-
+"use client"
 import React, { useState } from 'react';
 import {
   Collapse,
@@ -40,17 +39,17 @@ const NavBar = () => {
               {user && (
                 <>
                   <NavItem>
-                    <PageLink href="/csr" className="nav-link" testId="navbar-csr">
+                    <PageLink href="/examples/csr" className="nav-link" testId="navbar-csr">
                       Client-side rendered page
                     </PageLink>
                   </NavItem>
                   <NavItem>
-                    <PageLink href="/ssr" className="nav-link" testId="navbar-ssr">
+                    <PageLink href="/examples/ssr" className="nav-link" testId="navbar-ssr">
                       Server-side rendered page
                     </PageLink>
                   </NavItem>
                   <NavItem>
-                    <PageLink href="/external" className="nav-link" testId="navbar-external">
+                    <PageLink href="/examples/external" className="nav-link" testId="navbar-external">
                       External API
                     </PageLink>
                   </NavItem>
@@ -78,7 +77,7 @@ const NavBar = () => {
                       className="nav-user-profile rounded-circle"
                       width="50"
                       height="50"
-                      decode="async"
+                      // decode="async"
                       data-testid="navbar-picture-desktop"
                     />
                   </DropdownToggle>
@@ -125,7 +124,7 @@ const NavBar = () => {
                       className="nav-user-profile d-inline-block rounded-circle mr-3"
                       width="50"
                       height="50"
-                      decode="async"
+                      //decode="async"
                       data-testid="navbar-picture-mobile"
                     />
                     <h6 className="d-inline-block" data-testid="navbar-user-mobile">
