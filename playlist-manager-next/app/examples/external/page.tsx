@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button } from 'reactstrap';
 
 import Loading from '../../../components/Loading';
 import ErrorMessage from '../../../components/ErrorMessage';
@@ -50,9 +49,9 @@ export default function External() {
             for more info).
           </p>
         </div>
-        <Button color="primary" className="mt-5" onClick={e => handle(e, callApi)} data-testid="external-action">
+        <button color="primary" className="mt-5" onClick={e => handle(e, callApi)} data-testid="external-action">
           Ping API
-        </Button>
+        </button>
       </div>
       <div className="result-block-container">
         {isLoading && <Loading />}

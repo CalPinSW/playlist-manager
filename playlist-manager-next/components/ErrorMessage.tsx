@@ -1,10 +1,9 @@
 import React from 'react';
-import { Alert } from 'reactstrap';
 
 const ErrorMessage = ({ children }) => (
-  <Alert color="danger" fade={false} data-testid="error">
+  <div color="danger" data-testid="error">
     {children}
-  </Alert>
+  </div>
 );
 
 export default ErrorMessage;

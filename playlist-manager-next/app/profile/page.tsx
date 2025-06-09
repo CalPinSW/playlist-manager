@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Row, Col } from 'reactstrap';
 import { useUser } from '@auth0/nextjs-auth0';
 
 import Loading from '../../components/Loading';
@@ -15,8 +14,8 @@ export default function Profile() {
       {isLoading && <Loading />}
       {user && (
         <>
-          <Row className="align-items-center profile-header mb-5 text-center text-md-left" data-testid="profile">
-            <Col md={2}>
+          <div className="flex flex-row align-items-center profile-header mb-5 text-center text-md-left" data-testid="profile">
+            <div className="flex flex-col">
               <img
                 src={user.picture}
                 alt="Profile"
@@ -24,17 +23,17 @@ export default function Profile() {
                 // decode="async"
                 data-testid="profile-picture"
               />
-            </Col>
-            <Col md>
+            </div>
+            <div className="flex flex-col">
               <h2 data-testid="profile-name">{user.name}</h2>
               <p className="lead text-muted" data-testid="profile-email">
                 {user.email}
               </p>
-            </Col>
-          </Row>
-          <Row data-testid="profile-json">
+            </div>
+          </div>
+          <div data-testid="profile-json">
             <Highlight>{JSON.stringify(user, null, 2)}</Highlight>
-          </Row>
+          </div>
         </>
       )}
     </>

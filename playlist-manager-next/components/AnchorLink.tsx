@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import NavBarItem from './NavBarItem';
+import NavBarItem from './layout/NavBarItem';
 
 interface AnchorLinkProps {
   children: React.ReactNode;

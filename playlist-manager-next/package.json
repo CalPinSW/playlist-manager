@@ -11,13 +11,19 @@
     "test:integration": "start-server-and-test start http-get://localhost:3000 cypress:run",
     "test:integration:watch": "start-server-and-test start http-get://localhost:3000 cypress:open",
     "cypress:run": "cypress run --browser chrome",
-    "cypress:open": "cypress open --browser chrome"
+    "cypress:open": "cypress open --browser chrome",
+    "prisma:generate": "prisma generate"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.6.1",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
+    "@prisma/client": "^6.9.0",
+    "@prisma/extension-accelerate": "^2.0.1",
+    "@spotify/web-api-ts-sdk": "^1.2.0",
     "concurrently": "^8.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -30,8 +36,7 @@
     "next": "15.2.4",
     "nodemon": "^3.0.0",
     "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "reactstrap": "^9.1.5"
+    "react-dom": "19.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.0",
