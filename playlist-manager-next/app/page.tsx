@@ -1,15 +1,13 @@
 import React from 'react';
-
-import Hero from '../components/Hero';
-import Content from '../components/Content';
+import { PlaylistSearch } from './pages/index/PlaylistSearch';
 
 export default function Index() {
   return (
-    <>
-    <div className='text-5xl m-3 p-4'>Hellow World</div>
-      <Hero />
-      <hr />
-      <Content />
-    </>
+    <div className="py-4 px-2 space-y-2">
+      <div className="text-5xl m-3 p-4">Playlist Manager</div>
+      <PlaylistSearch />
+
+      <hr className="my-2 h-px w-4/5 mx-auto" />
+    </div>
   );
 }
