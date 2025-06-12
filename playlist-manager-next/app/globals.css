@@ -1,32 +1,32 @@
 @import 'tailwindcss';
 
 @theme {
-    --color-background: oklch(0.1822 0 0); /* "#121212" */
-    --color-background: oklch(0.1822 0 0); /* "#121212" */
-    --color-background-offset: oklch(0.347 0.012 278.7); /* "#282828" */
-    --color-background-interactive: oklch(0.377 0.012 278.7); /* "#3f3f3f" */
+  --color-background: oklch(0.1822 0 0); /* "#121212" */
+  --color-background: oklch(0.1822 0 0); /* "#121212" */
+  --color-background-offset: oklch(0.347 0.012 278.7); /* "#282828" */
+  --color-background-interactive: oklch(0.377 0.012 278.7); /* "#3f3f3f" */
 
-    --color-text: oklch(0.946 0.009 81.7); /* "#eae0d5" */
-    --color-text-secondary: oklch(0.715 0.012 306.2); /* "#aeacb0" */
+  --color-text: oklch(0.946 0.009 81.7); /* "#eae0d5" */
+  --color-text-secondary: oklch(0.715 0.012 306.2); /* "#aeacb0" */
 
-    --color-primary: oklch(0.627 0.222 301.7); /* "#7a5af5" */
-    --color-primary-lighter: oklch(0.367 0.13 301.7); /* "#613286" */
-    --color-primary-darker: oklch(0.601 0.217 301.7); /* "#5e43f3" */
+  --color-primary: oklch(0.627 0.222 301.7); /* "#7a5af5" */
+  --color-primary-lighter: oklch(0.367 0.13 301.7); /* "#613286" */
+  --color-primary-darker: oklch(0.601 0.217 301.7); /* "#5e43f3" */
 
-    --color-secondary: oklch(0.963 0.184 104.5); /* "#ebd621" */
-    --color-secondary-lighter: oklch(0.988 0.071 104.5); /* "#fff175" */
-    --color-secondary-darker: oklch(0.755 0.184 104.5); /* "#a69500" */
+  --color-secondary: oklch(0.963 0.184 104.5); /* "#ebd621" */
+  --color-secondary-lighter: oklch(0.988 0.071 104.5); /* "#fff175" */
+  --color-secondary-darker: oklch(0.755 0.184 104.5); /* "#a69500" */
 
-    --color-warning: oklch(0.272 0.222 19.7); /* "#720026" */
-    --color-warning-lighter: oklch(0.462 0.181 271.7); /* "#3354e6" */
-    --color-warning-darker: oklch(0.527 0.181 19.7); /* "#ce4257" */
+  --color-warning: oklch(0.272 0.222 19.7); /* "#720026" */
+  --color-warning-lighter: oklch(0.462 0.181 271.7); /* "#3354e6" */
+  --color-warning-darker: oklch(0.527 0.181 19.7); /* "#ce4257" */
 }
 
-:root{
+:root {
   background-color: var(--color-background);
   color: var(--color-text);
 }
 
-:root[data-theme="light"] {
+:root[data-theme='light'] {
   background-color: var(--color-background-light);
 }

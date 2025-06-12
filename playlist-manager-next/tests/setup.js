@@ -22,7 +22,7 @@ vi.mock('./../lib/auth0', () => {
           sub: 'bob'
         }
       }),
-      getAccessToken: () => 'access_token',
+      getAccessToken: () => 'access_token'
     }
   };
 });

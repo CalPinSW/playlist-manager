@@ -1,12 +1,10 @@
-import React, { FC } from "react";
+import React, { FC } from 'react';
 
 interface ProgressCircleProps {
   percentage: number;
   className?: string;
 }
-export const ProgressCircle: FC<ProgressCircleProps> = ({
-  percentage,
-}) => {
+export const ProgressCircle: FC<ProgressCircleProps> = ({ percentage }) => {
   return (
     <div className="relative">
       <svg className="size-full" viewBox="0 0 100 100">
@@ -27,17 +25,9 @@ export const ProgressCircle: FC<ProgressCircleProps> = ({
           r="40"
           fill="transparent"
           strokeDasharray={40 * 2 * Math.PI}
-          strokeDashoffset={
-            40 * 2 * Math.PI - (percentage / 100) * 40 * 2 * Math.PI
-          }
+          strokeDashoffset={40 * 2 * Math.PI - (percentage / 100) * 40 * 2 * Math.PI}
         ></circle>
-        <text
-          x="50"
-          y="50"
-          textAnchor="middle"
-          alignmentBaseline="middle"
-          className="stroke-text"
-        >
+        <text x="50" y="50" textAnchor="middle" alignmentBaseline="middle" className="stroke-text">
           {percentage}%
         </text>
       </svg>

@@ -14,7 +14,10 @@ export default function Profile() {
       {isLoading && <Loading />}
       {user && (
         <>
-          <div className="flex flex-row align-items-center profile-header mb-5 text-center text-md-left" data-testid="profile">
+          <div
+            className="flex flex-row align-items-center profile-header mb-5 text-center text-md-left"
+            data-testid="profile"
+          >
             <div className="flex flex-col">
               <img
                 src={user.picture}

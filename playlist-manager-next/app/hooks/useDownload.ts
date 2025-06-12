@@ -1,8 +1,8 @@
-import JSZip from "jszip";
+import JSZip from 'jszip';
 
 export interface ImageLink {
-    url: string;
-    name: string;
+  url: string;
+  name: string;
 }
 
 const useDownloadImages = () => {
@@ -18,12 +18,12 @@ const useDownloadImages = () => {
 
     // Generate the zip file
     const zipData = await zip.generateAsync({
-      type: "blob",
-      streamFiles: true,
+      type: 'blob',
+      streamFiles: true
     });
 
     // Create a download link for the zip file
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = window.URL.createObjectURL(zipData);
     link.download = `${zipTitle}_images.zip`;
     link.click();

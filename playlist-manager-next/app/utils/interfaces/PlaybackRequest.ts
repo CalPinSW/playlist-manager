@@ -1,21 +1,21 @@
-export type OffsetType = "position" | "uri" | "album_id";
+export type OffsetType = 'position' | 'uri' | 'album_id';
 
 export interface Offset {
   type: OffsetType;
 }
 
 export interface PositionOffset extends Offset {
-  type: "position";
+  type: 'position';
   position: number;
 }
 
 export interface UriOffset extends Offset {
-  type: "uri";
+  type: 'uri';
   uri: string;
 }
 
 export interface AlbumIdOffset extends Offset {
-  type: "album_id";
+  type: 'album_id';
   album_id: string;
 }
 

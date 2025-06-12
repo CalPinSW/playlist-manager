@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import Link from "next/link";
-import useDbUser from "../../app/hooks/useDbUser";
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import Link from 'next/link';
+import useDbUser from '../../app/hooks/useDbUser';
 
 export const ProfileSettings = () => {
   const { user, isLoading } = useDbUser();
@@ -24,7 +24,7 @@ export const ProfileSettings = () => {
           <Menu as="div" className="relative">
             <MenuButton className="flex items-center gap-2 focus:outline-none">
               <img
-                src={user.image_url ?? ""}
+                src={user.image_url ?? ''}
                 alt="Profile"
                 className="rounded-full w-10 h-10"
                 data-testid="navbar-picture-desktop"
@@ -37,7 +37,7 @@ export const ProfileSettings = () => {
                   {({ active }) => (
                     <span
                       className={`block px-4 py-2 text-sm text-gray-700 dark:text-text-secondary ${
-                        active ? "bg-gray-100 dark:bg-background-offset" : ""
+                        active ? 'bg-gray-100 dark:bg-background-offset' : ''
                       }`}
                       data-testid="navbar-user-desktop"
                     >
@@ -49,9 +49,7 @@ export const ProfileSettings = () => {
                   {({ active }) => (
                     <Link
                       href="/profile"
-                      className={`block px-4 py-2 text-sm ${
-                        active ? "bg-gray-100 dark:bg-background-offset" : ""
-                      }`}
+                      className={`block px-4 py-2 text-sm ${active ? 'bg-gray-100 dark:bg-background-offset' : ''}`}
                       data-testid="navbar-profile-desktop"
                     >
                       Profile
@@ -62,9 +60,7 @@ export const ProfileSettings = () => {
                   {({ active }) => (
                     <Link
                       href="/pages/link-user-to-spotify"
-                      className={`block px-4 py-2 text-sm ${
-                        active ? "bg-gray-100 dark:bg-background-offset" : ""
-                      }`}
+                      className={`block px-4 py-2 text-sm ${active ? 'bg-gray-100 dark:bg-background-offset' : ''}`}
                       data-testid="navbar-profile-desktop"
                     >
                       Link with Spotify
@@ -76,7 +72,7 @@ export const ProfileSettings = () => {
                     <Link
                       href="/auth/logout"
                       className={`block px-4 py-2 text-sm text-red-600 ${
-                        active ? "bg-gray-100 dark:bg-background-offset" : ""
+                        active ? 'bg-gray-100 dark:bg-background-offset' : ''
                       }`}
                       data-testid="navbar-logout-desktop"
                     >

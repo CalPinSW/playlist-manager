@@ -25,4 +25,4 @@ export default async function SSRPage() {
       </div>
     </>
   );
-};
+}

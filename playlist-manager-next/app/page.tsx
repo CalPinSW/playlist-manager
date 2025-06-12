@@ -6,7 +6,7 @@ export default function Index() {
   return (
     <div className="flex flex-col p-2 gap-4">
       <div className="text-4xl m-3 text-center">Playlist Manager</div>
-      <div className='flex flex-col gap-8'>
+      <div className="flex flex-col gap-8">
         <PlaylistSearch />
         <AlbumAndArtistSearch />
       </div>

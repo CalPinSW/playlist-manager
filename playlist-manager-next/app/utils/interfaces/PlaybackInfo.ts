@@ -1,7 +1,7 @@
-import { Artist } from "@spotify/web-api-ts-sdk";
+import { Artist } from '@spotify/web-api-ts-sdk';
 
 export interface PlaybackInfo {
-  type: "track" | "episode";
+  type: 'track' | 'episode';
   track_title: string;
   track_id: string;
   album_title: string;
@@ -14,7 +14,7 @@ export interface PlaybackInfo {
   album_progress: number;
   album_duration: number;
   is_playing: boolean;
-  playlist?: PlaylistProgress
+  playlist?: PlaylistProgress;
 }
 
 export interface PlaylistProgress {

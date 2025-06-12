@@ -1,5 +1,5 @@
 // Utility functions for playlist playback info, durations, and progress
-import prisma from "../../lib/prisma";
+import prisma from '../../lib/prisma';
 
 export async function getPlaylistByIdOrNone(playlistId: string) {
   return await prisma.playlist.findUnique({
@@ -7,8 +7,8 @@ export async function getPlaylistByIdOrNone(playlistId: string) {
     select: {
       id: true,
       name: true,
-      image_url: true,
-    },
+      image_url: true
+    }
   });
 }
 
@@ -16,14 +16,14 @@ export async function getPlaylistDuration(playlistId: string): Promise<number> {
   // Get all albums on the playlist
   const albums = await prisma.playlistalbumrelationship.findMany({
     where: { playlist_id: playlistId },
-    select: { album_id: true },
+    select: { album_id: true }
   });
   const albumIds = albums.map(a => a.album_id);
   if (albumIds.length === 0) return 0;
   // Sum durations of all tracks in those albums
   const result = await prisma.track.aggregate({
     where: { album_id: { in: albumIds } },
-    _sum: { duration_ms: true },
+    _sum: { duration_ms: true }
   });
   return result._sum.duration_ms || 0;
 }
@@ -33,14 +33,14 @@ export async function getPlaylistDurationUpToTrack(playlistId: string, trackId: 
   const albums = await prisma.playlistalbumrelationship.findMany({
     where: { playlist_id: playlistId },
     orderBy: { album_index: 'asc' },
-    select: { album_id: true, album_index: true },
+    select: { album_id: true, album_index: true }
   });
   const albumOrder = albums.map(a => a.album_id);
   if (albumOrder.length === 0) return 0;
   // Get all tracks in those albums, with disc/track ordering
   const tracks = await prisma.track.findMany({
     where: { album_id: { in: albumOrder } },
-    select: { id: true, duration_ms: true, album_id: true, disc_number: true, track_number: true },
+    select: { id: true, duration_ms: true, album_id: true, disc_number: true, track_number: true }
   });
   // Sort tracks by album_index, disc_number, track_number
   tracks.sort((a, b) => {
@@ -64,7 +64,9 @@ export async function buildPlaybackInfoWithPlaylist(playbackInfo: any) {
   const playlist = await getPlaylistByIdOrNone(playbackInfo.playlist_id);
   if (!playlist) return playbackInfo;
   const playlist_duration = await getPlaylistDuration(playbackInfo.playlist_id);
-  const playlist_progress = (await getPlaylistDurationUpToTrack(playbackInfo.playlist_id, playbackInfo.track_id)) + (playbackInfo.track_progress || 0);
+  const playlist_progress =
+    (await getPlaylistDurationUpToTrack(playbackInfo.playlist_id, playbackInfo.track_id)) +
+    (playbackInfo.track_progress || 0);
   return {
     ...playbackInfo,
     playlist: {
@@ -72,7 +74,7 @@ export async function buildPlaybackInfoWithPlaylist(playbackInfo: any) {
       title: playlist.name,
       progress: playlist_progress,
       duration: playlist_duration,
-      artwork_url: playlist.image_url,
-    },
+      artwork_url: playlist.image_url
+    }
   };
 }
