@@ -10,6 +10,9 @@ const tailwindConfigModule = {
 
   theme: {
     extend: {
+      transitionProperty: {
+        height: 'height',
+      },
       keyframes: {
         slideDash: {
           from: { transform: "translateX(-50%)" },

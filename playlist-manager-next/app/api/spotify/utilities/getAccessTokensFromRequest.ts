@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from "../../../../lib/prisma";
 import { getUserFromRequest } from "../../user/route";
-import { refreshSpotifyAccessToken } from '../accept-user-token/route';
 import { access_token } from '../../../generated/prisma';
+import { NextApiRequest } from 'next';
+import { refreshSpotifyAccessToken } from './refreshSpotifyAccessToken';
 
 export class SpotifyAuthorizationError extends Error {
   constructor(message: string) {
@@ -11,8 +12,8 @@ export class SpotifyAuthorizationError extends Error {
   }
 }   
  
-type Handler = (req: NextRequest, context?: any) => Promise<Response>;
-type HandlerWithAccessToken = (accessToken: access_token, req: NextRequest, context?: any) => Promise<Response>;
+type Handler = (req: NextRequest | NextApiRequest, context?: any) => Promise<Response>;
+type HandlerWithAccessToken = (accessToken: access_token, req: NextRequest | NextApiRequest, context?: any) => Promise<Response>;
  
 export function withSpotifyAccessToken(handler: HandlerWithAccessToken): Handler {
   return async (req, context) => {
@@ -29,13 +30,11 @@ export function withSpotifyAccessToken(handler: HandlerWithAccessToken): Handler
       );
     }
     try {
-        return handler(accessTokens, req, context);
+        const response = await handler(accessTokens, req, context);
+        return response
     } catch (error) {
-        if (error instanceof SpotifyAuthorizationError) {
-            await refreshSpotifyAccessToken(user)
-            return handler(accessTokens, req, context);
-        }
-        else throw error;
+        await refreshSpotifyAccessToken(user)
+        return handler(accessTokens, req, context);
     }
   };
 }

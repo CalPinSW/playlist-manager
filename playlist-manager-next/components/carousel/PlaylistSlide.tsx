@@ -10,7 +10,7 @@ interface PlaylistSlideProps {
 
 const PlaylistSlide: FC<PlaylistSlideProps> = ({playlist}) => {
       return (
-      <Link className="flex-col space-y-2 max-w-32" href={playlist ? `edit/${playlist.id}` : "#"} >
+      <Link className="flex-col space-y-2 max-w-32" href={playlist ? `playlist/${playlist.id}` : "#"} >
             <ImageWithFallback 
                   className='max-w-32 max-h-32 rounded-md object-cover' 
                   src={playlist?.image_url} 

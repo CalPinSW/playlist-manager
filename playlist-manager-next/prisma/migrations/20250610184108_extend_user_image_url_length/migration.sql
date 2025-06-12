@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "user" ALTER COLUMN "image_url" SET DATA TYPE VARCHAR(600);

@@ -1,13 +1,15 @@
 import React from 'react';
-import { PlaylistSearch } from './pages/index/PlaylistSearch';
+import { PlaylistSearch } from './(pages)/index/PlaylistSearch';
+import { AlbumAndArtistSearch } from './(pages)/index/AlbumSearch';
 
 export default function Index() {
   return (
-    <div className="py-4 px-2 space-y-2">
-      <div className="text-5xl m-3 p-4">Playlist Manager</div>
-      <PlaylistSearch />
-
-      <hr className="my-2 h-px w-4/5 mx-auto" />
+    <div className="flex flex-col p-2 gap-4">
+      <div className="text-4xl m-3 text-center">Playlist Manager</div>
+      <div className='flex flex-col gap-8'>
+        <PlaylistSearch />
+        <AlbumAndArtistSearch />
+      </div>
     </div>
   );
 }

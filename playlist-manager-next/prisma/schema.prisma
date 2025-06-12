@@ -135,6 +135,8 @@ model playlist {
   user_id                           String                              @db.VarChar(255)
   snapshot_id                       String                              @db.VarChar(255)
   uri                               String                              @db.VarChar(255)
+  created_at                        DateTime                            @default(now())
+  updated_at                        DateTime                            @default(now())
   playbackstateplaylistrelationship playbackstateplaylistrelationship[]
   user                              user                                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   playlistalbumrelationship         playlistalbumrelationship[]
@@ -186,7 +188,7 @@ model trackartistrelationship {
 model user {
   id                                String                              @id @db.VarChar(255)
   display_name                      String                              @db.VarChar(255)
-  image_url                         String                              @db.VarChar(400)
+  image_url                         String                              @db.VarChar(600)
   uri                               String                              @db.VarChar(255)
   auth0_id                          String?                             @db.VarChar
   access_token                      access_token?

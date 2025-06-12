@@ -2,11 +2,13 @@ import React, { Dispatch, FC, SetStateAction, useEffect, useMemo, useState } fro
 import { debounce } from "lodash"
 
 interface SearchBarProps {
-  search: string,
-  setSearch: Dispatch<SetStateAction<string>>
+    title: string,
+    search: string,
+    setSearch: Dispatch<SetStateAction<string>>
 }
 
 const SearchBar: FC<SearchBarProps> = ({
+    title,
     search,
     setSearch
 }) => {
@@ -30,7 +32,7 @@ const SearchBar: FC<SearchBarProps> = ({
 
     return (
         <div className="w-full flex space-x-4">
-            <div>Search</div>
+            <div>{title}</div>
             <input className="w-full py-1 border-solid border border-primary-lighter bg-background-offset rounded-md" type="text" onChange={handleChange} value={displaySearch} />
         </div>
 )};

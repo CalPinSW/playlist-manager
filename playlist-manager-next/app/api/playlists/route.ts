@@ -10,17 +10,18 @@ const getPlaylistsHandler = async (request: NextRequest) =>{
         const limit = searchParams.get('limit') || '20';
         const offset = searchParams.get('offset') || '0';
         const search = searchParams.get('search') || '';
-        const sort_by = searchParams.get('sort_by') || 'name';
-        const desc = searchParams.get('desc') === 'true';
+        const sort_by = searchParams.get('sort_by') || "created_at"
+        const asc = searchParams.get('asc') === 'true';
 
         const playlists = await prisma.playlist.findMany({
             where: {
                 user_id: user.id,
                 name: { contains: search, mode: 'insensitive' }
             },
-            orderBy: {
-                [sort_by]: desc ? 'desc' : 'asc',
-            },
+            ...sort_by ? {orderBy: {
+                [sort_by]: asc ? 'asc' : 'desc',
+            }} : {}
+            ,
             skip: parseInt(offset),
             take: parseInt(limit),
         });

@@ -10,7 +10,7 @@ export const ProfileSettings = () => {
   return (
     <div className="flex flex-col gap-2">
       {/* Desktop */}
-      <div className="hidden md:flex items-center">
+      <div className="flex items-center">
         {!isLoading && !user && (
           <Link
             href="/auth/login"
@@ -20,7 +20,7 @@ export const ProfileSettings = () => {
             Log in
           </Link>
         )}
-        {user && user && (
+        {user && (
           <Menu as="div" className="relative">
             <MenuButton className="flex items-center gap-2 focus:outline-none">
               <img
@@ -87,45 +87,6 @@ export const ProfileSettings = () => {
               </div>
             </MenuItems>
           </Menu>
-        )}
-      </div>
-      {/* Mobile */}
-      <div className="flex flex-col gap-2 md:hidden">
-        {!isLoading && !user && (
-          <Link
-            href="/auth/login"
-            className="bg-primary text-white px-4 py-2 rounded shadow w-full text-center"
-            data-testid="navbar-login-mobile"
-          >
-            Log in
-          </Link>
-        )}
-        {user && (
-          <div className="flex flex-col gap-2 items-start w-full">
-            <div className="flex items-center gap-2">
-              <img
-                src={user.image_url ?? ""}
-                alt="Profile"
-                className="rounded-full w-10 h-10"
-                data-testid="navbar-picture-mobile"
-              />
-              <span className="font-medium">{user.display_name}</span>
-            </div>
-            <Link
-              href="/profile"
-              className="text-primary hover:underline"
-              data-testid="navbar-profile-mobile"
-            >
-              Profile
-            </Link>
-            <Link
-              href="/auth/logout"
-              className="text-red-600 hover:underline"
-              data-testid="navbar-logout-mobile"
-            >
-              Log out
-            </Link>
-          </div>
         )}
       </div>
     </div>

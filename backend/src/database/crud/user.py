@@ -28,14 +28,16 @@ def get_or_create_user(user: User):
     )
 
 
-def upsert_user_tokens(user_id: str, access_token: str, refresh_token: str):
+def upsert_user_tokens(user_id: str, access_token: str, refresh_token: str, expires_in: int, token_type: str):
     DbAccessToken.insert(
-        user=user_id, access_token=access_token, refresh_token=refresh_token
+        user=user_id, access_token=access_token, refresh_token=refresh_token, expires_in=expires_in, token_type=token_type
     ).on_conflict(
         conflict_target=[DbAccessToken.user],
         update={
             DbAccessToken.access_token: access_token,
             DbAccessToken.refresh_token: refresh_token,
+            DbAccessToken.expires_in: expires_in,
+            DbAccessToken.token_type: token_type,
         },
     ).execute()
 
