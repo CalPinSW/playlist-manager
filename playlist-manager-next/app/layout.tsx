@@ -4,6 +4,7 @@ import Footer from '../components/layout/PlaybackFooter';
 import React from 'react';
 import type { Metadata } from 'next';
 import Providers from './providers';
+import { ToastContainer } from 'react-toastify';
 
 export const metadata: Metadata = {
   title: 'Playlist Manager',
@@ -23,6 +24,7 @@ export default function RootLayout({ children }) {
             <div className="flex">
               <Footer />
             </div>
+            <ToastContainer />
           </main>
         </Providers>
       </body>

@@ -61,7 +61,7 @@ const PlaybackFooter: FC = () => {
               <PlaylistIcon className="my-auto size-8 fill-primary-darker" />
               <div className="my-auto text-balance">
                 {playbackInfo.playlist && (
-                  <Link href={`edit/${playbackInfo.playlist?.id}`}>{playbackInfo.playlist?.title}</Link>
+                  <Link href={`/playlist/${playbackInfo.playlist?.id}`}>{playbackInfo.playlist?.title}</Link>
                 )}
               </div>
             </div>

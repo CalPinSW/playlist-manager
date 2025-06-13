@@ -9,7 +9,7 @@ import { buildPlaybackInfoWithPlaylist } from '../../../../utils/playlistPlaybac
 const getPlaybackHandler = async (access_tokens: access_token) => {
   const spotifySdk = SpotifyApi.withAccessToken(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID, access_tokens);
   const playback = await spotifySdk.player.getPlaybackState();
-
+  
   if (!playback) {
     return NextResponse.json(null, { status: 200 });
   }

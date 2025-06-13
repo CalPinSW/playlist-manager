@@ -9,8 +9,8 @@ const getSpotifyAlbumHandler = async (access_tokens: access_token, request: Next
   try {
     const { id } = request.query as { id: string };
     const spotifySdk = SpotifyApi.withAccessToken(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID, access_tokens);
-    const album = getSpotifyAlbum(spotifySdk, id);
-    return NextResponse.json(undefined, { status: 204 });
+    const album = await getSpotifyAlbum(spotifySdk, id);
+    return NextResponse.json(album, { status: 204 });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }

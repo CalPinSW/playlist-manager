@@ -2,12 +2,12 @@
 
 import React, { FC } from 'react';
 import Link from 'next/link';
-import PlaylistIcon from '../PlaylistIcon';
 import { album } from '../../app/generated/prisma';
-import ImageWithFallback from '../ImageWithFallback';
 
 interface AlbumSlideProps {
   album: album | undefined;
+  selected?: boolean;
+  active?: boolean;
 }
 
 const AlbumSlide: FC<AlbumSlideProps> = ({ album }) => {
