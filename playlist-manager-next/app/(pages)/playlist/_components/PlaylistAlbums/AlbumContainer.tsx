@@ -4,6 +4,7 @@ import { FC } from 'react';
 import { AlbumWithAdditionalDetails } from './PlaylistAlbums';
 import { AlbumCover } from '../../../../components/AlbumCover';
 import Image from 'next/image';
+import AlbumIcon from '../../../../components/icons/AlbumIcon';
 
 interface AlbumContainerProps {
   album: AlbumWithAdditionalDetails;
@@ -48,13 +49,17 @@ export const AlbumContainer: FC<AlbumContainerProps> = ({ album, onClick, active
         onClick(album);
       }}>
       <RotatingBorderBox active={active}>
-        <Image
-          className="max-w-32 max-h-32 rounded-t-md object-cover"
-          width={128}
-          height={128}
-          src={album?.image_url}
-          alt={album?.name}
-        />
+        {album?.image_url ? (
+          <Image
+            className="max-w-32 max-h-32 rounded-t-md object-cover"
+            width={128}
+            height={128}
+            src={album?.image_url}
+            alt={album?.name}
+          />
+        ) : (
+          <AlbumIcon className="fill-primary bg-background-offset rounded-t-md" />
+        )}
       </RotatingBorderBox>
       <div className="bg-background-offset rounded-b-md">
         <div className="px-2 max-w-32 mx-auto font-bold text-wrap">{album.name}</div>

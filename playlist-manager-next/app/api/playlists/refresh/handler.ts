@@ -25,7 +25,7 @@ export const refreshSpotifyPlaylists = async (spotifySdk: SpotifyApi, userId: st
 
         if (!dbPlaylist || dbPlaylist.snapshot_id !== simplifiedPlaylist.snapshot_id) {
           if (dbPlaylist) {
-            deleteDbPlaylist(userId, dbPlaylist.id);
+            await deleteDbPlaylist(userId, dbPlaylist.id);
           }
           const playlist = await getPlaylist(spotifySdk, simplifiedPlaylist.id);
           await addPlaylistToDb(spotifySdk, userId, playlist);

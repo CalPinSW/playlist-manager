@@ -2,9 +2,10 @@
 
 import { FC } from 'react';
 import AsyncButton from '../../../components/AsyncButton';
-import { ArrowDownTrayIcon, ClipboardIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, ArrowPathIcon, ClipboardIcon } from '@heroicons/react/24/outline';
 import { useDownloadImages } from '../../../hooks/useDownload';
 import { PlaylistWithAlbums } from './PlaylistAlbums/PlaylistAlbums';
+import { refreshSpotifyPlaylist } from '../../../api/playlists/[playlistId]/refresh/handler';
 
 interface PlaylistActionsProps {
   playlist: PlaylistWithAlbums;
@@ -28,11 +29,21 @@ const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist }) => {
     await navigator.clipboard.writeText(albumArtistList);
   };
 
+  const updatePlaylistHandler = async () => {
+    await fetch(`/api/playlists/${playlist.id}/refresh`);
+  };
+
   return (
     <div className="flex justify-between sm:justify-end flex-row my-4 space-x-2">
+      <AsyncButton className="bg-primary hover:bg-primary-darker justify-center w-fit" onClick={updatePlaylistHandler}>
+        <div className="flex gap-2 sm:flex-row flex-col">
+          <ArrowPathIcon className="m-auto" width={24} height={24} />
+          Refresh Playlist Data
+        </div>
+      </AsyncButton>
       <AsyncButton className="bg-primary hover:bg-primary-darker justify-center w-fit" onClick={downloadImagesHandler}>
-        <div className="flex gap-2">
-          <ArrowDownTrayIcon className="" width={24} height={24} />
+        <div className="flex gap-2 sm:flex-row flex-col">
+          <ArrowDownTrayIcon className="m-auto" width={24} height={24} />
           Download Album Images
         </div>
       </AsyncButton>
@@ -40,8 +51,8 @@ const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist }) => {
         className="bg-primary hover:bg-primary-darker justify-center w-fit"
         onClick={copyArtistsHandler}
         successMessage="Artist List copied">
-        <div className="flex gap-2">
-          <ClipboardIcon className="" width={24} height={24} />
+        <div className="flex gap-2 sm:flex-row flex-col">
+          <ClipboardIcon className="m-auto" width={24} height={24} />
           Copy Artist List
         </div>
       </AsyncButton>
