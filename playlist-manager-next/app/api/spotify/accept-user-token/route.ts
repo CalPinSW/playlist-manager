@@ -9,7 +9,8 @@ const getAcceptUserTokenHandler = async (request: NextRequest) => {
     params.append('code', code);
     params.append(
       'redirect_uri',
-      (process.env.NEXT_PUBLIC_VERCEL_URL || process.env.NEXT_PUBLIC_BASE_URL) + process.env.SPOTIFY_REDIRECT_ENDPOINT
+      ('https://' + process.env.NEXT_PUBLIC_VERCEL_URL || process.env.NEXT_PUBLIC_BASE_URL) +
+        process.env.SPOTIFY_REDIRECT_ENDPOINT
     );
     params.append('grant_type', 'authorization_code');
 

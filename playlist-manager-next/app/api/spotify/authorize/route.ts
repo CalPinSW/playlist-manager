@@ -9,7 +9,8 @@ const getAuthorizeHandler = async () => {
     queryString.searchParams.append('scope', spotifyScopes.join(' '));
     queryString.searchParams.append(
       'redirect_uri',
-      (process.env.NEXT_PUBLIC_VERCEL_URL || process.env.NEXT_PUBLIC_BASE_URL) + process.env.SPOTIFY_REDIRECT_ENDPOINT
+      ('https://' + process.env.NEXT_PUBLIC_VERCEL_URL || process.env.NEXT_PUBLIC_BASE_URL) +
+        process.env.SPOTIFY_REDIRECT_ENDPOINT
     );
     queryString.searchParams.append('state', 'some-random-state');
     return NextResponse.redirect(queryString);
