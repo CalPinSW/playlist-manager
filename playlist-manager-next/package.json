@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate; next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -48,6 +48,7 @@
     "next": "15.2.4",
     "nodemon": "^3.0.0",
     "prettier-plugin-tailwindcss": "^0.6.12",
+    "prisma": "^6.9.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-toastify": "^11.0.5",

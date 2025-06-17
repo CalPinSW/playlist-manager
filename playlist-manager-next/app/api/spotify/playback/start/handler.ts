@@ -20,15 +20,15 @@ export const startSpotifyPlayback = async (
       const album = await prisma.album.findUnique({
         where: { id: (offset as AlbumIdOffset).album_id },
         include: {
-          track: {
+          tracks: {
             orderBy: [{ disc_number: 'asc' }, { track_number: 'asc' }]
           }
         }
       });
-      if (!album || !album.track || album.track.length === 0) {
+      if (!album || !album.tracks || album.tracks.length === 0) {
         throw new ErrorWithStatus('Album or tracks not found', 400);
       }
-      const firstTrackUri = album.track[0].uri;
+      const firstTrackUri = album.tracks[0].uri;
       startPlaybackRequest.offset = { type: 'uri', uri: firstTrackUri } as UriOffset;
     }
   }

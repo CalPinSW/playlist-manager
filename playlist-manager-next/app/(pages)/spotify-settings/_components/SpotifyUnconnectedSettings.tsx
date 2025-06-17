@@ -8,7 +8,10 @@ const SpotifyUnconnectedSettings: FC = () => {
     queryString.searchParams.append('response_type', 'code');
     queryString.searchParams.append('client_id', process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || '');
     queryString.searchParams.append('scope', spotifyScopes.join(' '));
-    queryString.searchParams.append('redirect_uri', process.env.SPOTIFY_REDIRECT_URI);
+    queryString.searchParams.append(
+      'redirect_uri',
+      process.env.NEXT_PUBLIC_BASE_URL + process.env.SPOTIFY_REDIRECT_ENDPOINT
+    );
     queryString.searchParams.append('state', 'some-random-state');
     window.open(queryString.toString(), '_self');
   };

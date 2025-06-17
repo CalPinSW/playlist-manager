@@ -36,7 +36,7 @@ const getAlbumWithTracks = async (albumId: string): Promise<AlbumWithTracks> => 
   const album = await prisma.album.findUnique({
     where: { id: albumId },
     include: {
-      track: {
+      tracks: {
         include: {
           trackartistrelationship: {
             include: { artist: true }
@@ -52,6 +52,6 @@ const getAlbumWithTracks = async (albumId: string): Promise<AlbumWithTracks> => 
   return {
     ...album,
     artists: album.albumartistrelationship.map(aar => aar.artist),
-    tracks: album.track.map(track => ({ ...track, artists: track.trackartistrelationship.map(tar => tar.artist) }))
+    tracks: album.tracks.map(track => ({ ...track, artists: track.trackartistrelationship.map(tar => tar.artist) }))
   };
 };
