@@ -7,7 +7,10 @@ const getAcceptUserTokenHandler = async (request: NextRequest) => {
     const code = request.nextUrl.searchParams.get('code');
     const params = new URLSearchParams();
     params.append('code', code);
-    params.append('redirect_uri', (process.env.NEXT_PUBLIC_VERCEL_URL || process.env.NEXT_PUBLIC_BASE_URL) + process.env.SPOTIFY_REDIRECT_ENDPOINT);
+    params.append(
+      'redirect_uri',
+      (process.env.NEXT_PUBLIC_VERCEL_URL || process.env.NEXT_PUBLIC_BASE_URL) + process.env.SPOTIFY_REDIRECT_ENDPOINT
+    );
     params.append('grant_type', 'authorization_code');
 
     const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
