@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
-import { getUserFromRequest } from '../../user/route';
 import { access_token } from '../../../generated/prisma';
-import { NextApiRequest } from 'next';
 import { refreshSpotifyAccessToken } from './refreshSpotifyAccessToken';
-import { HandlerContext } from '../../withAuth';
+import { NextContext } from '../../withAuth';
+import { getUserFromRequest } from '../../user/handler';
 
 export class SpotifyAuthorizationError extends Error {
   constructor(message: string) {
@@ -13,12 +12,8 @@ export class SpotifyAuthorizationError extends Error {
   }
 }
 
-type Handler = (req: NextRequest | NextApiRequest, context?: HandlerContext) => Promise<Response>;
-type HandlerWithAccessToken = (
-  accessToken: access_token,
-  req: NextRequest | NextApiRequest,
-  context?: HandlerContext
-) => Promise<Response>;
+type Handler = (req: NextRequest, context?: NextContext) => Promise<Response>;
+type HandlerWithAccessToken = (accessToken: access_token, req: NextRequest, context?: NextContext) => Promise<Response>;
 
 export function withSpotifyAccessToken(handler: HandlerWithAccessToken): Handler {
   return async (req, context) => {

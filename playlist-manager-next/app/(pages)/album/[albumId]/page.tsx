@@ -5,7 +5,7 @@ import AlbumHeader from '../_components/AlbumHeader';
 import TrackList from '../_components/TrackList';
 import AlbumInfo from '../_components/AlbumInfo';
 
-export default async function Page({ params }: { params: { albumId: string } }) {
+export default async function Page({ params }: { params: Promise<{ albumId: string }> }) {
   const { albumId } = await params;
   const album = await getAlbumWithTracks(albumId);
 

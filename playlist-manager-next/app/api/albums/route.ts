@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '../withAuth';
-import { getUserFromRequest } from '../user/route';
 import prisma from '../../../lib/prisma';
+import { getUserFromRequest } from '../user/handler';
 
 const getAlbumsHandler = async (request: NextRequest) => {
   try {

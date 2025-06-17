@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
-import { getUserFromRequest } from '../../user/route';
+import { getUserFromRequest } from '../../user/handler';
 
 const getAcceptUserTokenHandler = async (request: NextRequest) => {
   try {

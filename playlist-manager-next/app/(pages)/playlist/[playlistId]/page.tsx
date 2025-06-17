@@ -3,11 +3,11 @@ import prisma from '../../../../lib/prisma';
 import PlaylistTitle from '../_components/PlaylistTitle';
 import PlaylistAlbums, { AlbumWithAdditionalDetails } from '../_components/PlaylistAlbums/PlaylistAlbums';
 import { playlist } from '../../../generated/prisma';
-import { searchPlaylists } from '../../../api/playlists/route';
 import { auth0 } from '../../../../lib/auth0';
 import PlaylistActions from '../_components/PlaylistActions';
+import { searchPlaylists } from '../../../api/playlists/handler';
 
-export default async function Page({ params }: { params: { playlistId: string } }) {
+export default async function Page({ params }: { params: Promise<{ playlistId: string }> }) {
   const { playlistId } = await params;
   const { user: auth0User } = await auth0.getSession();
   const user = await prisma.user.findFirst({
