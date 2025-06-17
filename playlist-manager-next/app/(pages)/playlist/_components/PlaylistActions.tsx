@@ -1,7 +1,7 @@
 'use client';
 
 import { FC } from 'react';
-import AsyncButton from '../../../components/AsyncButton';
+import AsyncButton from '../../components/AsyncButton';
 import { ArrowDownTrayIcon, ArrowPathIcon, ClipboardIcon } from '@heroicons/react/24/outline';
 import { useDownloadImages } from '../../../hooks/useDownload';
 import { PlaylistWithAlbums } from './PlaylistAlbums/PlaylistAlbums';

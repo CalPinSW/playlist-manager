@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { AlbumWithTracks } from '../[albumId]/page';
-import { AlbumCover } from '../../../components/AlbumCover';
+import { AlbumCover } from '../../components/AlbumCover';
 import mbApi from '../../../../lib/musicbrainz';
 
 interface AlbumHeaderProps {

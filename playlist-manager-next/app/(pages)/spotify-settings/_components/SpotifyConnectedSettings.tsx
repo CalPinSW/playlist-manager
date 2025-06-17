@@ -1,7 +1,7 @@
 'use client';
 import { UserProfile } from '@spotify/web-api-ts-sdk';
 import React, { FC } from 'react';
-import AsyncButton from '../../../components/AsyncButton';
+import AsyncButton from '../../components/AsyncButton';
 import Image from 'next/image';
 
 interface SpotifyConnectedSettingsProps {

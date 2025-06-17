@@ -1,10 +1,10 @@
 import './globals.css';
-import NavBar from '../components/layout/NavBar';
-import Footer from '../components/layout/PlaybackFooter';
 import React from 'react';
 import type { Metadata } from 'next';
 import Providers from './providers';
 import { ToastContainer } from 'react-toastify';
+import NavBar from './(pages)/components/layout/NavBar';
+import PlaybackFooter from './(pages)/components/layout/PlaybackFooter';
 
 export const metadata: Metadata = {
   title: 'Playlist Manager',
@@ -25,7 +25,7 @@ export default function RootLayout({ children }) {
             </div>
             <div className="flex-1 min-h-0 overflow-auto">{children}</div>
             <div className="flex">
-              <Footer />
+              <PlaybackFooter />
             </div>
             <ToastContainer />
           </main>

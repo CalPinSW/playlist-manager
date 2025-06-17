@@ -5,7 +5,7 @@ import AlbumIcon from '../icons/AlbumIcon';
 import { ProgressCircle } from '../icons/dynamic/ProgressCircle';
 import SongIcon from '../icons/SongIcon';
 import PlaylistIcon from '../PlaylistIcon';
-import { usePlaybackContext } from '../../hooks/usePlaybackContext';
+import { usePlaybackContext } from '../../../hooks/usePlaybackContext';
 import Image from 'next/image';
 
 const PlaybackFooter: FC = () => {
@@ -20,6 +20,11 @@ const PlaybackFooter: FC = () => {
     }
   };
 
+  const playbackArtists =
+    playbackInfo.type == 'track'
+      ? playbackInfo.album_artists.map(artist => artist.name).join(', ')
+      : playbackInfo.album_artists;
+
   return (
     <div className="flex w-full h-fit bg-background-offset px-4 py-2 text-sm sm:text-base space-x-4 sm:space-x-6">
       <div className="flex flex-col space-y-2 w-1/5 max-w-32">
@@ -31,7 +36,7 @@ const PlaybackFooter: FC = () => {
             alt={playbackInfo.album_title + ' artwork'}></Image>
         </button>
         <div>Playing:</div>
-        <div className="text-balance">{playbackInfo.album_artists.map(artist => artist.name).join(', ')}</div>
+        <div className="text-balance">{playbackArtists}</div>
       </div>
       <div className="flex flex-col w-4/5 text-sm space-y-2">
         <div className="flex flex-row justify-between">

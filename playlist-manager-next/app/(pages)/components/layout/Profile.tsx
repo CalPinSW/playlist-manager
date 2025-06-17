@@ -2,7 +2,7 @@
 
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Link from 'next/link';
-import useDbUser from '../../hooks/useDbUser';
+import useDbUser from '../../../hooks/useDbUser';
 import Image from 'next/image';
 
 export const ProfileSettings = () => {

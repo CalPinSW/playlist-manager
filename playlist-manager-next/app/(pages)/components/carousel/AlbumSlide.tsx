@@ -2,7 +2,7 @@
 
 import React, { FC } from 'react';
 import Link from 'next/link';
-import { AlbumWithPlaylists } from '../../(pages)/(index)/AlbumSearch';
+import { AlbumWithPlaylists } from '../../(index)/AlbumSearch';
 import Image from 'next/image';
 import AlbumIcon from '../icons/AlbumIcon';
 

@@ -1,10 +1,10 @@
-import { RotatingBorderBox } from '../../../../components/RotatingBorderBox';
+import { RotatingBorderBox } from '../../../components/RotatingBorderBox';
 import { album } from '../../../../../generated/prisma';
 import { FC } from 'react';
 import { AlbumWithAdditionalDetails } from './PlaylistAlbums';
-import { AlbumCover } from '../../../../components/AlbumCover';
+import { AlbumCover } from '../../../components/AlbumCover';
 import Image from 'next/image';
-import AlbumIcon from '../../../../components/icons/AlbumIcon';
+import AlbumIcon from '../../../components/icons/AlbumIcon';
 
 interface AlbumContainerProps {
   album: AlbumWithAdditionalDetails;

@@ -31,7 +31,6 @@ export const refreshSpotifyAccessToken = async (user: user) => {
   }
 
   const tokenResponse = await response.json();
-
   const accessToken = tokenResponse.access_token;
 
   await prisma.access_token.update({

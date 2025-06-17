@@ -3,10 +3,10 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { album, artist, playlist } from '../../../generated/prisma';
-import Carousel from '../../components/carousel/Carousel';
-import SearchBar from '../../components/SearchBar';
+import Carousel from '../components/carousel/Carousel';
+import SearchBar from '../components/SearchBar';
 import { PaginationState } from '../../utils/interfaces/PaginationState';
-import AlbumSlide from '../../components/carousel/AlbumSlide';
+import AlbumSlide from '../components/carousel/AlbumSlide';
 
 export interface AlbumWithPlaylists extends album {
   onPlaylists: playlist[];

@@ -1,13 +1,27 @@
-import { Artist } from '@spotify/web-api-ts-sdk';
+import { Artist, SimplifiedArtist } from '@spotify/web-api-ts-sdk';
 
-export interface PlaybackInfo {
+export type PlaybackInfo = EpisodePlaybackInfo | TrackPlaybackInfo;
+
+interface EpisodePlaybackInfo extends PlaybackBase {
+  type: 'episode';
+  track_artists: string;
+  album_artists: string;
+}
+
+interface TrackPlaybackInfo extends PlaybackBase {
+  type: 'track';
+  track_artists: SimplifiedArtist[];
+  album_artists: Artist[];
+}
+
+interface PlaybackBase {
   type: 'track' | 'episode';
   track_title: string;
   track_id: string;
   album_title: string;
   album_id: string;
-  track_artists: Artist[];
-  album_artists: Artist[];
+  track_artists: SimplifiedArtist[] | string;
+  album_artists: Artist[] | string;
   artwork_url: string;
   track_progress: number;
   track_duration: number;

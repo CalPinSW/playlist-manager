@@ -106,7 +106,7 @@ model playbackstatealbumrelationship {
   playback_state    playback_state @relation(fields: [playback_state_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user              user           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([playback_state_id, album_id, user_id], map: "playbackstatealbumrelationship_playback_state_id_album_i_d70e1f")
+  @@unique([album_id, user_id], map: "playbackstatealbumrelationship_album_id_user_id")
   @@index([album_id], map: "playbackstatealbumrelationship_album_id")
   @@index([playback_state_id], map: "playbackstatealbumrelationship_playback_state_id")
   @@index([user_id], map: "playbackstatealbumrelationship_user_id")
@@ -121,7 +121,7 @@ model playbackstateplaylistrelationship {
   playlist          playlist       @relation(fields: [playlist_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user              user           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([playback_state_id, playlist_id, user_id], map: "playbackstateplaylistrelationship_playback_state_id_play_7a32ab")
+  @@unique([playlist_id, user_id], map: "playbackstateplaylistrelationship_playlist_id_user_id")
   @@index([playback_state_id], map: "playbackstateplaylistrelationship_playback_state_id")
   @@index([playlist_id], map: "playbackstateplaylistrelationship_playlist_id")
   @@index([user_id], map: "playbackstateplaylistrelationship_user_id")
