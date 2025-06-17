@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import Link from 'next/link';
-import { playlist } from '../../generated/prisma';
+import { playlist } from '../../../generated/prisma';
 import Image from 'next/image';
 import PlaylistIcon from '../icons/PlaylistIcon';
 

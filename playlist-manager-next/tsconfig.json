@@ -19,12 +19,6 @@
       }
     ]
   },
-  "include": [
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    "app/(pages)/playlist/_components/PlaylistAlbums"
-  ],
+  "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx", "trigger.config.ts"],
   "exclude": ["node_modules"]
 }

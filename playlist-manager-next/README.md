@@ -87,6 +87,10 @@ npm run test
 npm run test:integration
 ```
 
+## Recurring Jobs
+
+Recurring Jobs are configured with [Trigger](https://trigger.dev/) and can be managed via the [dashboard](https://cloud.trigger.dev/orgs/playlist-manager-6679/projects/playlist-manager-5HSM/env/prod)
+
 ## What is Auth0?
 
 Auth0 helps you to:

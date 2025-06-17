@@ -40,4 +40,7 @@ yarn-error.log*
 .vercel
 
 # prisma
-/app/generated/prisma/
+/generated/prisma/
+
+# trigger
+.trigger

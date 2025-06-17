@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { refreshSpotifyPlaylist } from './handler';
-import { access_token } from '../../../../generated/prisma';
+import { access_token } from '../../../../../generated/prisma';
 import { getUserFromRequest } from '../../../user/handler';
 import { withAuth } from '../../../withAuth';
 import { withSpotifyAccessToken } from '../../../spotify/utilities/getAccessTokensFromRequest';

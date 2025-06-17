@@ -3,7 +3,7 @@ import prisma from '../../../../lib/prisma';
 import executeWithRetries from '../../../utils/executeWithRetries';
 import getAllPlaylistTracks from '../../spotify/utilities/spotify/getAllPlaylistTracks';
 import { getOrCreateAlbum, createTrackOrNone } from '../../spotify/utilities/spotifyUtils';
-import { playlist } from '../../../generated/prisma';
+import { playlist } from '../../../../generated/prisma';
 
 export const refreshSpotifyPlaylists = async (spotifySdk: SpotifyApi, userId: string): Promise<void> => {
   console.log('Fetching spotify playlists:');

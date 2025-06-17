@@ -1,6 +1,6 @@
 import React from 'react';
 import prisma from '../../../../lib/prisma';
-import { album, artist, track } from '../../../generated/prisma';
+import { album, artist, track } from '../../../../generated/prisma';
 import AlbumHeader from '../_components/AlbumHeader';
 import TrackList from '../_components/TrackList';
 import AlbumInfo from '../_components/AlbumInfo';

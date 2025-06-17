@@ -1,6 +1,6 @@
 import { useUser as useAuth0User } from '@auth0/nextjs-auth0';
 import { useEffect, useState } from 'react';
-import { user } from '../generated/prisma';
+import { user } from '../../generated/prisma';
 import { User } from '@auth0/nextjs-auth0/types';
 
 interface UseDbUserReturn {

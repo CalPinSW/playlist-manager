@@ -1,9 +1,12 @@
 import prisma from '../../../../lib/prisma';
-import { user } from '../../../generated/prisma';
-import { getSpotifyAccessTokensFromRequest } from './getAccessTokensFromRequest';
+import { user } from '../../../../generated/prisma';
 
 export const refreshSpotifyAccessToken = async (user: user) => {
-  const tokens = await getSpotifyAccessTokensFromRequest();
+  const tokens = await prisma.access_token.findUnique({
+    where: {
+      user_id: user.id
+    }
+  });
   if (!tokens || !tokens.refresh_token) {
     throw new Error('No refresh token found for user');
   }

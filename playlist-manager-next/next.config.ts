@@ -3,17 +3,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   eslint: {
-    dirs: [
-      'app/(pages)',
-      'app/api',
-      'app/components',
-      'app/context',
-      'app/types',
-      'app/hooks',
-      'app/tests',
-      'app/utils',
-      'lib'
-    ]
+    dirs: ['app', 'lib']
   },
   images: {
     remotePatterns: [

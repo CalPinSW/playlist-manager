@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { playlist } from '../../../generated/prisma';
+import { playlist } from '../../../../generated/prisma';
 
 interface PlaylistTitleProps {
   playlist: playlist;

@@ -1,6 +1,6 @@
 import './globals.css';
-import NavBar from './components/layout/NavBar';
-import Footer from './components/layout/PlaybackFooter';
+import NavBar from '../components/layout/NavBar';
+import Footer from '../components/layout/PlaybackFooter';
 import React from 'react';
 import type { Metadata } from 'next';
 import Providers from './providers';

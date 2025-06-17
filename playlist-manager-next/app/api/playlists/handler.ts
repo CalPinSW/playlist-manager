@@ -1,5 +1,5 @@
 import prisma from '../../../lib/prisma';
-import { playlist } from '../../generated/prisma';
+import { playlist } from '../../../generated/prisma';
 
 interface SearchParams {
   search?: string;

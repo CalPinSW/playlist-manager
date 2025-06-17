@@ -1,7 +1,7 @@
 'use client';
 
 import { FC, useEffect, useRef, useState } from 'react';
-import { album, album_notes, artist, genre, playlist } from '../../../../generated/prisma';
+import { album, album_notes, artist, genre, playlist } from '../../../../../generated/prisma';
 import Carousel from '../../../../components/carousel/Carousel';
 import { usePlaybackContext } from '../../../../hooks/usePlaybackContext';
 import { AlbumContainer } from './AlbumContainer';

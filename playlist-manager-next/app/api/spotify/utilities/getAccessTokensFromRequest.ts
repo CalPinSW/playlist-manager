@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
-import { access_token } from '../../../generated/prisma';
+import { access_token } from '../../../../generated/prisma';
 import { refreshSpotifyAccessToken } from './refreshSpotifyAccessToken';
 import { NextContext } from '../../withAuth';
 import { getUserFromRequest } from '../../user/handler';

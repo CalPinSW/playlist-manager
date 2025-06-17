@@ -5,7 +5,6 @@ import AsyncButton from '../../../components/AsyncButton';
 import { ArrowDownTrayIcon, ArrowPathIcon, ClipboardIcon } from '@heroicons/react/24/outline';
 import { useDownloadImages } from '../../../hooks/useDownload';
 import { PlaylistWithAlbums } from './PlaylistAlbums/PlaylistAlbums';
-import { refreshSpotifyPlaylist } from '../../../api/playlists/[playlistId]/refresh/handler';
 
 interface PlaylistActionsProps {
   playlist: PlaylistWithAlbums;

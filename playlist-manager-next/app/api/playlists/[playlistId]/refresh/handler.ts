@@ -1,5 +1,5 @@
-import { MaxInt, Page, Playlist, SimplifiedPlaylist, SpotifyApi, Track } from '@spotify/web-api-ts-sdk';
-import { playlist } from '../../../../generated/prisma';
+import { Playlist, SpotifyApi, Track } from '@spotify/web-api-ts-sdk';
+import { playlist } from '../../../../../generated/prisma';
 import prisma from '../../../../../lib/prisma';
 import getAllPlaylistTracks from '../../../spotify/utilities/spotify/getAllPlaylistTracks';
 import { createTrackOrNone, getOrCreateAlbum } from '../../../spotify/utilities/spotifyUtils';

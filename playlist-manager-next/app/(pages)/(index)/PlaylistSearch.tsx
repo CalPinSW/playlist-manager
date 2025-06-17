@@ -2,7 +2,7 @@
 
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { playlist } from '../../generated/prisma';
+import { playlist } from '../../../generated/prisma';
 import Carousel from '../../components/carousel/Carousel';
 import PlaylistSlide from '../../components/carousel/PlaylistSlide';
 import SearchBar from '../../components/SearchBar';

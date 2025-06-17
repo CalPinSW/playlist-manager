@@ -1,7 +1,7 @@
 'use client';
 
 import { FC } from 'react';
-import { album, playlist } from '../../../../generated/prisma';
+import { album, playlist } from '../../../../../generated/prisma';
 import { StartPlaybackRequest } from '../../../../utils/interfaces/PlaybackRequest';
 import { AddAlbumToSpotifyPlaylistRequest } from '../../../../api/playlists/[playlistId]/add-album/route';
 import AsyncButton from '../../../../components/AsyncButton';

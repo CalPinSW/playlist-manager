@@ -1,6 +1,6 @@
 import { SpotifyApi } from '@spotify/web-api-ts-sdk';
 import { NextRequest, NextResponse } from 'next/server';
-import { access_token } from '../../../generated/prisma';
+import { access_token } from '../../../../generated/prisma';
 import { withAuth } from '../../withAuth';
 import { withSpotifyAccessToken } from '../utilities/getAccessTokensFromRequest';
 import { getSpotifyAlbum } from './handler';

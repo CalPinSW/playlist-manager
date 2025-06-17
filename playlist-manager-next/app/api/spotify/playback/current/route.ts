@@ -1,4 +1,4 @@
-import { access_token } from '../../../../generated/prisma';
+import { access_token } from '../../../../../generated/prisma';
 import { NextResponse } from 'next/server';
 import { withAuth } from '../../../withAuth';
 import { Episode, PlaybackState, SpotifyApi, Track } from '@spotify/web-api-ts-sdk';

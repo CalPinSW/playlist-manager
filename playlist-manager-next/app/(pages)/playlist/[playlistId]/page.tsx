@@ -2,7 +2,7 @@ import React from 'react';
 import prisma from '../../../../lib/prisma';
 import PlaylistTitle from '../_components/PlaylistTitle';
 import PlaylistAlbums, { AlbumWithAdditionalDetails } from '../_components/PlaylistAlbums/PlaylistAlbums';
-import { playlist } from '../../../generated/prisma';
+import { playlist } from '../../../../generated/prisma';
 import { auth0 } from '../../../../lib/auth0';
 import PlaylistActions from '../_components/PlaylistActions';
 import { searchPlaylists } from '../../../api/playlists/handler';

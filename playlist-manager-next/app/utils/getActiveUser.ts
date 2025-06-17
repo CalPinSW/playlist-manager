@@ -1,6 +1,6 @@
 import { auth0 } from '../../lib/auth0';
 import prisma from '../../lib/prisma';
-import { user } from '../generated/prisma';
+import { user } from '../../generated/prisma';
 
 const getActiveUser = async (): Promise<user> => {
   const { user: auth0User } = await auth0.getSession();

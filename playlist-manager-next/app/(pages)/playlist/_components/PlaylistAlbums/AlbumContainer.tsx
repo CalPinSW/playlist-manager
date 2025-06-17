@@ -1,5 +1,5 @@
 import { RotatingBorderBox } from '../../../../components/RotatingBorderBox';
-import { album } from '../../../../generated/prisma';
+import { album } from '../../../../../generated/prisma';
 import { FC } from 'react';
 import { AlbumWithAdditionalDetails } from './PlaylistAlbums';
 import { AlbumCover } from '../../../../components/AlbumCover';
