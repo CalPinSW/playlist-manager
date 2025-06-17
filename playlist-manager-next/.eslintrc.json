@@ -6,10 +6,12 @@
     "prettier"
   ],
   "parser": "@typescript-eslint/parser",
+  "parserOptions": { "project": "./tsconfig.json" },
   "rules": {
     "quotes": "off",
     "@next/next/no-page-custom-font": "off", // Probably should switch this back on at some point
     "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-floating-promises": "error",
     "@typescript-eslint/no-unused-vars": [
       "error",
       {

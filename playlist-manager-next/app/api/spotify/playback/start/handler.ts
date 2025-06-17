@@ -32,18 +32,20 @@ export const startSpotifyPlayback = async (
       startPlaybackRequest.offset = { type: 'uri', uri: firstTrackUri } as UriOffset;
     }
   }
-  return spotifySdk.player.startResumePlayback(
-    deviceId,
-    startPlaybackRequest.context_uri,
-    startPlaybackRequest.uris,
-    startPlaybackRequest.offset,
-    startPlaybackRequest.position_ms
-  );
+  const accessToken = await spotifySdk.getAccessToken();
+  await fetch(`https://api.spotify.com/v1/me/player/play${deviceId ? '?deviceId=' + deviceId : ''}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken.access_token}`
+    },
+    body: JSON.stringify(startPlaybackRequest)
+  });
 };
 
 const getDeviceIdForUser = async (spotifySdk: SpotifyApi): Promise<string | null> => {
   const { devices } = await spotifySdk.player.getAvailableDevices();
-  console.log(devices);
+
   if (!devices || devices.length === 0) {
     return null;
   }

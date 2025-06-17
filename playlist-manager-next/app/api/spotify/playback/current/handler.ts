@@ -1,4 +1,4 @@
-import { PlaybackState, Episode, Track, SpotifyApi } from '@spotify/web-api-ts-sdk';
+import { PlaybackState, Track, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import prisma from '../../../../../lib/prisma';
 import { PlaybackInfo } from '../../../../utils/interfaces/PlaybackInfo';
 import { buildPlaybackInfoWithPlaylist, PreProcessedPlaybackInfo } from '../../../../utils/playlistPlayback';
@@ -9,7 +9,8 @@ export const getPlayback = async (spotifySdk: SpotifyApi, userId: string): Promi
     return null;
   }
   if (playback.currently_playing_type === 'episode') {
-    return buildEpisodePlaybackResponse(playback);
+    return null;
+    // return buildEpisodePlaybackResponse(playback);
   } else {
     await upsertAlbumPlaybackState(playback, userId);
 
@@ -50,24 +51,24 @@ export const getPlayback = async (spotifySdk: SpotifyApi, userId: string): Promi
   }
 };
 
-const buildEpisodePlaybackResponse = (playback: PlaybackState): PlaybackInfo => {
-  const item = playback.item as Episode;
-  return {
-    type: 'episode',
-    track_title: item.name,
-    track_id: item.id,
-    album_title: item.show.name,
-    album_id: item.show.id,
-    track_artists: item.show.publisher,
-    album_artists: item.show.publisher,
-    artwork_url: item.images?.[0]?.url ?? '',
-    track_progress: playback.progress_ms,
-    track_duration: item.duration_ms,
-    album_progress: 0,
-    album_duration: item.show.total_episodes,
-    is_playing: playback.is_playing
-  };
-};
+// const buildEpisodePlaybackResponse = (playback: PlaybackState): PlaybackInfo => {
+//   const item = playback.item as Episode;
+//   return {
+//     type: 'episode',
+//     track_title: item.name,
+//     track_id: item.id,
+//     album_title: item.show.name,
+//     album_id: item.show.id,
+//     track_artists: item.show.publisher,
+//     album_artists: item.show.publisher,
+//     artwork_url: item.images?.[0]?.url ?? '',
+//     track_progress: playback.progress_ms,
+//     track_duration: item.duration_ms,
+//     album_progress: 0,
+//     album_duration: item.show.total_episodes,
+//     is_playing: playback.is_playing
+//   };
+// };
 
 const upsertAlbumPlaybackState = async (playbackInfo: PlaybackState, userId: string): Promise<void> => {
   const track = playbackInfo.item as Track;
@@ -79,9 +80,8 @@ const upsertAlbumPlaybackState = async (playbackInfo: PlaybackState, userId: str
       }
     }
   });
-
   if (playbackStateAlbumRelationship) {
-    prisma.playback_state.update({
+    await prisma.playback_state.update({
       where: { id: playbackStateAlbumRelationship.playback_state_id },
       data: {
         item_id: playbackInfo.item.id,
@@ -124,7 +124,7 @@ const upsertPlaylistPlaybackState = async (
   });
 
   if (playbackStatePlaylistRelationship) {
-    prisma.playback_state.update({
+    await prisma.playback_state.update({
       where: { id: playbackStatePlaylistRelationship.playback_state_id },
       data: {
         item_id: playbackInfo.item.id,

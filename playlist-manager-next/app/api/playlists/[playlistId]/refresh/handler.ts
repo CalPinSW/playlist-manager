@@ -55,7 +55,7 @@ export async function addPlaylistToDb(
       album_index += 1;
     }
 
-    createTrackOrNone(track.track, track.track.album);
+    await createTrackOrNone(track.track, track.track.album);
   }
   return dbPlaylist;
 }

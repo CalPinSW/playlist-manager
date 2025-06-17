@@ -2,9 +2,10 @@
 
 import { FC } from 'react';
 import AsyncButton from '../../components/AsyncButton';
-import { ArrowDownTrayIcon, ArrowPathIcon, ClipboardIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, ArrowPathIcon, ClipboardIcon, PlayIcon } from '@heroicons/react/24/outline';
 import { useDownloadImages } from '../../../hooks/useDownload';
 import { PlaylistWithAlbums } from './PlaylistAlbums/PlaylistAlbums';
+import { ResumePlaybackRequest } from '../../../utils/interfaces/PlaybackRequest';
 
 interface PlaylistActionsProps {
   playlist: PlaylistWithAlbums;
@@ -32,8 +33,21 @@ const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist }) => {
     await fetch(`/api/playlists/${playlist.id}/refresh`);
   };
 
+  const resumePlaylistHandler = async () => {
+    const requestBody: ResumePlaybackRequest = { id: playlist.id };
+    await fetch('/api/spotify/playback/resume', {
+      method: 'POST',
+      body: JSON.stringify(requestBody)
+    });
+  };
   return (
     <div className="flex justify-between sm:justify-end flex-row my-4 space-x-2">
+      <AsyncButton className="bg-primary hover:bg-primary-darker justify-center w-fit" onClick={resumePlaylistHandler}>
+        <div className="flex gap-2 sm:flex-row flex-col">
+          <PlayIcon className="m-auto" width={24} height={24} />
+          Resume Playlist
+        </div>
+      </AsyncButton>
       <AsyncButton className="bg-primary hover:bg-primary-darker justify-center w-fit" onClick={updatePlaylistHandler}>
         <div className="flex gap-2 sm:flex-row flex-col">
           <ArrowPathIcon className="m-auto" width={24} height={24} />
