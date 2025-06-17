@@ -25,8 +25,8 @@ const PlaybackFooter: FC = () => {
       <div className="flex flex-col space-y-2 w-1/5 max-w-32">
         <button className="opacity-80 size-full" onClick={handlePausePlayClick}>
           <Image
-            width={32}
-            height={32}
+            width={128}
+            height={128}
             src={playbackInfo.artwork_url}
             alt={playbackInfo.album_title + ' artwork'}></Image>
         </button>
