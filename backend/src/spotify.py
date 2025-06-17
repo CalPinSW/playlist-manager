@@ -122,6 +122,8 @@ class SpotifyClient:
             user_id=user_id,
             access_token=token_response.access_token,
             refresh_token=refresh_token,
+            expires_in=token_response.expires_in,
+            token_type=token_response.token_type,
         )
         return (user_id, access_token, refresh_token)
 
