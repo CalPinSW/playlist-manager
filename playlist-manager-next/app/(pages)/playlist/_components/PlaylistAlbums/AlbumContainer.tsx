@@ -1,8 +1,9 @@
-import PlaylistIcon from '../../../../../components/PlaylistIcon';
-import { RotatingBorderBox } from '../../../../../components/RotatingBorderBox';
+import { RotatingBorderBox } from '../../../../components/RotatingBorderBox';
 import { album } from '../../../../generated/prisma';
 import { FC } from 'react';
 import { AlbumWithAdditionalDetails } from './PlaylistAlbums';
+import { AlbumCover } from '../../../../components/AlbumCover';
+import Image from 'next/image';
 
 interface AlbumContainerProps {
   album: AlbumWithAdditionalDetails;
@@ -11,7 +12,7 @@ interface AlbumContainerProps {
   active?: boolean;
 }
 
-export const AlbumContainer: FC<AlbumContainerProps> = ({ album, onClick, selected, active }) => {
+export const foo: FC<AlbumContainerProps> = ({ album, onClick, selected, active }) => {
   return (
     <div
       className={`group size-40 max-size-40 lg:size-72 lg:max-size-72 [perspective:1000px]`}
@@ -34,23 +35,31 @@ export const AlbumContainer: FC<AlbumContainerProps> = ({ album, onClick, select
           )}
         </div>
       </RotatingBorderBox>
+      <div className="w-full h-6 bg-background-offset"></div>
     </div>
   );
 };
 
-interface AlbumCoverProps {
-  album: album;
-  blur?: boolean;
-}
-
-export const AlbumCover: FC<AlbumCoverProps> = ({ album, blur }) => {
-  if (album.image_url) {
-    return (
-      <img
-        src={album.image_url}
-        title={album.name}
-        className={`size-full transition-all duration-500 ${blur && 'opacity-70 blur-[2px]'}`}></img>
-    );
-  }
-  return <PlaylistIcon className="size-full fill-primary" />;
+export const AlbumContainer: FC<AlbumContainerProps> = ({ album, onClick, active }) => {
+  return (
+    <button
+      className="flex-col space-y-2 max-w-32"
+      onClick={() => {
+        onClick(album);
+      }}>
+      <RotatingBorderBox active={active}>
+        <Image
+          className="max-w-32 max-h-32 rounded-t-md object-cover"
+          width={128}
+          height={128}
+          src={album?.image_url}
+          alt={album?.name}
+        />
+      </RotatingBorderBox>
+      <div className="bg-background-offset rounded-b-md">
+        <div className="px-2 max-w-32 mx-auto font-bold text-wrap">{album.name}</div>
+        <div className="px-2 max-w-32 mx-auto text-wrap">{album.artists.map(a => a.name).join(', ')}</div>
+      </div>
+    </button>
+  );
 };

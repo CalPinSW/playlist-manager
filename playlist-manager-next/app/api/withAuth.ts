@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth0 } from '../../lib/auth0';
 
-type Handler = (req: NextRequest, context?: any) => Promise<Response>;
+export type HandlerContext = { params: Record<string, string> };
+
+type Handler = (req: NextRequest, context?: HandlerContext) => Promise<Response>;
 
 export function withAuth(handler: Handler): Handler {
   return async (req, context) => {

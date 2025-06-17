@@ -6,6 +6,7 @@ import { withSpotifyAccessToken } from '../../../spotify/utilities/getAccessToke
 import prisma from '../../../../../lib/prisma';
 import { getSpotifyAlbum } from '../../../spotify/album/[id]';
 import { ErrorWithStatus } from '../../../../utils/errors/ErrorWithStatus';
+import getAllPlaylistTracks from '../../../spotify/utilities/spotify/getAllPlaylistTracks';
 
 export interface AddAlbumToSpotifyPlaylistRequest {
   albumId: string;
@@ -68,7 +69,7 @@ const addAlbumToSpotifyPlaylist = async (
   requestBody: AddAlbumToSpotifyPlaylistRequest
 ) => {
   const album = await getSpotifyAlbum(spotifySdk, requestBody.albumId);
-  const playlistTracks = await getPlaylistTracks(spotifySdk, playlistId);
+  const playlistTracks = await getAllPlaylistTracks(spotifySdk, playlistId);
 
   await saveAlbums(spotifySdk, [album.id]);
 
@@ -86,27 +87,6 @@ const addAlbumToSpotifyPlaylist = async (
 
 async function isAlbumInPlaylist(playlistTracks: PlaylistedTrack<Track>[], album: Album): Promise<boolean> {
   return album.tracks.items.every(item => playlistTracks.map(pt => pt.track.id).includes(item.id));
-}
-
-async function getPlaylistTracks(spotifySdk: SpotifyApi, playlistId: string): Promise<PlaylistedTrack<Track>[]> {
-  let playlistTracks: PlaylistedTrack<Track>[] = [];
-  let offset = 0;
-  const limit = 50;
-  let apiTracksObject = await spotifySdk.playlists.getPlaylistItems(playlistId, undefined, undefined, limit, offset);
-
-  while (true) {
-    playlistTracks = playlistTracks.concat(apiTracksObject.items);
-
-    if (!apiTracksObject.next) {
-      break;
-    }
-    offset += limit;
-    // Wait 500ms to avoid rate limits (optional, as needed)
-    await new Promise(res => setTimeout(res, 500));
-    apiTracksObject = await spotifySdk.playlists.getPlaylistItems(playlistId, undefined, undefined, limit, offset);
-  }
-
-  return playlistTracks;
 }
 
 const convertAlbumIndexToPositionIndexForPlaylist = (

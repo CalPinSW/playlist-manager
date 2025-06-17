@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+* {
+  font-family: 'Barlow';
+}
+
 @theme {
   --color-background: oklch(0.1822 0 0); /* "#121212" */
   --color-background: oklch(0.1822 0 0); /* "#121212" */

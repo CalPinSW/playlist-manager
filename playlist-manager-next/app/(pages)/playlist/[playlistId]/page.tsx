@@ -5,6 +5,7 @@ import PlaylistAlbums, { AlbumWithAdditionalDetails } from '../_components/Playl
 import { playlist } from '../../../generated/prisma';
 import { searchPlaylists } from '../../../api/playlists/route';
 import { auth0 } from '../../../../lib/auth0';
+import PlaylistActions from '../_components/PlaylistActions';
 
 export default async function Page({ params }: { params: { playlistId: string } }) {
   const { playlistId } = await params;
@@ -19,11 +20,13 @@ export default async function Page({ params }: { params: { playlistId: string } 
   const playlistAlbums = await getPlaylistAlbumsWithGenres(playlistId);
   const associatedPlaylists = await getAssociatedPlaylists(user.id, playlist);
 
+  const playlistWithAlbums = { ...playlist, albums: playlistAlbums };
   return (
     <div className="flex flex-col p-2 text-sm sm:text-base h-full flex-1">
       <div className="flex flex-col space-y-4 h-full flex-1 grow">
         <PlaylistTitle playlist={playlist} />
-        <PlaylistAlbums playlistWithAlbums={{ ...playlist, albums: playlistAlbums }} associatedPlaylists={associatedPlaylists} />
+        <PlaylistActions playlist={playlistWithAlbums} />
+        <PlaylistAlbums playlistWithAlbums={playlistWithAlbums} associatedPlaylists={associatedPlaylists} />
       </div>
     </div>
   );
@@ -69,44 +72,44 @@ const getPlaylistAlbumsWithGenres = async (playlist_id: string): Promise<AlbumWi
   });
 };
 
-async function getPlaylistTracks(playlist_id: string) {
-  // Find all tracks for the playlist, ordered by album_index, disc_number, track_number
-  const playlistAlbums = await prisma.playlistalbumrelationship.findMany({
-    where: { playlist_id },
-    orderBy: { album_index: 'asc' },
-    include: {
-      album: {
-        select: {
-          id: true,
-          name: true,
-          track: {
-            orderBy: [{ disc_number: 'asc' }, { track_number: 'asc' }],
-            include: {
-              trackartistrelationship: {
-                include: { artist: { select: { name: true } } }
-              }
-            }
-          }
-        }
-      }
-    }
-  });
+// async function getPlaylistTracks(playlist_id: string) {
+//   // Find all tracks for the playlist, ordered by album_index, disc_number, track_number
+//   const playlistAlbums = await prisma.playlistalbumrelationship.findMany({
+//     where: { playlist_id },
+//     orderBy: { album_index: 'asc' },
+//     include: {
+//       album: {
+//         select: {
+//           id: true,
+//           name: true,
+//           track: {
+//             orderBy: [{ disc_number: 'asc' }, { track_number: 'asc' }],
+//             include: {
+//               trackartistrelationship: {
+//                 include: { artist: { select: { name: true } } }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   });
 
-  // Flatten tracks from all albums, preserving album_index order
-  const result: Array<any> = [];
-  for (const rel of playlistAlbums) {
-    const album = rel.album;
-    for (const track of album.track) {
-      result.push({
-        id: track.id,
-        name: track.name,
-        album: { name: album.name },
-        artists: track.trackartistrelationship.map(rel => ({ name: rel.artist.name }))
-      });
-    }
-  }
-  return result;
-}
+//   // Flatten tracks from all albums, preserving album_index order
+//   const result: Array<any> = [];
+//   for (const rel of playlistAlbums) {
+//     const album = rel.album;
+//     for (const track of album.track) {
+//       result.push({
+//         id: track.id,
+//         name: track.name,
+//         album: { name: album.name },
+//         artists: track.trackartistrelationship.map(rel => ({ name: rel.artist.name }))
+//       });
+//     }
+//   }
+//   return result;
+// }
 
 const getAssociatedPlaylists = async (userId, playlist: playlist): Promise<playlist[]> => {
   if (playlist?.name.startsWith('New Albums')) {

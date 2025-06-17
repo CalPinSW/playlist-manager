@@ -33,7 +33,7 @@ model album {
   albumgenrerelationship         albumgenrerelationship[]
   playbackstatealbumrelationship playbackstatealbumrelationship[]
   playlistalbumrelationship      playlistalbumrelationship[]
-  track                          track[]
+  tracks                          track[]
 }
 
 model album_notes {

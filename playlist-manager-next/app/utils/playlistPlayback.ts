@@ -1,5 +1,7 @@
 // Utility functions for playlist playback info, durations, and progress
+import { Artist } from '@spotify/web-api-ts-sdk';
 import prisma from '../../lib/prisma';
+import { PlaybackInfo } from './interfaces/PlaybackInfo';
 
 export async function getPlaylistByIdOrNone(playlistId: string) {
   return await prisma.playlist.findUnique({
@@ -59,7 +61,26 @@ export async function getPlaylistDurationUpToTrack(playlistId: string, trackId: 
   return total;
 }
 
-export async function buildPlaybackInfoWithPlaylist(playbackInfo: any) {
+export interface PreProcessedPlaybackInfo {
+  type: 'track' | 'episode';
+  track_title: string;
+  track_id: string;
+  album_title: string;
+  album_id: string;
+  playlist_id: string;
+  track_artists: string[];
+  album_artists: Artist[];
+  artwork_url: string;
+  track_progress: number;
+  track_duration: number;
+  album_progress: number;
+  album_duration: number;
+  is_playing: boolean;
+}
+
+export async function buildPlaybackInfoWithPlaylist(
+  playbackInfo: PreProcessedPlaybackInfo
+): Promise<PlaybackInfo | PreProcessedPlaybackInfo> {
   if (!playbackInfo.playlist_id) return playbackInfo;
   const playlist = await getPlaylistByIdOrNone(playbackInfo.playlist_id);
   if (!playlist) return playbackInfo;

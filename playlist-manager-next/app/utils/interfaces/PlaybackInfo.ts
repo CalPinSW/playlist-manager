@@ -22,4 +22,5 @@ export interface PlaylistProgress {
   title: string;
   progress: number;
   duration: number;
+  artwork_url: string;
 }

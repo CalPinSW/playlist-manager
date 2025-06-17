@@ -1,6 +1,6 @@
 import './globals.css';
-import NavBar from '../components/layout/NavBar';
-import Footer from '../components/layout/PlaybackFooter';
+import NavBar from './components/layout/NavBar';
+import Footer from './components/layout/PlaybackFooter';
 import React from 'react';
 import type { Metadata } from 'next';
 import Providers from './providers';
@@ -14,6 +14,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Barlow:300,400,500,700&display=swap" />
+      </head>
       <body className="min-h-screen flex flex-col">
         <Providers>
           <main id="app" className="flex flex-col flex-1 min-h-screen max-h-screen" data-testid="layout">

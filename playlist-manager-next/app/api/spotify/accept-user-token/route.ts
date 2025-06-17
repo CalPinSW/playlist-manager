@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { user } from '../../../generated/prisma';
 import prisma from '../../../../lib/prisma';
 import { getUserFromRequest } from '../../user/route';
-import { getSpotifyAccessTokensFromRequest } from '../utilities/getAccessTokensFromRequest';
 
 const getAcceptUserTokenHandler = async (request: NextRequest) => {
   try {

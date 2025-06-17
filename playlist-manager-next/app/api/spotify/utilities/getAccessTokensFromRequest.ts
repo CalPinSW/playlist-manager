@@ -4,6 +4,7 @@ import { getUserFromRequest } from '../../user/route';
 import { access_token } from '../../../generated/prisma';
 import { NextApiRequest } from 'next';
 import { refreshSpotifyAccessToken } from './refreshSpotifyAccessToken';
+import { HandlerContext } from '../../withAuth';
 
 export class SpotifyAuthorizationError extends Error {
   constructor(message: string) {
@@ -12,11 +13,11 @@ export class SpotifyAuthorizationError extends Error {
   }
 }
 
-type Handler = (req: NextRequest | NextApiRequest, context?: any) => Promise<Response>;
+type Handler = (req: NextRequest | NextApiRequest, context?: HandlerContext) => Promise<Response>;
 type HandlerWithAccessToken = (
   accessToken: access_token,
   req: NextRequest | NextApiRequest,
-  context?: any
+  context?: HandlerContext
 ) => Promise<Response>;
 
 export function withSpotifyAccessToken(handler: HandlerWithAccessToken): Handler {
@@ -28,12 +29,12 @@ export function withSpotifyAccessToken(handler: HandlerWithAccessToken): Handler
       }
     });
     if (!accessTokens) {
-      return NextResponse.redirect('/pages/link-user-to-spotify', { status: 401 });
+      return NextResponse.redirect('/spotify-settings', { status: 401 });
     }
     try {
       const response = await handler(accessTokens, req, context);
       return response;
-    } catch (error) {
+    } catch (_e) {
       await refreshSpotifyAccessToken(user);
       return handler(accessTokens, req, context);
     }

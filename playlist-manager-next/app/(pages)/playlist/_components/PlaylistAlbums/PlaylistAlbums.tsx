@@ -2,10 +2,10 @@
 
 import { FC, useEffect, useRef, useState } from 'react';
 import { album, album_notes, artist, genre, playlist } from '../../../../generated/prisma';
-import Carousel from '../../../../../components/carousel/Carousel';
+import Carousel from '../../../../components/carousel/Carousel';
 import { usePlaybackContext } from '../../../../hooks/usePlaybackContext';
 import { AlbumContainer } from './AlbumContainer';
-import PlaylistActions from './PlaylistActions';
+import PlaylistActions from './AlbumActions';
 
 export interface AlbumWithAdditionalDetails extends album {
   genres: genre[];

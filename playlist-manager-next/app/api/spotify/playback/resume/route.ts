@@ -16,7 +16,7 @@ const postResumePlaybackHandler = async (access_tokens: access_token, request: N
     const playbackRequest = await buildStartPlaybackRequest(user.id, requestBody);
     const playback = await startSpotifyPlayback(spotifySdk, playbackRequest);
     return NextResponse.json({ playback }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 };

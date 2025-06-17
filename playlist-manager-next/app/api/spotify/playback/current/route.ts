@@ -3,13 +3,12 @@ import { NextResponse } from 'next/server';
 import { withAuth } from '../../../withAuth';
 import { Episode, PlaybackState, SpotifyApi, Track } from '@spotify/web-api-ts-sdk';
 import { withSpotifyAccessToken } from '../../utilities/getAccessTokensFromRequest';
-import prisma from '../../../../../lib/prisma';
-import { buildPlaybackInfoWithPlaylist } from '../../../../utils/playlistPlayback';
+import { buildPlaybackInfoWithPlaylist, PreProcessedPlaybackInfo } from '../../../../utils/playlistPlayback';
 
 const getPlaybackHandler = async (access_tokens: access_token) => {
   const spotifySdk = SpotifyApi.withAccessToken(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID, access_tokens);
   const playback = await spotifySdk.player.getPlaybackState();
-  
+
   if (!playback) {
     return NextResponse.json(null, { status: 200 });
   }
@@ -33,7 +32,7 @@ const getPlaybackHandler = async (access_tokens: access_token) => {
     const album_progress =
       (trackIndex > 0 ? album.tracks.items.slice(0, trackIndex).reduce((acc, t) => acc + t.duration_ms, 0) : 0) +
       (playback.progress_ms ?? 0);
-    const playbackInfo = {
+    const playbackInfo: PreProcessedPlaybackInfo = {
       type: 'track',
       track_title: item.name,
       track_id: item.id,
@@ -81,44 +80,44 @@ const buildEpisodePlaybackResponse = (playback: PlaybackState) => {
   );
 };
 
-const upsertPlaybackState = async (
-  playback: PlaybackState,
-  item: Track,
-  playlist_id: string,
-  access_tokens: access_token
-) => {
-  // Upsert playback state for album
-  await prisma.playback_state.upsert({
-    where: { id: Number(item.id) },
-    update: {
-      item_id: item.id,
-      progress_ms: playback.progress_ms,
-      timestamp: new Date(playback.timestamp),
-      type: playback.currently_playing_type
-    },
-    create: {
-      item_id: item.id,
-      progress_ms: playback.progress_ms,
-      timestamp: new Date(playback.timestamp),
-      type: playback.currently_playing_type
-    }
-  });
-  // Upsert playback state for playlist if present
-  if (playlist_id) {
-    await prisma.playbackstateplaylistrelationship.upsert({
-      where: {
-        playback_state_id_playlist_id_user_id: {
-          playback_state_id: Number(item.id),
-          playlist_id: playlist_id,
-          user_id: access_tokens.user_id
-        }
-      },
-      update: {},
-      create: {
-        playback_state_id: Number(item.id),
-        playlist_id: playlist_id,
-        user_id: access_tokens.user_id
-      }
-    });
-  }
-};
+// const upsertPlaybackState = async (
+//   playback: PlaybackState,
+//   item: Track,
+//   playlist_id: string,
+//   access_tokens: access_token
+// ) => {
+//   // Upsert playback state for album
+//   await prisma.playback_state.upsert({
+//     where: { id: Number(item.id) },
+//     update: {
+//       item_id: item.id,
+//       progress_ms: playback.progress_ms,
+//       timestamp: new Date(playback.timestamp),
+//       type: playback.currently_playing_type
+//     },
+//     create: {
+//       item_id: item.id,
+//       progress_ms: playback.progress_ms,
+//       timestamp: new Date(playback.timestamp),
+//       type: playback.currently_playing_type
+//     }
+//   });
+//   // Upsert playback state for playlist if present
+//   if (playlist_id) {
+//     await prisma.playbackstateplaylistrelationship.upsert({
+//       where: {
+//         playback_state_id_playlist_id_user_id: {
+//           playback_state_id: Number(item.id),
+//           playlist_id: playlist_id,
+//           user_id: access_tokens.user_id
+//         }
+//       },
+//       update: {},
+//       create: {
+//         playback_state_id: Number(item.id),
+//         playlist_id: playlist_id,
+//         user_id: access_tokens.user_id
+//       }
+//     });
+//   }
+// };

@@ -1,4 +1,3 @@
-import { artist } from './../../generated/prisma/index.d';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '../withAuth';
 import { getUserFromRequest } from '../user/route';

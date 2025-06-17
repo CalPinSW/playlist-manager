@@ -18,7 +18,7 @@ const postStartPlaybackHandler = async (access_tokens: access_token, request: Ne
     const spotifySdk = SpotifyApi.withAccessToken(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID, access_tokens);
     const playback = await startSpotifyPlayback(spotifySdk, requestBody);
     return NextResponse.json({ playback }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 };
