@@ -39,6 +39,6 @@ export const config = {
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      * - api (API routes)
      */
-    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|api).*)'
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|api|app/api).*)'
   ]
 };
