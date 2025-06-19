@@ -14,7 +14,7 @@ const SpotifyAlbumSearchResults: FC<SpotifyAlbumSearchResultsProps> = ({ albums 
     <div className="flex flex-grow mt-2 p-2 h-[50vh] bg-background-offset rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
       <div className="flex flex-col overflow-y-auto gap-2">
         {albums.albums.items.map(album => (
-          <Link href={`/album/${album.id}`} className="flex gap-4">
+          <Link key={`Spotify Album ${album.id}`} href={`/album/${album.id}`} className="flex gap-4">
             <Image
               className="rounded-md"
               width={96}

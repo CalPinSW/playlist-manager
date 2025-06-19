@@ -22,9 +22,7 @@ const PlaybackFooter: FC = () => {
   };
 
   const playbackArtists =
-    playbackInfo.type == 'track'
-      ? renderArtistList(playbackInfo.album_artists)
-      : playbackInfo.album_artists;
+    playbackInfo.type == 'track' ? renderArtistList(playbackInfo.album_artists) : playbackInfo.album_artists;
 
   return (
     <div className="flex w-full h-fit bg-background-offset px-4 py-2 text-sm sm:text-base space-x-4 sm:space-x-6">
