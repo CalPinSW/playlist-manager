@@ -3,6 +3,7 @@
 import { toast } from 'react-toastify';
 import LoadingSpinner from './LoadingSpinner';
 import { FC, ReactNode, useState } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 interface AsyncButtonProps {
   children: ReactNode;
@@ -48,11 +49,14 @@ const AsyncButton: FC<AsyncButtonProps> = ({ children, onClick, successMessage, 
 
   return (
     <button
-      className={`p-2 rounded hover:bg-background-interactive cursor-pointer active:bg-primary ${
-        isLoading ? 'bg-primary-darker' : ''
-      } ${isError ? 'bg-warning' : ''} ${className}`}
+      className={twMerge(
+        'p-2 rounded hover:bg-background-interactive cursor-pointer active:bg-primary',
+        isLoading && 'bg-primary-darker',
+        isError && 'bg-warning',
+        className
+      )}
       onClick={handleClick}>
-      <div className={`p-2 ${isLoading ? 'hidden' : ''}`}>{children}</div>
+      <div className={`m-auto ${isLoading ? 'hidden' : ''}`}>{children}</div>
       <div className={`m-auto h-8 w-8 ${isLoading ? '' : 'hidden'}`}>
         <LoadingSpinner />
       </div>

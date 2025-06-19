@@ -6,9 +6,9 @@
 
 @theme {
   --color-background: oklch(0.1822 0 0); /* "#121212" */
-  --color-background: oklch(0.1822 0 0); /* "#121212" */
+  --color-background: rgb(18, 18, 18); /* "#121212" */
   --color-background-offset: oklch(25.304% 0.03251 276.124); /* "#282828" */
-  --color-background-interactive: oklch(0.377 0.012 278.7); /* "#3f3f3f" */
+  --color-background-interactive: oklch(29.125% 0.05252 316.6); /* "#3f3f3f" */
 
   --color-text: oklch(0.946 0.009 81.7); /* "#eae0d5" */
   --color-text-secondary: oklch(0.715 0.012 306.2); /* "#aeacb0" */

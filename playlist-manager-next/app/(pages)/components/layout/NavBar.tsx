@@ -14,7 +14,7 @@ export default function NavBar() {
 
   const unprotectedRoutes = [{ name: 'Home', href: '/' }];
 
-  const protectedRoutes = [];
+  const protectedRoutes = [{ name: 'Spotify', href: '/spotify' }];
 
   // const settingsRoutes = [{ name: 'Settings', href: '/settings' }];
 

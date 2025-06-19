@@ -4,11 +4,14 @@ import { album, artist, track } from '../../../../generated/prisma';
 import AlbumHeader from '../_components/AlbumHeader';
 import TrackList from '../_components/TrackList';
 import AlbumInfo from '../_components/AlbumInfo';
+import { redirect } from 'next/navigation';
 
 export default async function Page({ params }: { params: Promise<{ albumId: string }> }) {
   const { albumId } = await params;
   const album = await getAlbumWithTracks(albumId);
-
+  if (!album) {
+    redirect(`/spotify/album/${albumId}`);
+  }
   return (
     <div className="flex flex-col text-sm sm:text-base h-full flex-1 m-4 sm:m-24">
       <div className="flex flex-col space-y-4 h-full flex-1 grow">
@@ -49,6 +52,9 @@ const getAlbumWithTracks = async (albumId: string): Promise<AlbumWithTracks> => 
       }
     }
   });
+
+  if (!album) return null;
+
   return {
     ...album,
     artists: album.albumartistrelationship.map(aar => aar.artist),

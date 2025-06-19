@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AlbumWithPlaylists } from '../../(index)/AlbumSearch';
 import Image from 'next/image';
 import AlbumIcon from '../icons/AlbumIcon';
+import renderArtistList from '../../../utils/renderArtistsList';
 
 interface AlbumSlideProps {
   album: AlbumWithPlaylists | undefined;
@@ -30,7 +31,7 @@ const AlbumSlide: FC<AlbumSlideProps> = ({ album }) => {
         {album?.name}
       </div>
       <div className="px-2 max-w-32 mx-auto text-center group-hover:line-clamp-none sm:line-clamp-2 line-clamp-3 wrap-break-word hyphens-auto">
-        {album?.artists.map(a => a.name).join(', ')}
+        {renderArtistList(album?.artists)}
       </div>
     </Link>
   );

@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, make_response, request
-import requests
 from src.database.crud.playlist import (
     create_playlist_album_relationship,
     get_playlist_albums_with_genres,

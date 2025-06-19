@@ -5,6 +5,7 @@ import { AlbumWithAdditionalDetails } from './PlaylistAlbums';
 import { AlbumCover } from '../../../components/AlbumCover';
 import Image from 'next/image';
 import AlbumIcon from '../../../components/icons/AlbumIcon';
+import renderArtistList from '../../../../utils/renderArtistsList';
 
 interface AlbumContainerProps {
   album: AlbumWithAdditionalDetails;
@@ -30,7 +31,7 @@ export const foo: FC<AlbumContainerProps> = ({ album, onClick, selected, active 
             <div className="absolute top-0 [transform:rotateY(180deg)] [backface-visibility:hidden]">
               <div className="flex flex-col space-y-2 m-2">
                 <div>{album.name}</div>
-                <div>{album.artists.map(artist => artist.name).join(', ')}</div>
+                <div>{renderArtistList(album.artists)}</div>
               </div>
             </div>
           )}
@@ -63,7 +64,7 @@ export const AlbumContainer: FC<AlbumContainerProps> = ({ album, onClick, active
       </RotatingBorderBox>
       <div className="bg-background-offset rounded-b-md">
         <div className="px-2 max-w-32 mx-auto font-bold text-wrap">{album.name}</div>
-        <div className="px-2 max-w-32 mx-auto text-wrap">{album.artists.map(a => a.name).join(', ')}</div>
+        <div className="px-2 max-w-32 mx-auto text-wrap">{renderArtistList(album.artists)}</div>
       </div>
     </button>
   );

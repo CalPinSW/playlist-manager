@@ -7,6 +7,7 @@ import SongIcon from '../icons/SongIcon';
 import PlaylistIcon from '../PlaylistIcon';
 import { usePlaybackContext } from '../../../hooks/usePlaybackContext';
 import Image from 'next/image';
+import renderArtistList from '../../../utils/renderArtistsList';
 
 const PlaybackFooter: FC = () => {
   const { playbackInfo } = usePlaybackContext();
@@ -22,7 +23,7 @@ const PlaybackFooter: FC = () => {
 
   const playbackArtists =
     playbackInfo.type == 'track'
-      ? playbackInfo.album_artists.map(artist => artist.name).join(', ')
+      ? renderArtistList(playbackInfo.album_artists)
       : playbackInfo.album_artists;
 
   return (

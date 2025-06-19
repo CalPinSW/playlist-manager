@@ -6,6 +6,7 @@ import { ArrowDownTrayIcon, ArrowPathIcon, ClipboardIcon, PlayIcon } from '@hero
 import { useDownloadImages } from '../../../hooks/useDownload';
 import { PlaylistWithAlbums } from './PlaylistAlbums/PlaylistAlbums';
 import { ResumePlaybackRequest } from '../../../utils/interfaces/PlaybackRequest';
+import renderArtistList from '../../../utils/renderArtistsList';
 
 interface PlaylistActionsProps {
   playlist: PlaylistWithAlbums;
@@ -15,14 +16,14 @@ const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist }) => {
   const { handleZip } = useDownloadImages();
   const playlistImages = playlist.albums.map((album, i) => ({
     url: album.image_url,
-    name: `${i + 1}_${album.name} - ${album.artists.map(artist => artist.name).join(', ')}`
+    name: `${i + 1}_${album.name} - ${renderArtistList(album.artists)}`
   }));
   const downloadImagesHandler = () => handleZip(playlist.name, playlistImages);
 
   const copyArtistsHandler = async () => {
     const albumArtistList = playlist.albums
       .map(album => {
-        const artistNames = album.artists.map(artist => artist.name).join(', ');
+        const artistNames = renderArtistList(album.artists);
         return `${album.name} - ${artistNames}`;
       })
       .join('\n');
@@ -40,31 +41,32 @@ const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist }) => {
       body: JSON.stringify(requestBody)
     });
   };
+
   return (
-    <div className="flex justify-between sm:justify-end flex-row my-4 space-x-2">
-      <AsyncButton className="bg-primary hover:bg-primary-darker justify-center w-fit" onClick={resumePlaylistHandler}>
-        <div className="flex gap-2 sm:flex-row flex-col">
+    <div className="grid grid-cols-2 justify-between sm:flex sm:justify-end flex-row my-4 gap-2">
+      <AsyncButton className="flex bg-primary hover:bg-primary-darker justify-center" onClick={resumePlaylistHandler}>
+        <div className="flex gap-2 sm:p-2 flex-row">
           <PlayIcon className="m-auto" width={24} height={24} />
           Resume Playlist
         </div>
       </AsyncButton>
-      <AsyncButton className="bg-primary hover:bg-primary-darker justify-center w-fit" onClick={updatePlaylistHandler}>
-        <div className="flex gap-2 sm:flex-row flex-col">
+      <AsyncButton className="flex bg-primary hover:bg-primary-darker justify-center" onClick={updatePlaylistHandler}>
+        <div className="flex gap-2 sm:p-2 flex-row">
           <ArrowPathIcon className="m-auto" width={24} height={24} />
           Refresh Playlist Data
         </div>
       </AsyncButton>
-      <AsyncButton className="bg-primary hover:bg-primary-darker justify-center w-fit" onClick={downloadImagesHandler}>
-        <div className="flex gap-2 sm:flex-row flex-col">
+      <AsyncButton className="flex bg-primary hover:bg-primary-darker justify-center" onClick={downloadImagesHandler}>
+        <div className="flex gap-2 sm:p-2 flex-row">
           <ArrowDownTrayIcon className="m-auto" width={24} height={24} />
           Download Album Images
         </div>
       </AsyncButton>
       <AsyncButton
-        className="bg-primary hover:bg-primary-darker justify-center w-fit"
+        className="flex bg-primary hover:bg-primary-darker justify-center"
         onClick={copyArtistsHandler}
         successMessage="Artist List copied">
-        <div className="flex gap-2 sm:flex-row flex-col">
+        <div className="flex gap-2 sm:p-2 sflex-row">
           <ClipboardIcon className="m-auto" width={24} height={24} />
           Copy Artist List
         </div>
