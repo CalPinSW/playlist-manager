@@ -1,28 +1,21 @@
 import { FC } from 'react';
-import { AlbumWithTracks } from '../[albumId]/page';
-import wikipedia from 'wikipedia';
+import { AlbumInfo as IAlbumInfo } from '../../../utils/interfaces/AlbumInfo/AlbumInfo';
 
 interface AlbumInfoProps {
-  album: AlbumWithTracks;
+  albumInfo: IAlbumInfo;
 }
 
-const AlbumInfo: FC<AlbumInfoProps> = async ({ album }) => {
-  const wikiAlbumInfo = await fetchWikipediaAlbumInfo(album);
-  if (!wikiAlbumInfo) return null;
+const AlbumInfo: FC<AlbumInfoProps> = async ({ albumInfo }) => {
+  if (!albumInfo.summary && !albumInfo.summary_html) return null;
   return (
     <div>
-      <div dangerouslySetInnerHTML={{ __html: wikiAlbumInfo.extract_html }}></div>
+      {albumInfo ? (
+        <div dangerouslySetInnerHTML={{ __html: albumInfo.summary_html }}></div>
+      ) : (
+        <div>{albumInfo.summary}</div>
+      )}
     </div>
   );
 };
 
 export default AlbumInfo;
-
-const fetchWikipediaAlbumInfo = async (album: AlbumWithTracks) => {
-  try {
-    const results = await wikipedia.summary(`${album.name}_(album)`);
-    return results;
-  } catch (_) {
-    return null;
-  }
-};

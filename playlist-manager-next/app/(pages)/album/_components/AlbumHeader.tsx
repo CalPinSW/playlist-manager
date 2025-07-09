@@ -2,46 +2,37 @@ import { FC } from 'react';
 import { AlbumWithTracks } from '../[albumId]/page';
 import { AlbumCover } from '../../components/AlbumCover';
 import mbApi from '../../../../lib/musicbrainz';
+import renderGenres from '../../../utils/AlbumInfo/renderGenres';
+import { AlbumInfo } from '../../../utils/interfaces/AlbumInfo/AlbumInfo';
+import AlbumTypeIcon from './AlbumTypeIcon';
 
 interface AlbumHeaderProps {
-  album: AlbumWithTracks;
+  albumInfo: AlbumInfo;
 }
 
-const AlbumHeader: FC<AlbumHeaderProps> = async ({ album }) => {
-  const mbAlbumInfo = await fetchMBAlbumInfo(album);
-  const genres = mbAlbumInfo?.['tags'];
+const AlbumHeader: FC<AlbumHeaderProps> = async ({ albumInfo }) => {
   return (
     <div className="flex gap-12 sm:gap-24">
-      <AlbumCover className={'h-32 w-32'} album={album} />
+      <AlbumCover className={'h-32 w-32'} name={albumInfo.name} imageUrl={albumInfo.albumImageUrl} />
       <div className="flex flex-col my-4 space-y-2">
-        <div className="text-4xl">{album.name}</div>
-        {album.artists.map(a => (
-          <div key={`artist ${a.id}`} className="text-xl font-light">
+        <div className="text-4xl">{albumInfo.name}</div>
+        {albumInfo.artists.map(a => (
+          <div key={`artist ${a.spotifyId}`} className="text-xl font-light">
             {a.name}
           </div>
         ))}
-        <div>
-          {genres && (
-            <div className="text-text-secondary">
-              {genres
-                .sort((t1, t2) => t2.count - t1.count)
-                .slice(0, 5)
-                .map(tag => tag.name)
-                .join(', ')}
-            </div>
-          )}
-        </div>
+        {albumInfo.genres && (
+          <div>{albumInfo.genres && <div className="text-text-secondary">{renderGenres(albumInfo.genres)}</div>}</div>
+        )}
+        {albumInfo.type && (
+          <AlbumTypeIcon
+            albumType={albumInfo.type}
+            className="my-auto size-8 stroke-primary-darker fill-primary-darker"
+          />
+        )}
       </div>
     </div>
   );
 };
 
 export default AlbumHeader;
-
-const fetchMBAlbumInfo = async (album: AlbumWithTracks) => {
-  const artist = album.artists[0].name;
-  const title = album.name;
-  const query = `query=artist:"${artist}" AND release:"${title}"`;
-  const results = await mbApi.search('release-group', { query });
-  return results['release-groups'].find(rg => rg['primary-type'] == 'Album');
-};

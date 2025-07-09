@@ -4,20 +4,21 @@ import PlaylistIcon from './PlaylistIcon';
 import Image from 'next/image';
 
 interface AlbumCoverProps {
-  album: album;
+  name: string;
+  imageUrl?: string;
   blur?: boolean;
   className?: string;
 }
 
-export const AlbumCover: FC<AlbumCoverProps> = ({ album, blur, className }) => {
-  if (album.image_url) {
+export const AlbumCover: FC<AlbumCoverProps> = ({ name, imageUrl, blur, className }) => {
+  if (imageUrl) {
     return (
       <Image
         width={128}
         height={128}
-        src={album.image_url}
-        title={album.name}
-        alt={`${album.name} artwork`}
+        src={imageUrl}
+        title={name}
+        alt={`${name} artwork`}
         className={`size-full transition-all duration-500 ${blur && 'opacity-70 blur-[2px]'} ${className}`}></Image>
     );
   }

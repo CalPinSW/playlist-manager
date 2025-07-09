@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-const AlbumIcon: FC<React.SVGProps<SVGSVGElement>> = props => {
+const PlayingAlbumIcon: FC<React.SVGProps<SVGSVGElement>> = props => {
   return (
     <svg viewBox="0 0 24 24" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
@@ -34,4 +34,4 @@ const AlbumIcon: FC<React.SVGProps<SVGSVGElement>> = props => {
   );
 };
 
-export default AlbumIcon;
+export default PlayingAlbumIcon;

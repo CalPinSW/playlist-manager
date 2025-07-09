@@ -3,11 +3,13 @@ import { NextResponse } from 'next/server';
 import { withAuth } from '../../../withAuth';
 import { SpotifyApi } from '@spotify/web-api-ts-sdk';
 import { withSpotifyAccessToken } from '../../utilities/getAccessTokensFromRequest';
+import { pausePlayback } from './handler';
 
 const getPlaybackPauseHandler = async (access_tokens: access_token) => {
   try {
-    await SpotifyApi.withAccessToken(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID, access_tokens);
-    return NextResponse.json(undefined, { status: 204 });
+    const spotifySdk = SpotifyApi.withAccessToken(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID, access_tokens);
+    await pausePlayback(spotifySdk);
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }

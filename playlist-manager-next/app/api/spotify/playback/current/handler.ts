@@ -1,10 +1,14 @@
 import { PlaybackState, Track, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import prisma from '../../../../../lib/prisma';
 import { PlaybackInfo } from '../../../../utils/interfaces/PlaybackInfo';
-import { buildPlaybackInfoWithPlaylist, PreProcessedPlaybackInfo } from '../../../../utils/playlistPlayback';
+import {
+  buildPlaybackInfoWithPlaylist,
+  PreProcessedPlaybackInfo
+} from '../../../../utils/spotifyPlayback/playlistPlayback';
 
 export const getPlayback = async (spotifySdk: SpotifyApi, userId: string): Promise<PlaybackInfo> => {
   const playback = await spotifySdk.player.getPlaybackState();
+  const timestamp = Number(new Date());
   if (!playback) {
     return null;
   }
@@ -12,16 +16,14 @@ export const getPlayback = async (spotifySdk: SpotifyApi, userId: string): Promi
     return null;
     // return buildEpisodePlaybackResponse(playback);
   } else {
-    await upsertAlbumPlaybackState(playback, userId);
-
     const context = playback.context;
 
     let playlistId: string | null = null;
 
     if (context && context.type === 'playlist') {
       playlistId = context.uri.replace('spotify:playlist:', '');
-      await upsertPlaylistPlaybackState(playback, playlistId, userId);
     }
+    await upsertPlaybackState(playback, userId, playlistId);
 
     const item = playback.item as Track;
     const album = await spotifySdk.albums.get(item.album.id);
@@ -45,7 +47,8 @@ export const getPlayback = async (spotifySdk: SpotifyApi, userId: string): Promi
       track_duration: item.duration_ms,
       album_progress: album_progress,
       album_duration: album_duration,
-      is_playing: playback.is_playing
+      is_playing: playback.is_playing,
+      timestamp: timestamp
     };
     return buildPlaybackInfoWithPlaylist(playbackInfo);
   }
@@ -69,6 +72,19 @@ export const getPlayback = async (spotifySdk: SpotifyApi, userId: string): Promi
 //     is_playing: playback.is_playing
 //   };
 // };
+
+const upsertPlaybackState = async (playbackInfo: PlaybackState, userId: string, playlistId?: string): Promise<void> => {
+  const track = playbackInfo.item as Track;
+  const dbAlbum = await prisma.album.findUnique({
+    where: { id: track.album.id }
+  });
+  if (dbAlbum) {
+    upsertAlbumPlaybackState(playbackInfo, userId);
+    if (playlistId) {
+      await upsertPlaylistPlaybackState(playbackInfo, playlistId, userId);
+    }
+  }
+};
 
 const upsertAlbumPlaybackState = async (playbackInfo: PlaybackState, userId: string): Promise<void> => {
   const track = playbackInfo.item as Track;

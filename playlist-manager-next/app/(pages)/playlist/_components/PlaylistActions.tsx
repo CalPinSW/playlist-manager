@@ -4,24 +4,26 @@ import { FC } from 'react';
 import AsyncButton from '../../components/AsyncButton';
 import { ArrowDownTrayIcon, ArrowPathIcon, ClipboardIcon, PlayIcon } from '@heroicons/react/24/outline';
 import { useDownloadImages } from '../../../hooks/useDownload';
-import { PlaylistWithAlbums } from './PlaylistAlbums/PlaylistAlbums';
 import { ResumePlaybackRequest } from '../../../utils/interfaces/PlaybackRequest';
 import renderArtistList from '../../../utils/renderArtistsList';
+import { playlist } from '../../../../generated/prisma';
+import { AlbumWithAdditionalDetails } from './PlaylistAlbums/PlaylistAlbums';
 
 interface PlaylistActionsProps {
-  playlist: PlaylistWithAlbums;
+  playlist: playlist
+  playlistAlbums: AlbumWithAdditionalDetails[]
 }
 
-const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist }) => {
+const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist, playlistAlbums }) => {
   const { handleZip } = useDownloadImages();
-  const playlistImages = playlist.albums.map((album, i) => ({
+  const playlistImages = playlistAlbums.map((album, i) => ({
     url: album.image_url,
     name: `${i + 1}_${album.name} - ${renderArtistList(album.artists)}`
   }));
   const downloadImagesHandler = () => handleZip(playlist.name, playlistImages);
 
   const copyArtistsHandler = async () => {
-    const albumArtistList = playlist.albums
+    const albumArtistList = playlistAlbums
       .map(album => {
         const artistNames = renderArtistList(album.artists);
         return `${album.name} - ${artistNames}`;

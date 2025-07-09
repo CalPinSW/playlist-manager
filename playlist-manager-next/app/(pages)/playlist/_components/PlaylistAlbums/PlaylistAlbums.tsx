@@ -13,22 +13,21 @@ export interface AlbumWithAdditionalDetails extends album {
   artists: artist[];
 }
 
-export interface PlaylistWithAlbums extends playlist {
-  albums: AlbumWithAdditionalDetails[];
-}
-
 interface PlaylistAlbumsProps {
-  playlistWithAlbums: PlaylistWithAlbums;
+  playlist: playlist;
+  playlistAlbums: AlbumWithAdditionalDetails[]
   associatedPlaylists: playlist[];
 }
 
 const PlaylistAlbums: FC<PlaylistAlbumsProps> = ({
-  playlistWithAlbums: { albums, ...playlist },
+  playlist,
+  playlistAlbums,
   associatedPlaylists
 }) => {
   const { playbackInfo } = usePlaybackContext();
+
   const activeAlbumId = playbackInfo?.album_id;
-  const activeAlbumIndex = albums.findIndex(album => album.id === activeAlbumId);
+  const activeAlbumIndex = playlistAlbums.findIndex(album => album.id === activeAlbumId);
   const [selectedAlbum, setSelectedAlbum] = useState<album | undefined>(undefined);
   const onAlbumClick = (album: album) => {
     if (selectedAlbum && selectedAlbum.id == album.id) {
@@ -37,7 +36,7 @@ const PlaylistAlbums: FC<PlaylistAlbumsProps> = ({
       setSelectedAlbum(album);
     }
   };
-  const selectedAlbumIndex = selectedAlbum ? albums.findIndex(album => album.id === selectedAlbum.id) : undefined;
+  const selectedAlbumIndex = selectedAlbum ? playlistAlbums.findIndex(album => album.id === selectedAlbum.id) : undefined;
   const albumInfoRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (selectedAlbum && albumInfoRef.current) {
@@ -50,7 +49,7 @@ const PlaylistAlbums: FC<PlaylistAlbumsProps> = ({
       <Carousel
         startIndex={activeAlbumIndex != -1 ? activeAlbumIndex : 0}
         selectedIndex={selectedAlbumIndex}
-        slides={albums.map((a, index) => (
+        slides={playlistAlbums.map((a, index) => (
           <AlbumContainer
             album={a}
             onClick={onAlbumClick}

@@ -4,7 +4,7 @@ import { FC } from 'react';
 import { AlbumWithAdditionalDetails } from './PlaylistAlbums';
 import { AlbumCover } from '../../../components/AlbumCover';
 import Image from 'next/image';
-import AlbumIcon from '../../../components/icons/AlbumIcon';
+import PlayingAlbumIcon from '../../../components/icons/PlayingAlbumIcon';
 import renderArtistList from '../../../../utils/renderArtistsList';
 
 interface AlbumContainerProps {
@@ -26,7 +26,7 @@ export const foo: FC<AlbumContainerProps> = ({ album, onClick, selected, active 
           className={`size-full p-1 relative transition-all duration-500 [transform-style:preserve-3d] ${
             selected && '[transform:rotateY(180deg)]'
           }`}>
-          <AlbumCover album={album} blur={selected} />
+          <AlbumCover name={album.name} imageUrl={album.image_url} blur={selected} />
           {selected && (
             <div className="absolute top-0 [transform:rotateY(180deg)] [backface-visibility:hidden]">
               <div className="flex flex-col space-y-2 m-2">
@@ -59,7 +59,7 @@ export const AlbumContainer: FC<AlbumContainerProps> = ({ album, onClick, active
             alt={album?.name}
           />
         ) : (
-          <AlbumIcon className="fill-primary bg-background-offset rounded-t-md" />
+          <PlayingAlbumIcon className="fill-primary bg-background-offset rounded-t-md" />
         )}
       </RotatingBorderBox>
       <div className="bg-background-offset rounded-b-md">

@@ -18,15 +18,16 @@ export default async function Page({ params }: { params: Promise<{ playlistId: s
 
   const playlist = await prisma.playlist.findUnique({ where: { id: playlistId } });
   const playlistAlbums = await getPlaylistAlbumsWithGenres(playlistId);
+  const playlistWithAlbums = { ...playlist, albums: playlistAlbums };
+
   const associatedPlaylists = await getAssociatedPlaylists(user.id, playlist);
 
-  const playlistWithAlbums = { ...playlist, albums: playlistAlbums };
   return (
     <div className="flex flex-col p-2 text-sm sm:text-base h-full flex-1">
       <div className="flex flex-col space-y-4 h-full flex-1 grow">
         <PlaylistTitle playlist={playlist} />
-        <PlaylistActions playlist={playlistWithAlbums} />
-        <PlaylistAlbums playlistWithAlbums={playlistWithAlbums} associatedPlaylists={associatedPlaylists} />
+        <PlaylistActions playlist={playlist} playlistAlbums={playlistAlbums} />
+        <PlaylistAlbums playlist={playlist} playlistAlbums={playlistAlbums} associatedPlaylists={associatedPlaylists} />
       </div>
     </div>
   );

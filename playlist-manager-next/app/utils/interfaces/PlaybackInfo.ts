@@ -29,6 +29,7 @@ interface PlaybackBase {
   album_duration: number;
   is_playing: boolean;
   playlist?: PlaylistProgress;
+  timestamp: number;
 }
 
 export interface PlaylistProgress {

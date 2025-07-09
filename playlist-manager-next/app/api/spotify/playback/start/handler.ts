@@ -7,10 +7,11 @@ import {
   AlbumIdOffset,
   UriOffset
 } from '../../../../utils/interfaces/PlaybackRequest';
+import getDeviceIdForUser from '../../../../utils/spotifyPlayback/getDeviceIdForUser';
 
 export const startSpotifyPlayback = async (
   spotifySdk: SpotifyApi,
-  startPlaybackRequest: StartPlaybackRequest
+  startPlaybackRequest?: StartPlaybackRequest
 ): Promise<void> => {
   const deviceId = await getDeviceIdForUser(spotifySdk);
   if (startPlaybackRequest && startPlaybackRequest.offset) {
@@ -41,22 +42,4 @@ export const startSpotifyPlayback = async (
     },
     body: JSON.stringify(startPlaybackRequest)
   });
-};
-
-const getDeviceIdForUser = async (spotifySdk: SpotifyApi): Promise<string | null> => {
-  const { devices } = await spotifySdk.player.getAvailableDevices();
-
-  if (!devices || devices.length === 0) {
-    return null;
-  }
-
-  let device_id: string;
-  const active_device = devices.find(device => device.is_active);
-  if (active_device) {
-    device_id = active_device.id;
-  } else {
-    const smartphone_device = devices.find(device => device.type && device.type.toLowerCase() === 'smartphone');
-    device_id = smartphone_device ? smartphone_device.id : devices[0].id;
-  }
-  return device_id;
 };

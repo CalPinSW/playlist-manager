@@ -1,17 +1,48 @@
 'use client';
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import Link from 'next/link';
-import AlbumIcon from '../icons/AlbumIcon';
+import AlbumIcon from '../icons/PlayingAlbumIcon';
 import { ProgressCircle } from '../icons/dynamic/ProgressCircle';
 import SongIcon from '../icons/SongIcon';
 import PlaylistIcon from '../PlaylistIcon';
 import { usePlaybackContext } from '../../../hooks/usePlaybackContext';
 import Image from 'next/image';
 import renderArtistList from '../../../utils/renderArtistsList';
+import { PlaybackInfo } from '../../../utils/interfaces/PlaybackInfo';
 
-const PlaybackFooter: FC = () => {
+const PlaybackFooterWrapper: FC = () => {
   const { playbackInfo } = usePlaybackContext();
   if (!playbackInfo) return null;
+  return <PlaybackFooter playbackInfo={playbackInfo} />;
+};
+
+interface PlaybackFooterProps {
+  playbackInfo: PlaybackInfo;
+}
+
+const PlaybackFooter: FC<PlaybackFooterProps> = ({ playbackInfo }) => {
+  const [trackProgress, setTrackProgress] = useState(playbackInfo.track_progress);
+  const [albumProgress, setAlbumProgress] = useState(playbackInfo.album_progress);
+  useEffect(() => {
+    const trackInterval = setInterval(() => {
+      if (playbackInfo.is_playing) {
+        setTrackProgress(
+          Math.min(
+            playbackInfo.track_progress + Number(new Date()) - playbackInfo.timestamp,
+            playbackInfo.track_duration
+          )
+        );
+        setAlbumProgress(
+          Math.min(
+            playbackInfo.album_progress + Number(new Date()) - playbackInfo.timestamp,
+            playbackInfo.album_duration
+          )
+        );
+      }
+    }, 1000);
+
+    return () => clearInterval(trackInterval);
+  }, [playbackInfo]);
 
   const handlePausePlayClick = async (): Promise<void> => {
     if (playbackInfo.is_playing) {
@@ -44,34 +75,30 @@ const PlaybackFooter: FC = () => {
             <div className="my-auto text-balance">{playbackInfo.track_title}</div>
           </div>
           <div className="size-12 sm:size-16 my-auto">
-            <ProgressCircle
-              percentage={Math.round((playbackInfo.track_progress / playbackInfo.track_duration) * 100)}
-            />
+            <ProgressCircle percentage={Math.round((trackProgress / playbackInfo.track_duration) * 100)} />
           </div>
         </div>
 
         {playbackInfo.type == 'track' && (
-          <div className="flex flex-row justify-between">
+          <Link href={`/album/${playbackInfo.album_id}`} className="flex flex-row justify-between">
             <div className="flex flex-row space-x-2">
               <AlbumIcon className="my-auto size-8 stroke-primary-darker" />
               <div className="my-auto text-balance">{playbackInfo.album_title}</div>
             </div>
             <div className="size-12 sm:size-16 my-auto">
-              <ProgressCircle
-                percentage={Math.round((playbackInfo.album_progress / playbackInfo.album_duration) * 100)}
-              />
+              <ProgressCircle percentage={Math.round((albumProgress / playbackInfo.album_duration) * 100)} />
             </div>
-          </div>
+          </Link>
         )}
 
         {playbackInfo.playlist?.id && (
-          <div className={`flex flex-row justify-between ${playbackInfo.playlist ? '' : 'opacity-0'}`}>
+          <Link
+            href={`/playlist/${playbackInfo.playlist?.id}`}
+            className={`flex flex-row justify-between ${playbackInfo.playlist ? '' : 'opacity-0'}`}>
             <div className="flex flex-row space-x-2">
               <PlaylistIcon className="my-auto size-8 fill-primary-darker" />
               <div className="my-auto text-balance">
-                {playbackInfo.playlist && (
-                  <Link href={`/playlist/${playbackInfo.playlist?.id}`}>{playbackInfo.playlist?.title}</Link>
-                )}
+                <div>{playbackInfo.playlist?.title}</div>
               </div>
             </div>
             <div className="size-12 sm:size-16 my-auto">
@@ -83,11 +110,11 @@ const PlaybackFooter: FC = () => {
                 }
               />
             </div>
-          </div>
+          </Link>
         )}
       </div>
     </div>
   );
 };
 
-export default PlaybackFooter;
+export default PlaybackFooterWrapper;

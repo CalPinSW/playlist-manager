@@ -5,6 +5,7 @@ import AlbumHeader from '../_components/AlbumHeader';
 import TrackList from '../_components/TrackList';
 import AlbumInfo from '../_components/AlbumInfo';
 import { redirect } from 'next/navigation';
+import { getAlbumInfo } from '../../../utils/AlbumInfo/getAlbumInfo';
 
 export default async function Page({ params }: { params: Promise<{ albumId: string }> }) {
   const { albumId } = await params;
@@ -12,11 +13,16 @@ export default async function Page({ params }: { params: Promise<{ albumId: stri
   if (!album) {
     redirect(`/spotify/album/${albumId}`);
   }
+  const albumInfo = await getAlbumInfo(
+    album.name,
+    album.artists.map(artist => ({ name: artist.name, spotifyId: artist.id })),
+    album.image_url
+  );
   return (
     <div className="flex flex-col text-sm sm:text-base h-full flex-1 m-4 sm:m-24">
       <div className="flex flex-col space-y-4 h-full flex-1 grow">
-        <AlbumHeader album={album} />
-        <AlbumInfo album={album} />
+        <AlbumHeader albumInfo={albumInfo} />
+        <AlbumInfo albumInfo={albumInfo} />
         <div></div>
         <div className="flex-end">
           <TrackList album={album} />
