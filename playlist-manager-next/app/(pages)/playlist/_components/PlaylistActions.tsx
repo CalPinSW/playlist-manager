@@ -10,8 +10,8 @@ import { playlist } from '../../../../generated/prisma';
 import { AlbumWithAdditionalDetails } from './PlaylistAlbums/PlaylistAlbums';
 
 interface PlaylistActionsProps {
-  playlist: playlist
-  playlistAlbums: AlbumWithAdditionalDetails[]
+  playlist: playlist;
+  playlistAlbums: AlbumWithAdditionalDetails[];
 }
 
 const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist, playlistAlbums }) => {

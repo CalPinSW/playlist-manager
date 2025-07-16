@@ -15,16 +15,12 @@ export interface AlbumWithAdditionalDetails extends album {
 
 interface PlaylistAlbumsProps {
   playlist: playlist;
-  playlistAlbums: AlbumWithAdditionalDetails[]
+  playlistAlbums: AlbumWithAdditionalDetails[];
   associatedPlaylists: playlist[];
 }
 
-const PlaylistAlbums: FC<PlaylistAlbumsProps> = ({
-  playlist,
-  playlistAlbums,
-  associatedPlaylists
-}) => {
-  const { playbackInfo } = usePlaybackContext();
+const PlaylistAlbums: FC<PlaylistAlbumsProps> = ({ playlist, playlistAlbums, associatedPlaylists }) => {
+  const { playbackInfo, handlePlayAlbum } = usePlaybackContext();
 
   const activeAlbumId = playbackInfo?.album_id;
   const activeAlbumIndex = playlistAlbums.findIndex(album => album.id === activeAlbumId);
@@ -36,7 +32,9 @@ const PlaylistAlbums: FC<PlaylistAlbumsProps> = ({
       setSelectedAlbum(album);
     }
   };
-  const selectedAlbumIndex = selectedAlbum ? playlistAlbums.findIndex(album => album.id === selectedAlbum.id) : undefined;
+  const selectedAlbumIndex = selectedAlbum
+    ? playlistAlbums.findIndex(album => album.id === selectedAlbum.id)
+    : undefined;
   const albumInfoRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (selectedAlbum && albumInfoRef.current) {
@@ -64,6 +62,7 @@ const PlaylistAlbums: FC<PlaylistAlbumsProps> = ({
           selectedAlbum={selectedAlbum}
           currentPlaylist={playlist}
           associatedPlaylists={associatedPlaylists}
+          onPlayAlbumClick={handlePlayAlbum}
         />
       </div>
     </div>

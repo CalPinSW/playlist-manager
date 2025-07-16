@@ -79,7 +79,7 @@ const upsertPlaybackState = async (playbackInfo: PlaybackState, userId: string, 
     where: { id: track.album.id }
   });
   if (dbAlbum) {
-    upsertAlbumPlaybackState(playbackInfo, userId);
+    await upsertAlbumPlaybackState(playbackInfo, userId);
     if (playlistId) {
       await upsertPlaylistPlaybackState(playbackInfo, playlistId, userId);
     }

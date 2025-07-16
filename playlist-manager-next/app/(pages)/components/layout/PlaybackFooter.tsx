@@ -11,16 +11,17 @@ import renderArtistList from '../../../utils/renderArtistsList';
 import { PlaybackInfo } from '../../../utils/interfaces/PlaybackInfo';
 
 const PlaybackFooterWrapper: FC = () => {
-  const { playbackInfo } = usePlaybackContext();
+  const { playbackInfo, handlePausePlay } = usePlaybackContext();
   if (!playbackInfo) return null;
-  return <PlaybackFooter playbackInfo={playbackInfo} />;
+  return <PlaybackFooter playbackInfo={playbackInfo} handlePausePlay={handlePausePlay} />;
 };
 
 interface PlaybackFooterProps {
   playbackInfo: PlaybackInfo;
+  handlePausePlay: () => Promise<void>;
 }
 
-const PlaybackFooter: FC<PlaybackFooterProps> = ({ playbackInfo }) => {
+const PlaybackFooter: FC<PlaybackFooterProps> = ({ playbackInfo, handlePausePlay }) => {
   const [trackProgress, setTrackProgress] = useState(playbackInfo.track_progress);
   const [albumProgress, setAlbumProgress] = useState(playbackInfo.album_progress);
   useEffect(() => {
@@ -44,21 +45,13 @@ const PlaybackFooter: FC<PlaybackFooterProps> = ({ playbackInfo }) => {
     return () => clearInterval(trackInterval);
   }, [playbackInfo]);
 
-  const handlePausePlayClick = async (): Promise<void> => {
-    if (playbackInfo.is_playing) {
-      await fetch('/api/spotify/playback/pause');
-    } else {
-      await fetch('/api/spotify/playback/start');
-    }
-  };
-
   const playbackArtists =
     playbackInfo.type == 'track' ? renderArtistList(playbackInfo.album_artists) : playbackInfo.album_artists;
 
   return (
     <div className="flex w-full h-fit bg-background-offset px-4 py-2 text-sm sm:text-base space-x-4 sm:space-x-6">
       <div className="flex flex-col space-y-2 w-1/5 max-w-32">
-        <button className="opacity-80 size-full" onClick={handlePausePlayClick}>
+        <button className="opacity-80 size-full" onClick={handlePausePlay}>
           <Image
             width={128}
             height={128}

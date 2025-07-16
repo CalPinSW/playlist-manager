@@ -9,7 +9,11 @@ interface PlaylistAlbumAndActionsProps {
   associatedPlaylists: playlist[];
 }
 
-const PlaylistAlbumAndActions: FC<PlaylistAlbumAndActionsProps> = ({ playlist, initialPlaylistAlbums, associatedPlaylists }) => {
+const PlaylistAlbumAndActions: FC<PlaylistAlbumAndActionsProps> = ({
+  playlist,
+  initialPlaylistAlbums,
+  associatedPlaylists
+}) => {
   const playlistAlbums = initialPlaylistAlbums;
 
   return (

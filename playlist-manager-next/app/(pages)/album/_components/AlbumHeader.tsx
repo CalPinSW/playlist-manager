@@ -1,7 +1,5 @@
 import { FC } from 'react';
-import { AlbumWithTracks } from '../[albumId]/page';
 import { AlbumCover } from '../../components/AlbumCover';
-import mbApi from '../../../../lib/musicbrainz';
 import renderGenres from '../../../utils/AlbumInfo/renderGenres';
 import { AlbumInfo } from '../../../utils/interfaces/AlbumInfo/AlbumInfo';
 import AlbumTypeIcon from './AlbumTypeIcon';

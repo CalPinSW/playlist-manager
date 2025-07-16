@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import { album } from '../../../generated/prisma';
 import PlaylistIcon from './PlaylistIcon';
 import Image from 'next/image';
 

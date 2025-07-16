@@ -18,7 +18,7 @@ export default async function Page({ params }: { params: Promise<{ playlistId: s
 
   const playlist = await prisma.playlist.findUnique({ where: { id: playlistId } });
   const playlistAlbums = await getPlaylistAlbumsWithGenres(playlistId);
-  const playlistWithAlbums = { ...playlist, albums: playlistAlbums };
+  // const playlistWithAlbums = { ...playlist, albums: playlistAlbums };
 
   const associatedPlaylists = await getAssociatedPlaylists(user.id, playlist);
 

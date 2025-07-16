@@ -3,5 +3,12 @@ import getDeviceIdForUser from '../../../../utils/spotifyPlayback/getDeviceIdFor
 
 export const pausePlayback = async (spotifySdk: SpotifyApi): Promise<void> => {
   const deviceId = await getDeviceIdForUser(spotifySdk);
-  await spotifySdk.player.pausePlayback(deviceId);
+  const accessToken = await spotifySdk.getAccessToken();
+  await fetch(`https://api.spotify.com/v1/me/player/pause${deviceId ? '?deviceId=' + deviceId : ''}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken.access_token}`
+    }
+  });
 };

@@ -2,7 +2,7 @@
 
 import { FC } from 'react';
 import { album, playlist } from '../../../../../generated/prisma';
-import { StartPlaybackRequest } from '../../../../utils/interfaces/PlaybackRequest';
+import { PlaybackOffset } from '../../../../utils/interfaces/PlaybackRequest';
 import { AddAlbumToSpotifyPlaylistRequest } from '../../../../api/playlists/[playlistId]/add-album/route';
 import AsyncButton from '../../../components/AsyncButton';
 import Link from 'next/link';
@@ -11,18 +11,20 @@ interface AlbumActionsProps {
   selectedAlbum: album | null;
   currentPlaylist: playlist;
   associatedPlaylists: playlist[];
+  onPlayAlbumClick: (offset: PlaybackOffset, contextUri?: string) => Promise<void>;
 }
 
-const AlbumActions: FC<AlbumActionsProps> = ({ selectedAlbum, currentPlaylist, associatedPlaylists }) => {
+const AlbumActions: FC<AlbumActionsProps> = ({
+  selectedAlbum,
+  currentPlaylist,
+  associatedPlaylists,
+  onPlayAlbumClick
+}) => {
   if (!selectedAlbum) {
     return null;
   }
   const handlePlayAlbumClick = async () => {
-    const startPlaybackRequest: StartPlaybackRequest = {
-      context_uri: currentPlaylist.uri,
-      offset: { type: 'album_id', album_id: selectedAlbum.id }
-    };
-    await fetch('/api/spotify/playback/start', { method: 'POST', body: JSON.stringify(startPlaybackRequest) });
+    await onPlayAlbumClick({ type: 'album_id', album_id: selectedAlbum.id }, currentPlaylist.uri);
   };
 
   const handleAddAlbumToPlaylistClick = async (playlistId: string) => {
