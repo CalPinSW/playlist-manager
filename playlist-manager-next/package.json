@@ -33,18 +33,18 @@
     "@trigger.dev/sdk": "^3.3.17",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
-    "concurrently": "^8.2.0",
+    "concurrently": "^9.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "embla-carousel-react": "^8.6.0",
-    "eslint": "^9.29.0",
+    "eslint": "^9.31.0",
     "eslint-plugin-prettier": "^5.4.1",
-    "express": "^4.18.2",
+    "express": "^5.1.0",
     "express-jwt": "^8.0",
     "helmet": "^7.1.0",
     "highlight.js": "^11.9.0",
     "jszip": "^3.10.1",
-    "jwks-rsa": "^3.1.0",
+    "jwks-rsa": "^3.2.0",
     "morgan": "^1.10.0",
     "musicbrainz-api": "^0.25.0",
     "next": "15.2.4",
@@ -78,5 +78,10 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.8",
     "vitest": "^3.0.9"
+  },
+  "overrides": {
+    "eslint": {
+      "brace-expansion": "1.1.12"
+    }
   }
 }
