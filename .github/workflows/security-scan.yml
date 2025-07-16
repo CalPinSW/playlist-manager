@@ -1,35 +1,17 @@
 name: Snyk Security Scan
 on: "push"
 jobs:
-    frontend-scan:
-        name: frontend scan
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
-            - run: npm install
-              working-directory: frontend
-            - uses: snyk/actions/setup@master
-            - name: Snyk monitor
-              working-directory: frontend
-              run: snyk test --severity-threshold=medium
-              env:
-                  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-    backend-scan:
-        name: backend scan
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
-            - uses: snok/install-poetry@v1
-              with:
-                  virtualenvs-create: true
-                  virtualenvs-in-project: true
-            - run: poetry install
-              working-directory: backend
-            - uses: snyk/actions/setup@master
-            - name: Snyk monitor
-              working-directory: backend
-              run: snyk test --severity-threshold=medium
-              env:
-                  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    scan:
+          name: scan
+          runs-on: ubuntu-latest
+          steps:
+              - name: Checkout Repository
+                uses: actions/checkout@v4
+              - run: npm install
+                working-directory: playlist-manager-next
+              - uses: snyk/actions/setup@master
+              - name: Snyk monitor
+                working-directory: playlist-manager-next
+                run: snyk test --severity-threshold=medium
+                env:
+                    SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
