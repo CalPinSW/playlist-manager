@@ -1,11 +1,12 @@
 import React from 'react';
 import prisma from '../../../../lib/prisma';
 import PlaylistTitle from '../_components/PlaylistTitle';
-import PlaylistAlbums, { AlbumWithAdditionalDetails } from '../_components/PlaylistAlbums/PlaylistAlbums';
+import PlaylistAlbums from '../_components/PlaylistAlbums/PlaylistAlbums';
 import { playlist } from '../../../../generated/prisma';
 import { auth0 } from '../../../../lib/auth0';
 import PlaylistActions from '../_components/PlaylistActions';
 import { searchPlaylists } from '../../../api/playlists/handler';
+import { getPlaylistAlbumsWithGenres } from '../../../api/playlists/[playlistId]/albums/handler';
 
 export default async function Page({ params }: { params: Promise<{ playlistId: string }> }) {
   const { playlistId } = await params;
@@ -18,7 +19,6 @@ export default async function Page({ params }: { params: Promise<{ playlistId: s
 
   const playlist = await prisma.playlist.findUnique({ where: { id: playlistId } });
   const playlistAlbums = await getPlaylistAlbumsWithGenres(playlistId);
-  // const playlistWithAlbums = { ...playlist, albums: playlistAlbums };
 
   const associatedPlaylists = await getAssociatedPlaylists(user.id, playlist);
 
@@ -32,46 +32,6 @@ export default async function Page({ params }: { params: Promise<{ playlistId: s
     </div>
   );
 }
-
-const getPlaylistAlbumsWithGenres = async (playlist_id: string): Promise<AlbumWithAdditionalDetails[]> => {
-  // Fetch albums for the playlist, ordered by album_index, with genres, artists, and notes
-  const playlistAlbums = await prisma.playlistalbumrelationship.findMany({
-    where: { playlist_id },
-    orderBy: { album_index: 'asc' },
-    include: {
-      album: {
-        select: {
-          id: true,
-          name: true,
-          image_url: true,
-          uri: true,
-          album_type: true,
-          total_tracks: true,
-          release_date: true,
-          release_date_precision: true,
-          label: true,
-          albumgenrerelationship: {
-            include: { genre: true }
-          },
-          albumartistrelationship: {
-            include: { artist: true }
-          },
-          album_notes: true
-        }
-      }
-    }
-  });
-
-  return playlistAlbums.map(rel => {
-    const album = rel.album;
-    return {
-      ...album,
-      genres: album.albumgenrerelationship.map(g => g.genre),
-      artists: album.albumartistrelationship.map(a => a.artist),
-      notes: album.album_notes
-    };
-  });
-};
 
 // async function getPlaylistTracks(playlist_id: string) {
 //   // Find all tracks for the playlist, ordered by album_index, disc_number, track_number

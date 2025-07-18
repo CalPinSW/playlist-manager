@@ -8,6 +8,7 @@ import { ResumePlaybackRequest } from '../../../utils/interfaces/PlaybackRequest
 import renderArtistList from '../../../utils/renderArtistsList';
 import { playlist } from '../../../../generated/prisma';
 import { AlbumWithAdditionalDetails } from './PlaylistAlbums/PlaylistAlbums';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface PlaylistActionsProps {
   playlist: playlist;
@@ -16,6 +17,8 @@ interface PlaylistActionsProps {
 
 const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist, playlistAlbums }) => {
   const { handleZip } = useDownloadImages();
+  const queryClient = useQueryClient();
+
   const playlistImages = playlistAlbums.map((album, i) => ({
     url: album.image_url,
     name: `${i + 1}_${album.name} - ${renderArtistList(album.artists)}`
@@ -34,6 +37,7 @@ const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist, playlistAlbums })
 
   const updatePlaylistHandler = async () => {
     await fetch(`/api/playlists/${playlist.id}/refresh`);
+    await queryClient.invalidateQueries({ queryKey: ['playlistAlbums', playlist.id] });
   };
 
   const resumePlaylistHandler = async () => {
