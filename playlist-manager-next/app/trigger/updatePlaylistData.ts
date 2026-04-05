@@ -1,4 +1,4 @@
-import { logger, task } from '@trigger.dev/sdk/v3';
+import { logger, task } from '@trigger.dev/sdk';
 import { refreshSpotifyPlaylists } from '../api/playlists/refresh/handler';
 import { SpotifyApi } from '@spotify/web-api-ts-sdk';
 import prisma from '../../lib/prisma';
