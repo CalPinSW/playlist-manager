@@ -42,7 +42,7 @@ export const syncRecentlyPlayedTask = schedules.task({
   }
 });
 
-async function syncForUser(user: { id: string; access_token: { refresh_token: string | null } | null }) {
+export async function syncForUser(user: { id: string; access_token: { refresh_token: string | null } | null }) {
   if (!user.access_token?.refresh_token) {
     logger.log('Skipping user — no refresh token', { userId: user.id });
     return;
