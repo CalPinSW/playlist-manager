@@ -6,7 +6,7 @@
  */
 
 import { getValidAccessToken } from './auth';
-import { API_ENDPOINTS, albumUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl } from '../constants/api';
+import { API_ENDPOINTS, albumUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl } from '../constants/api';
 
 export class AuthError extends Error {
   constructor(message = 'Not authenticated') {
@@ -118,6 +118,18 @@ export interface AlbumDetail {
   rating: number | null;
 }
 
+export interface RatedAlbum {
+  albumId: string;
+  albumName: string;
+  albumImageUrl: string;
+  albumUri: string;
+  artists: { id: string; name: string }[];
+  genres: string[];
+  /** 1–10; display as value / 2 */
+  rating: number;
+  ratedAt: string;
+}
+
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 /**
@@ -220,6 +232,36 @@ export async function fetchAlbumDetail(albumId: string): Promise<AlbumDetail> {
     throw new Error(`fetchAlbumDetail failed: ${res.status}`);
   }
   return res.json();
+}
+
+/**
+ * GET /api/ratings — all rated albums for the current user, ordered by rating/date.
+ */
+export async function fetchRatings(): Promise<RatedAlbum[]> {
+  const res = await authedFetch(ratingsUrl);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[api] fetchRatings failed:', res.status, body);
+    throw new Error(`fetchRatings failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+/**
+ * POST /api/ratings — upsert a rating (1–10) for an album.
+ * @param albumId Spotify album ID
+ * @param rating  Integer 1–10 (half-star display: rating/2)
+ */
+export async function setRating(albumId: string, rating: number): Promise<void> {
+  const res = await authedFetch(ratingsUrl, {
+    method: 'POST',
+    body: JSON.stringify({ albumId, rating })
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[api] setRating failed:', res.status, body);
+    throw new Error(`setRating failed: ${res.status}`);
+  }
 }
 
 /**

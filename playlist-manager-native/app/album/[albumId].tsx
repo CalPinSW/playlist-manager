@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { fetchAlbumDetail, fetchPlaylists, promoteAlbum, AuthError, AlbumDetail, AlbumTrack, PlaylistSummary } from '../../lib/api';
+import { fetchAlbumDetail, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistSummary } from '../../lib/api';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Colors } from '../../constants/colors';
 import { clearTokens } from '../../lib/auth';
@@ -28,6 +28,9 @@ export default function AlbumDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [promoting, setPromoting] = useState(false);
   const [promoted, setPromoted] = useState(false);
+  // Rating state (1–10 integer; null = unrated). Managed locally after initial load.
+  const [localRating, setLocalRating] = useState<number | null>(null);
+  const [ratingPending, setRatingPending] = useState(false);
 
   const handleAuthError = useCallback(async () => {
     await clearTokens();
@@ -46,6 +49,8 @@ export default function AlbumDetailScreen() {
       setPromoted(alreadyPromoted);
       // Store the target Best Albums playlist (first one found)
       setBestAlbumsPlaylist(playlists[0] ?? null);
+      // Seed local rating from server response
+      setLocalRating(data.rating);
     } catch (err) {
       if (err instanceof AuthError) { await handleAuthError(); return; }
       Alert.alert('Error', 'Could not load album.');
@@ -73,6 +78,23 @@ export default function AlbumDetailScreen() {
     }
   }, [album, bestAlbumsPlaylist, promoted, promoting, handleAuthError]);
 
+  const handleRating = useCallback(async (newRating: number) => {
+    if (!album || ratingPending) return;
+    const previous = localRating;
+    // Optimistic update
+    setLocalRating(newRating);
+    setRatingPending(true);
+    try {
+      await setRating(album.id, newRating);
+    } catch (err) {
+      setLocalRating(previous);
+      if (err instanceof AuthError) { await handleAuthError(); return; }
+      Alert.alert('Error', 'Could not save rating. Please try again.');
+    } finally {
+      setRatingPending(false);
+    }
+  }, [album, localRating, ratingPending, handleAuthError]);
+
   const openInSpotify = useCallback(() => {
     if (!album) return;
     Linking.openURL(album.uri).catch(() => {
@@ -93,10 +115,6 @@ export default function AlbumDetailScreen() {
   const currentTrackIndex = prog?.lastTrackIndex ?? -1;
   const artistNames = album.artists.map(a => a.name).join(', ');
   const releaseYear = album.releaseDate ? new Date(album.releaseDate).getFullYear() : null;
-  const rating = album.rating;
-  const fullStars = rating !== null ? Math.floor(rating / 2) : 0;
-  const hasHalf = rating !== null && rating % 2 !== 0;
-  const halfStarDisplay = rating !== null ? (rating / 2).toFixed(1) : null;
 
   const canPromote = !!bestAlbumsPlaylist && !promoted;
 
@@ -124,21 +142,12 @@ export default function AlbumDetailScreen() {
         </View>
       </View>
 
-      {/* Rating display */}
-      {halfStarDisplay !== null && (
-        <View style={styles.ratingRow}>
-          {[1, 2, 3, 4, 5].map(i => {
-            const filled = i <= fullStars;
-            const half = !filled && hasHalf && i === fullStars + 1;
-            return (
-              <Text key={i} style={[styles.star, filled || half ? styles.starFilled : styles.starEmpty]}>
-                {filled ? '★' : half ? '⯨' : '☆'}
-              </Text>
-            );
-          })}
-          <Text style={styles.ratingLabel}>{halfStarDisplay} / 5</Text>
-        </View>
-      )}
+      {/* Rating — interactive half-star picker */}
+      <StarRating
+        rating={localRating}
+        pending={ratingPending}
+        onRate={handleRating}
+      />
 
       {/* Progress */}
       {prog && (
@@ -197,6 +206,73 @@ export default function AlbumDetailScreen() {
       <Text style={styles.tracksHeading}>Tracks</Text>
       <TrackList tracks={album.tracks} currentTrackIndex={currentTrackIndex} />
     </ScrollView>
+  );
+}
+
+// ── Star rating ────────────────────────────────────────────────────────────────
+
+/**
+ * Half-star interactive rating row.
+ * Each visible star is split into left (N-0.5) and right (N) touch zones.
+ * Tapping the same half-star value again clears the rating (toggles off).
+ *
+ * rating: 1–10 integer (stored in DB) or null = unrated.
+ */
+function StarRating({
+  rating,
+  pending,
+  onRate
+}: {
+  rating: number | null;
+  pending: boolean;
+  onRate: (newRating: number) => void;
+}) {
+  const displayValue = rating !== null ? rating / 2 : 0; // 0–5 in 0.5 steps
+  const labelText = rating !== null ? `${(rating / 2).toFixed(1)} / 5` : 'Tap to rate';
+
+  return (
+    <View style={styles.ratingRow}>
+      {[1, 2, 3, 4, 5].map(star => {
+        const filled = displayValue >= star;
+        const half = !filled && displayValue >= star - 0.5 && displayValue < star;
+        return (
+          <View key={star} style={styles.starWrap}>
+            {/* Left half = half-star (e.g. star 3 left = 2.5 → DB value 5) */}
+            <TouchableOpacity
+              style={[styles.starHalf, styles.starHalfLeft]}
+              onPress={() => {
+                const newVal = (star - 1) * 2 + 1; // e.g. left of star 1 → 1
+                if (newVal !== rating) onRate(newVal);
+              }}
+              activeOpacity={0.6}
+              disabled={pending}
+            />
+            {/* Right half = full star (e.g. star 3 right → DB value 6) */}
+            <TouchableOpacity
+              style={[styles.starHalf, styles.starHalfRight]}
+              onPress={() => {
+                const newVal = star * 2; // e.g. right of star 3 → 6
+                if (newVal !== rating) onRate(newVal);
+              }}
+              activeOpacity={0.6}
+              disabled={pending}
+            />
+            {/* Star glyph rendered on top, pointer-events none */}
+            <Text
+              style={[
+                styles.star,
+                (filled || half) ? styles.starFilled : styles.starEmpty,
+                pending && styles.starPending
+              ]}
+              pointerEvents="none"
+            >
+              {filled ? '★' : half ? '⯨' : '☆'}
+            </Text>
+          </View>
+        );
+      })}
+      <Text style={[styles.ratingLabel, pending && styles.starPending]}>{labelText}</Text>
+    </View>
   );
 }
 
@@ -261,11 +337,23 @@ const styles = StyleSheet.create({
   },
   chipText: { color: Colors.textMuted, fontSize: 11, fontWeight: '500' },
 
-  ratingRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, gap: 4, marginBottom: 4 },
-  star: { fontSize: 24 },
+  ratingRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 10,
+    gap: 2, marginBottom: 4
+  },
+  starWrap: {
+    position: 'relative', width: 32, height: 32,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center'
+  },
+  starHalf: { position: 'absolute', top: 0, bottom: 0, width: '50%' },
+  starHalfLeft: { left: 0 },
+  starHalfRight: { right: 0 },
+  star: { fontSize: 26, pointerEvents: 'none' } as any,
   starFilled: { color: '#de7c38' },
-  starEmpty: { color: 'rgba(255,255,255,0.2)' },
-  ratingLabel: { color: Colors.textMuted, fontSize: 13, marginLeft: 8 },
+  starEmpty: { color: 'rgba(255,255,255,0.18)' },
+  starPending: { opacity: 0.5 },
+  ratingLabel: { color: Colors.textMuted, fontSize: 13, marginLeft: 10 },
 
   progressSection: { paddingHorizontal: 20, marginBottom: 4 },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
