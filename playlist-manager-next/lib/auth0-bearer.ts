@@ -27,16 +27,39 @@ export async function verifyBearerToken(token: string): Promise<{ sub: string }>
   const audience = process.env.AUTH0_AUDIENCE;
   if (!domain) throw new Error('AUTH0_DOMAIN env var is not set');
 
-  const { payload } = await jwtVerify(token, getJwks(), {
-    issuer: `https://${domain}/`,
-    ...(audience ? { audience } : {})
-  });
-
-  if (typeof payload.sub !== 'string') {
-    throw new Error('Invalid token: missing sub claim');
+  // Opaque tokens (issued when no audience is specified in the auth request)
+  // are not JWTs — they start with a random prefix, not 'eyJ'. Catch this
+  // early with a clear error rather than a confusing JWKS failure.
+  if (!token.startsWith('eyJ')) {
+    console.error(
+      '[auth0-bearer] Token is not a JWT (does not start with eyJ). ' +
+      'This usually means AUTH0_AUDIENCE was not set in the mobile app .env, ' +
+      'so Auth0 issued an opaque token instead of a signed JWT. ' +
+      'Set EXPO_PUBLIC_AUTH0_AUDIENCE in your .env to fix this.'
+    );
+    throw new Error('Token is opaque (not a JWT) — set EXPO_PUBLIC_AUTH0_AUDIENCE in the mobile app .env');
   }
 
-  return { sub: payload.sub };
+  try {
+    const { payload } = await jwtVerify(token, getJwks(), {
+      issuer: `https://${domain}/`,
+      ...(audience ? { audience } : {})
+    });
+
+    if (typeof payload.sub !== 'string') {
+      throw new Error('Invalid token: missing sub claim');
+    }
+
+    return { sub: payload.sub };
+  } catch (err) {
+    // Log the specific jose error so it appears in Vercel function logs.
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[auth0-bearer] jwtVerify failed: ${message} | ` +
+      `domain=${domain} | audience=${audience ?? '(not set)'}`
+    );
+    throw err;
+  }
 }
 
 /**
