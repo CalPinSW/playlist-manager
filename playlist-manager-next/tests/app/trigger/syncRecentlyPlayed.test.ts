@@ -1,11 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // vi.hoisted ensures these objects are initialised before vi.mock factories run.
-const { mockPrisma, mockGetRecentlyPlayedTracks, mockTaskRun } = vi.hoisted(() => {
+const { mockPrisma, mockGetRecentlyPlayedTracks } = vi.hoisted(() => {
   const mockGetRecentlyPlayedTracks = vi.fn();
-  // Captures the run function passed to schedules.task() so tests can call it directly.
-  let capturedRun: (payload: unknown, ctx: unknown) => Promise<void>;
-  const mockTaskRun = async (payload: unknown, ctx: unknown) => capturedRun(payload, ctx);
   const mockPrisma = {
     user: { findMany: vi.fn() },
     access_token: { findUnique: vi.fn() },
@@ -14,7 +11,7 @@ const { mockPrisma, mockGetRecentlyPlayedTracks, mockTaskRun } = vi.hoisted(() =
     track: { findMany: vi.fn() },
     listening_progress: { findUnique: vi.fn(), upsert: vi.fn() }
   };
-  return { mockPrisma, mockGetRecentlyPlayedTracks, mockTaskRun };
+  return { mockPrisma, mockGetRecentlyPlayedTracks };
 });
 
 vi.mock('../../../lib/prisma', () => ({ default: mockPrisma }));
@@ -23,11 +20,14 @@ vi.mock('../../../lib/prisma', () => ({ default: mockPrisma }));
 // so tests can invoke it directly without needing a real Trigger.dev runtime.
 vi.mock('@trigger.dev/sdk', () => ({
   schedules: {
-    task: (config: { run: (payload: unknown, ctx: unknown) => Promise<void> }) => ({
-      run: config.run
+    task: (config: { id?: string; run: (payload: unknown, ctx: unknown) => Promise<void> }) => ({
+      // Expose run for testing (not part of real v4 API, but needed for unit tests)
+      run: config.run,
+      id: config.id || 'test-task',
+      trigger: vi.fn(),
+      triggerAndWait: vi.fn()
     })
-  },
-  logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn() }
+  }
 }));
 
 vi.mock('@spotify/web-api-ts-sdk', () => ({
@@ -43,6 +43,11 @@ vi.mock('../../../app/api/spotify/utilities/refreshSpotifyAccessToken', () => ({
 }));
 
 import { syncRecentlyPlayedTask } from '../../../app/trigger/syncRecentlyPlayed';
+
+// Type assertion for testing: the mock adds a run method that doesn't exist in the real v4 API
+const testTask = syncRecentlyPlayedTask as typeof syncRecentlyPlayedTask & {
+  run: (payload: unknown, ctx: unknown) => Promise<void>;
+};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const makeUser = (id = 'user-1') => ({
@@ -90,7 +95,7 @@ describe('syncRecentlyPlayedTask', () => {
     mockPrisma.playlist.findMany.mockResolvedValue([makePlaylist('pl-1', 'New Albums 04/04/26')]);
     mockGetRecentlyPlayedTracks.mockResolvedValue({ items: [] });
 
-    await syncRecentlyPlayedTask.run(undefined as never, undefined as never);
+    await testTask.run(undefined as never, undefined as never);
 
     expect(mockPrisma.listening_progress.upsert).not.toHaveBeenCalled();
   });
@@ -104,7 +109,7 @@ describe('syncRecentlyPlayedTask', () => {
       makeTrack('track-1', 'album-1', 3, 12, 'pl-1')
     ]);
 
-    await syncRecentlyPlayedTask.run(undefined as never, undefined as never);
+    await testTask.run(undefined as never, undefined as never);
 
     expect(mockPrisma.listening_progress.upsert).toHaveBeenCalledOnce();
     const call = mockPrisma.listening_progress.upsert.mock.calls[0][0];
@@ -120,11 +125,13 @@ describe('syncRecentlyPlayedTask', () => {
       items: [makeRecentItem('track-orphan', '2026-04-04T10:00:00Z')]
     });
     mockPrisma.track.findMany.mockResolvedValue([
-      { id: 'track-orphan', album_id: 'album-x', track_number: 1,
-        album: { id: 'album-x', total_tracks: 5, playlistalbumrelationship: [] } }
+      {
+        id: 'track-orphan', album_id: 'album-x', track_number: 1,
+        album: { id: 'album-x', total_tracks: 5, playlistalbumrelationship: [] }
+      }
     ]);
 
-    await syncRecentlyPlayedTask.run(undefined as never, undefined as never);
+    await testTask.run(undefined as never, undefined as never);
 
     expect(mockPrisma.listening_progress.upsert).not.toHaveBeenCalled();
   });
@@ -139,7 +146,7 @@ describe('syncRecentlyPlayedTask', () => {
     ]);
     mockPrisma.listening_progress.findUnique.mockResolvedValue({ last_track_index: 7 });
 
-    await syncRecentlyPlayedTask.run(undefined as never, undefined as never);
+    await testTask.run(undefined as never, undefined as never);
 
     expect(mockPrisma.listening_progress.upsert).not.toHaveBeenCalled();
   });
@@ -154,7 +161,7 @@ describe('syncRecentlyPlayedTask', () => {
     ]);
     mockPrisma.listening_progress.findUnique.mockResolvedValue({ last_track_index: 5 });
 
-    await syncRecentlyPlayedTask.run(undefined as never, undefined as never);
+    await testTask.run(undefined as never, undefined as never);
 
     expect(mockPrisma.listening_progress.upsert).toHaveBeenCalledOnce();
     const call = mockPrisma.listening_progress.upsert.mock.calls[0][0];
@@ -174,7 +181,7 @@ describe('syncRecentlyPlayedTask', () => {
       makeTrack('track-2', 'album-1', 1, 12, 'pl-1')
     ]);
 
-    await syncRecentlyPlayedTask.run(undefined as never, undefined as never);
+    await testTask.run(undefined as never, undefined as never);
 
     const upsertCall = mockPrisma.sync_log.upsert.mock.calls[0][0];
     expect(upsertCall.create.last_played_at).toEqual(new Date('2026-04-04T10:05:00Z'));
@@ -186,7 +193,7 @@ describe('syncRecentlyPlayedTask', () => {
     mockPrisma.playlist.findMany.mockResolvedValue([makePlaylist('pl-1', 'New Albums 04/04/26')]);
     mockGetRecentlyPlayedTracks.mockResolvedValue({ items: [] });
 
-    await syncRecentlyPlayedTask.run(undefined as never, undefined as never);
+    await testTask.run(undefined as never, undefined as never);
 
     expect(mockGetRecentlyPlayedTracks).toHaveBeenCalledWith(
       50,
@@ -200,7 +207,7 @@ describe('syncRecentlyPlayedTask', () => {
     ]);
 
     await expect(
-      syncRecentlyPlayedTask.run(undefined as never, undefined as never)
+      testTask.run(undefined as never, undefined as never)
     ).resolves.not.toThrow();
 
     expect(mockGetRecentlyPlayedTracks).not.toHaveBeenCalled();
@@ -212,7 +219,7 @@ describe('syncRecentlyPlayedTask', () => {
     ]);
 
     await expect(
-      syncRecentlyPlayedTask.run(undefined as never, undefined as never)
+      testTask.run(undefined as never, undefined as never)
     ).resolves.not.toThrow();
 
     expect(mockGetRecentlyPlayedTracks).not.toHaveBeenCalled();

@@ -1,4 +1,4 @@
-import { logger, schedules } from '@trigger.dev/sdk';
+import { schedules } from '@trigger.dev/sdk';
 import { SpotifyApi } from '@spotify/web-api-ts-sdk';
 import prisma from '../../lib/prisma';
 import { refreshSpotifyAccessToken } from '../api/spotify/utilities/refreshSpotifyAccessToken';
@@ -27,40 +27,42 @@ export const syncRecentlyPlayedTask = schedules.task({
       include: { access_token: true }
     });
 
-    logger.log('Starting recently-played sync', { userCount: users.length });
+    console.log('Starting recently-played sync', { userCount: users.length });
 
     for (const user of users) {
       try {
         await syncForUser(user);
       } catch (err) {
         // Log and continue — a single user failure should not abort the whole run.
-        logger.error('Sync failed for user', { userId: user.id, error: String(err) });
+        console.error('Sync failed for user', { userId: user.id, error: String(err) });
       }
     }
 
-    logger.log('Sync run complete');
+    console.log('Sync run complete');
   }
 });
 
 export async function syncForUser(user: { id: string; access_token: { refresh_token: string | null } | null }) {
   if (!user.access_token?.refresh_token) {
-    logger.log('Skipping user — no refresh token', { userId: user.id });
+    console.log('Skipping user — no refresh token', { userId: user.id });
     return;
   }
 
   // Refresh the Spotify access token (transaction-wrapped to prevent token loss).
-  await refreshSpotifyAccessToken(user as Parameters<typeof refreshSpotifyAccessToken>[0]);
+  await refreshSpotifyAccessToken(user as unknown as Parameters<typeof refreshSpotifyAccessToken>[0]);
 
   const tokens = await prisma.access_token.findUnique({ where: { user_id: user.id } });
   if (!tokens?.access_token) {
-    logger.warn('No access token after refresh, skipping', { userId: user.id });
+    console.warn('No access token after refresh, skipping', { userId: user.id });
     return;
   }
 
-  const spotifySdk = SpotifyApi.withAccessToken(
-    process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!,
-    { access_token: tokens.access_token, token_type: tokens.token_type ?? 'Bearer', expires_in: tokens.expires_in ?? 3600, refresh_token: tokens.refresh_token ?? '' }
-  );
+  const spotifySdk = SpotifyApi.withAccessToken(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!, {
+    access_token: tokens.access_token,
+    token_type: tokens.token_type ?? 'Bearer',
+    expires_in: tokens.expires_in ?? 3600,
+    refresh_token: tokens.refresh_token ?? ''
+  });
 
   // ── Step 1: Identify active New Albums playlists for this user ──────────────
   const playlists = await prisma.playlist.findMany({
@@ -68,12 +70,10 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
     select: { id: true, name: true }
   });
 
-  const activePlaylistIds = playlists
-    .filter(p => NEW_ALBUMS_REGEX.test(p.name))
-    .map(p => p.id);
+  const activePlaylistIds = playlists.filter(p => NEW_ALBUMS_REGEX.test(p.name)).map(p => p.id);
 
   if (activePlaylistIds.length === 0) {
-    logger.log('No New Albums playlists found, skipping', { userId: user.id });
+    console.log('No New Albums playlists found, skipping', { userId: user.id });
     return;
   }
 
@@ -90,21 +90,15 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
 
   const items = recentlyPlayedResponse.items;
   if (items.length === 0) {
-    logger.log('No new recently-played items', { userId: user.id });
+    console.log('No new recently-played items', { userId: user.id });
     await updateSyncLog(user.id, null);
     return;
   }
 
-  logger.log('Recently-played items fetched', { userId: user.id, count: items.length });
+  console.log('Recently-played items fetched', { userId: user.id, count: items.length });
 
   // ── Step 3: Batch-resolve track → album → playlist (single Prisma query) ────
-  const trackIds = [
-    ...new Set(
-      items
-        .map(item => item.track?.id)
-        .filter((id): id is string => typeof id === 'string')
-    )
-  ];
+  const trackIds = [...new Set(items.map(item => item.track?.id).filter((id): id is string => typeof id === 'string'))];
 
   const trackMappings = await prisma.track.findMany({
     where: { id: { in: trackIds } },
@@ -225,7 +219,7 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
     upsertCount++;
   }
 
-  logger.log('Progress upserts complete', { userId: user.id, upsertCount });
+  console.log('Progress upserts complete', { userId: user.id, upsertCount });
 
   // ── Step 6: Advance the cursor ───────────────────────────────────────────────
   // items[0] is the most recent (Spotify returns newest first).
