@@ -1,19 +1,9 @@
 'use client';
 import React, { FC } from 'react';
-import { spotifyScopes } from '../../../../lib/spotify';
 
 const SpotifyUnconnectedSettings: FC = () => {
-  const linkToSpotifyHandler = async () => {
-    const queryString = new URL('https://accounts.spotify.com/authorize');
-    queryString.searchParams.append('response_type', 'code');
-    queryString.searchParams.append('client_id', process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || '');
-    queryString.searchParams.append('scope', spotifyScopes.join(' '));
-    queryString.searchParams.append(
-      'redirect_uri',
-      process.env.NEXT_PUBLIC_BASE_URL + process.env.SPOTIFY_REDIRECT_ENDPOINT
-    );
-    queryString.searchParams.append('state', 'some-random-state');
-    window.open(queryString.toString(), '_self');
+  const linkToSpotifyHandler = () => {
+    window.open('/api/spotify/authorize', '_self');
   };
   return (
     <div className="flex flex-col items-center justify-center">
