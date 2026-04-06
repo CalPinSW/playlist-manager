@@ -3,15 +3,14 @@
  *
  * Priority:
  * 1. EXPO_PUBLIC_API_BASE_URL env var (set in .env)
- * 2. The Vercel preview URL for the claude/weekend-2-expo branch
- *    (used until PRs #85 + #86 are merged to main and production is updated)
+ * 2. Stable production alias — tracks whatever is deployed to main.
  *
- * Once both PRs are merged, switch to the stable production alias:
- *   https://playlist-manager-calums-projects-8679c2fb.vercel.app
+ * For local development, use ngrok to expose your local server and set
+ * EXPO_PUBLIC_API_BASE_URL in .env.
  */
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL ??
-  'https://playlist-manager-git-claude-wee-2d2730-calums-projects-8679c2fb.vercel.app';
+  'https://playlist-manager-calums-projects-8679c2fb.vercel.app';
 
 if (__DEV__) {
   console.log('[api] Using backend:', API_BASE_URL);
