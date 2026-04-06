@@ -1,8 +1,8 @@
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthRequest, exchangeCodeAsync } from 'expo-auth-session';
+import { useAuthRequest } from 'expo-auth-session';
 import { useEffect, useState } from 'react';
-import { discovery, authRequestConfig, saveTokens } from '../../lib/auth';
+import { discovery, authRequestConfig, exchangeCodeForTokens } from '../../lib/auth';
 import { syncHistory } from '../../lib/api';
 import { Colors } from '../../constants/colors';
 
@@ -23,34 +23,29 @@ export default function LoginScreen() {
     if (response?.type !== 'success') return;
 
     const { code } = response.params;
-    if (!code || !request?.codeVerifier) return;
+    if (!code) {
+      Alert.alert('Sign in failed', 'No authorization code received');
+      return;
+    }
+
+    if (!request?.codeVerifier) {
+      Alert.alert('Sign in failed', 'Missing code verifier - please try again');
+      return;
+    }
 
     setLoading(true);
 
-    exchangeCodeAsync(
-      {
-        clientId: authRequestConfig.clientId,
-        code,
-        redirectUri: authRequestConfig.redirectUri,
-        codeVerifier: request.codeVerifier,
-        extraParams: authRequestConfig.additionalParameters
-      },
-      discovery
-    )
-      .then(async (tokenResponse) => {
-        await saveTokens({
-          access_token: tokenResponse.accessToken,
-          refresh_token: tokenResponse.refreshToken ?? undefined,
-          expires_in: tokenResponse.expiresIn ?? 3600,
-          id_token: tokenResponse.idToken ?? undefined
-        });
+    console.log('Exchanging code for tokens with verifier:', request.codeVerifier.substring(0, 10) + '...');
 
+    exchangeCodeForTokens(code, request.codeVerifier)
+      .then(async () => {
         // Fire sync on first login — don't block navigation on it.
         syncHistory().catch(() => null);
 
         router.replace('/(tabs)');
       })
       .catch((err) => {
+        console.error('Token exchange error:', err);
         Alert.alert('Sign in failed', err.message ?? 'Unknown error');
         setLoading(false);
       });

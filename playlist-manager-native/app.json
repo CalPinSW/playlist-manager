@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.calum.playlistmanager"
+      "bundleIdentifier": "com.calum.playlistmanager",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.calum.playlistmanager",
@@ -42,7 +45,10 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+        "projectId": "53e58516-2923-4b74-9f3d-ec87d7e1096b"
+      },
+      "router": {
+        "root": "./app"
       }
     }
   }
