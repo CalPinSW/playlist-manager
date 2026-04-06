@@ -55,7 +55,8 @@ const AsyncButton: FC<AsyncButtonProps> = ({ children, onClick, successMessage, 
         isError && 'bg-warning',
         className
       )}
-      onClick={handleClick}>
+      onClick={handleClick}
+    >
       <div className={`m-auto ${isLoading ? 'hidden' : ''}`}>{children}</div>
       <div className={`m-auto h-8 w-8 ${isLoading ? '' : 'hidden'}`}>
         <LoadingSpinner />

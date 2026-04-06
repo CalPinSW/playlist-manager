@@ -56,7 +56,8 @@ const PlaybackFooter: FC<PlaybackFooterProps> = ({ playbackInfo, handlePausePlay
             width={128}
             height={128}
             src={playbackInfo.artwork_url}
-            alt={playbackInfo.album_title + ' artwork'}></Image>
+            alt={playbackInfo.album_title + ' artwork'}
+          ></Image>
         </button>
         <div>Playing:</div>
         <div className="text-balance">{playbackArtists}</div>
@@ -87,7 +88,8 @@ const PlaybackFooter: FC<PlaybackFooterProps> = ({ playbackInfo, handlePausePlay
         {playbackInfo.playlist?.id && (
           <Link
             href={`/playlist/${playbackInfo.playlist?.id}`}
-            className={`flex flex-row justify-between ${playbackInfo.playlist ? '' : 'opacity-0'}`}>
+            className={`flex flex-row justify-between ${playbackInfo.playlist ? '' : 'opacity-0'}`}
+          >
             <div className="flex flex-row space-x-2">
               <PlaylistIcon className="my-auto size-8 fill-primary-darker" />
               <div className="my-auto text-balance">

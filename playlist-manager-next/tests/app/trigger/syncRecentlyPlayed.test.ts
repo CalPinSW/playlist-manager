@@ -83,7 +83,10 @@ describe('syncRecentlyPlayedTask', () => {
     vi.clearAllMocks();
     mockPrisma.user.findMany.mockResolvedValue([makeUser()]);
     mockPrisma.access_token.findUnique.mockResolvedValue({
-      access_token: 'tok', refresh_token: 'ref', token_type: 'Bearer', expires_in: 3600
+      access_token: 'tok',
+      refresh_token: 'ref',
+      token_type: 'Bearer',
+      expires_in: 3600
     });
     mockPrisma.sync_log.findUnique.mockResolvedValue(null);
     mockPrisma.sync_log.upsert.mockResolvedValue({});
@@ -105,9 +108,7 @@ describe('syncRecentlyPlayedTask', () => {
     mockGetRecentlyPlayedTracks.mockResolvedValue({
       items: [makeRecentItem('track-1', '2026-04-04T10:00:00Z')]
     });
-    mockPrisma.track.findMany.mockResolvedValue([
-      makeTrack('track-1', 'album-1', 3, 12, 'pl-1')
-    ]);
+    mockPrisma.track.findMany.mockResolvedValue([makeTrack('track-1', 'album-1', 3, 12, 'pl-1')]);
 
     await testTask.run(undefined as never, undefined as never);
 
@@ -126,7 +127,9 @@ describe('syncRecentlyPlayedTask', () => {
     });
     mockPrisma.track.findMany.mockResolvedValue([
       {
-        id: 'track-orphan', album_id: 'album-x', track_number: 1,
+        id: 'track-orphan',
+        album_id: 'album-x',
+        track_number: 1,
         album: { id: 'album-x', total_tracks: 5, playlistalbumrelationship: [] }
       }
     ]);
@@ -195,20 +198,13 @@ describe('syncRecentlyPlayedTask', () => {
 
     await testTask.run(undefined as never, undefined as never);
 
-    expect(mockGetRecentlyPlayedTracks).toHaveBeenCalledWith(
-      50,
-      { type: 'after', timestamp: storedCursor.getTime() }
-    );
+    expect(mockGetRecentlyPlayedTracks).toHaveBeenCalledWith(50, { type: 'after', timestamp: storedCursor.getTime() });
   });
 
   it('skips users with no New Albums playlists without error', async () => {
-    mockPrisma.playlist.findMany.mockResolvedValue([
-      makePlaylist('pl-1', 'Best Albums 04/04/26')
-    ]);
+    mockPrisma.playlist.findMany.mockResolvedValue([makePlaylist('pl-1', 'Best Albums 04/04/26')]);
 
-    await expect(
-      testTask.run(undefined as never, undefined as never)
-    ).resolves.not.toThrow();
+    await expect(testTask.run(undefined as never, undefined as never)).resolves.not.toThrow();
 
     expect(mockGetRecentlyPlayedTracks).not.toHaveBeenCalled();
   });
@@ -218,9 +214,7 @@ describe('syncRecentlyPlayedTask', () => {
       { ...makeUser(), access_token: { access_token: null, refresh_token: null } }
     ]);
 
-    await expect(
-      testTask.run(undefined as never, undefined as never)
-    ).resolves.not.toThrow();
+    await expect(testTask.run(undefined as never, undefined as never)).resolves.not.toThrow();
 
     expect(mockGetRecentlyPlayedTracks).not.toHaveBeenCalled();
   });

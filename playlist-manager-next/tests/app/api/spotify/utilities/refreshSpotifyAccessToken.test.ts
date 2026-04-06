@@ -47,17 +47,13 @@ describe('refreshSpotifyAccessToken', () => {
   it('throws when no access_token row is found', async () => {
     mockFindUnique.mockResolvedValue(null);
 
-    await expect(refreshSpotifyAccessToken(makeUser() as never)).rejects.toThrow(
-      'No refresh token found for user'
-    );
+    await expect(refreshSpotifyAccessToken(makeUser() as never)).rejects.toThrow('No refresh token found for user');
   });
 
   it('throws when access_token row exists but refresh_token is null', async () => {
     mockFindUnique.mockResolvedValue({ refresh_token: null });
 
-    await expect(refreshSpotifyAccessToken(makeUser() as never)).rejects.toThrow(
-      'No refresh token found for user'
-    );
+    await expect(refreshSpotifyAccessToken(makeUser() as never)).rejects.toThrow('No refresh token found for user');
   });
 
   it('updates access_token and refresh_token atomically inside a transaction', async () => {
@@ -105,9 +101,7 @@ describe('refreshSpotifyAccessToken', () => {
     mockFindUnique.mockResolvedValue({ refresh_token: 'old-refresh' });
     stubFetch({}, false);
 
-    await expect(refreshSpotifyAccessToken(makeUser() as never)).rejects.toThrow(
-      'Spotify token refresh failed'
-    );
+    await expect(refreshSpotifyAccessToken(makeUser() as never)).rejects.toThrow('Spotify token refresh failed');
     expect(mockTransaction).not.toHaveBeenCalled();
   });
 

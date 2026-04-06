@@ -14,7 +14,8 @@ export const ProgressCircle: FC<ProgressCircleProps> = ({ percentage }) => {
           cx="50"
           cy="50"
           r="40"
-          fill="transparent"></circle>
+          fill="transparent"
+        ></circle>
         <circle
           className="text-indigo-500  progress-ring__circle stroke-current"
           strokeWidth="10"
@@ -24,7 +25,8 @@ export const ProgressCircle: FC<ProgressCircleProps> = ({ percentage }) => {
           r="40"
           fill="transparent"
           strokeDasharray={40 * 2 * Math.PI}
-          strokeDashoffset={40 * 2 * Math.PI - (percentage / 100) * 40 * 2 * Math.PI}></circle>
+          strokeDashoffset={40 * 2 * Math.PI - (percentage / 100) * 40 * 2 * Math.PI}
+        ></circle>
         <text x="50" y="50" textAnchor="middle" alignmentBaseline="middle" className="stroke-text">
           {percentage}%
         </text>

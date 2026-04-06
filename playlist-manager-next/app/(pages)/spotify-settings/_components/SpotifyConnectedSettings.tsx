@@ -32,13 +32,15 @@ const SpotifyConnectedSettings: FC<SpotifyConnectedSettingsProps> = ({ user }) =
         <AsyncButton
           successMessage="Successfully fetched Spotify user data"
           className="p-4 bg-primary rounded-sm cursor-pointer"
-          onClick={refreshUserDataHandler}>
+          onClick={refreshUserDataHandler}
+        >
           Refetch user data
         </AsyncButton>
         <AsyncButton
           successMessage="Successfully refreshed Spotify playlists"
           className="p-4 bg-primary rounded-sm cursor-pointer"
-          onClick={refreshUserPlaylistsHandler}>
+          onClick={refreshUserPlaylistsHandler}
+        >
           Refresh user playlists
         </AsyncButton>
       </div>

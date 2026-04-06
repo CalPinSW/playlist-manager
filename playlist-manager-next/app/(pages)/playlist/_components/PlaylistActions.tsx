@@ -71,7 +71,8 @@ const PlaylistActions: FC<PlaylistActionsProps> = ({ playlist, playlistAlbums })
       <AsyncButton
         className="flex bg-primary hover:bg-primary-darker justify-center"
         onClick={copyArtistsHandler}
-        successMessage="Artist List copied">
+        successMessage="Artist List copied"
+      >
         <div className="flex gap-2 sm:p-2 sflex-row">
           <ClipboardIcon className="m-auto" width={24} height={24} />
           Copy Artist List

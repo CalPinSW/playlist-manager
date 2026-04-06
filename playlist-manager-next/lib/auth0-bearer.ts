@@ -55,8 +55,8 @@ async function decryptJweToken(token: string, domain: string): Promise<{ sub: st
   if (!clientSecret) {
     throw new Error(
       'AUTH0_CLIENT_SECRET env var is not set — required to decrypt JWE access tokens. ' +
-      'Either add it to your environment or disable JWT encryption in the Auth0 dashboard ' +
-      '(Applications → <your app> → Advanced Settings → OAuth → uncheck "JSON Web Token Encryption").'
+        'Either add it to your environment or disable JWT encryption in the Auth0 dashboard ' +
+        '(Applications → <your app> → Advanced Settings → OAuth → uncheck "JSON Web Token Encryption").'
     );
   }
 
@@ -79,7 +79,8 @@ async function decryptJweToken(token: string, domain: string): Promise<{ sub: st
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(
-      '[auth0-bearer] jwtDecrypt failed:', message,
+      '[auth0-bearer] jwtDecrypt failed:',
+      message,
       '| This usually means AUTH0_CLIENT_SECRET is incorrect or the token was not encrypted with it.',
       '| Consider disabling JWT encryption in Auth0: Applications → Advanced Settings → OAuth.'
     );

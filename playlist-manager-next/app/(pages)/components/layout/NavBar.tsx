@@ -65,7 +65,8 @@ export default function NavBar() {
       </div>
       <DisclosurePanel
         className="flex transition duration-200 ease-out data-closed:-translate-y-6 z-10 bg-gray-800"
-        transition>
+        transition
+      >
         {unprotectedRoutes.map(item => (
           <PageLink className="text-center" key={item.name} href={item.href}>
             {item.name}

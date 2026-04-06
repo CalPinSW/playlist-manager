@@ -18,7 +18,8 @@ export const AlbumCover: FC<AlbumCoverProps> = ({ name, imageUrl, blur, classNam
         src={imageUrl}
         title={name}
         alt={`${name} artwork`}
-        className={`size-full transition-all duration-500 ${blur && 'opacity-70 blur-[2px]'} ${className}`}></Image>
+        className={`size-full transition-all duration-500 ${blur && 'opacity-70 blur-[2px]'} ${className}`}
+      ></Image>
     );
   }
   return <PlaylistIcon className={`size-full fill-primary ${className}`} />;
