@@ -26,6 +26,13 @@ async function authedFetch(url: string, options: RequestInit = {}): Promise<Resp
 
   if (__DEV__) {
     console.log(`[api] ${options.method ?? 'GET'} ${url}`);
+    // Log token shape to diagnose opaque vs JWT tokens.
+    // JWT access tokens start with 'eyJ'. Opaque tokens don't.
+    const isJwt = token.startsWith('eyJ');
+    console.log(`[api] token: ${isJwt ? 'JWT ✓' : 'OPAQUE ✗ (audience not set?)'} — first 20 chars: ${token.slice(0, 20)}...`);
+    if (!isJwt) {
+      console.warn('[api] Auth0 issued an opaque token. Set EXPO_PUBLIC_AUTH0_AUDIENCE in .env to get a JWT.');
+    }
   }
 
   const response = await fetch(url, {

@@ -61,7 +61,7 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
     access_token: tokens.access_token,
     token_type: tokens.token_type ?? 'Bearer',
     expires_in: tokens.expires_in ?? 3600,
-    refresh_token: tokens.refresh_token ?? ''
+    refresh_token: ''
   });
 
   // ── Step 1: Identify active New Albums playlists for this user ──────────────

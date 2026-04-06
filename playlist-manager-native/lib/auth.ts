@@ -134,7 +134,7 @@ export const authRequestConfig: AuthSession.AuthRequestConfig = {
   redirectUri: REDIRECT_URI,
   scopes: ['openid', 'profile', 'email', 'offline_access'],
   responseType: AuthSession.ResponseType.Code,
-  additionalParameters: {
+  extraParams: {
     ...(AUTH0_AUDIENCE ? { audience: AUTH0_AUDIENCE } : {})
   },
   usePKCE: true,
