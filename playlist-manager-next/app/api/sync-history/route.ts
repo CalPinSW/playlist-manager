@@ -7,7 +7,9 @@ const syncHistoryHandler = async (req: NextRequest) => {
     const result = await syncHistory(req);
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: error.status || 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[sync-history] Error:', message);
+    return NextResponse.json({ error: message }, { status: (error as any).status || 500 });
   }
 };
 

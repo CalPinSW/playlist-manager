@@ -20,9 +20,15 @@ export const refreshSpotifyAccessToken = async (user: user) => {
     throw new Error('No refresh token found for user');
   }
 
-  const basicAuth = Buffer.from(`${process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_SECRET}`).toString(
-    'base64'
-  );
+  const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      `Spotify credentials missing: clientId=${clientId ? 'set' : 'MISSING'}, secret=${clientSecret ? 'set' : 'MISSING'}`
+    );
+  }
+
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
   const params = new URLSearchParams();
   params.append('grant_type', 'refresh_token');

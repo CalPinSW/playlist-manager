@@ -48,6 +48,11 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
     return;
   }
 
+  const spotifyClientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
+  if (!spotifyClientId) {
+    throw new Error('NEXT_PUBLIC_SPOTIFY_CLIENT_ID is not set in server environment');
+  }
+
   // Refresh the Spotify access token (transaction-wrapped to prevent token loss).
   await refreshSpotifyAccessToken(user as unknown as Parameters<typeof refreshSpotifyAccessToken>[0]);
 
@@ -57,7 +62,7 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
     return;
   }
 
-  const spotifySdk = SpotifyApi.withAccessToken(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!, {
+  const spotifySdk = SpotifyApi.withAccessToken(spotifyClientId, {
     access_token: tokens.access_token,
     token_type: tokens.token_type ?? 'Bearer',
     expires_in: tokens.expires_in ?? 3600,
