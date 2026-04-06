@@ -10,12 +10,12 @@ export interface AddAlbumToSpotifyPlaylistRequest {
 }
 
 const getPlaylistAlbumsHandler = async (
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ playlistId: string }> }
 ) => {
   try {
     const { playlistId } = await params;
-    const user = await getUserFromRequest();
+    const user = await getUserFromRequest(request);
 
     // Verify the playlist belongs to the user
     const playlist = await prisma.playlist.findFirst({

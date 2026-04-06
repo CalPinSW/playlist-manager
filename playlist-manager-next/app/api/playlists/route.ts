@@ -5,7 +5,7 @@ import { getUserFromRequest } from '../user/handler';
 
 const getPlaylistsHandler = async (request: NextRequest) => {
   try {
-    const user = await getUserFromRequest();
+    const user = await getUserFromRequest(request);
     const searchParams = request.nextUrl.searchParams;
     const limit = searchParams.get('limit');
     const offset = searchParams.get('offset');

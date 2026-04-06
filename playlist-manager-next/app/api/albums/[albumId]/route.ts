@@ -4,12 +4,12 @@ import prisma from '../../../../lib/prisma';
 import { getUserFromRequest } from '../../user/handler';
 
 const getAlbumHandler = async (
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ albumId: string }> }
 ) => {
   try {
     const { albumId } = await params;
-    const user = await getUserFromRequest();
+    const user = await getUserFromRequest(request);
 
     const album = await prisma.album.findFirst({
       where: {
