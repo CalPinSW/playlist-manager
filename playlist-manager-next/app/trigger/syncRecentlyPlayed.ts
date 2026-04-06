@@ -1,4 +1,4 @@
-import { logger, schedules } from '@trigger.dev/sdk';
+import { schedules } from '@trigger.dev/sdk';
 import { SpotifyApi } from '@spotify/web-api-ts-sdk';
 import prisma from '../../lib/prisma';
 import { refreshSpotifyAccessToken } from '../api/spotify/utilities/refreshSpotifyAccessToken';
@@ -27,24 +27,24 @@ export const syncRecentlyPlayedTask = schedules.task({
       include: { access_token: true }
     });
 
-    logger.log('Starting recently-played sync', { userCount: users.length });
+    console.log('Starting recently-played sync', { userCount: users.length });
 
     for (const user of users) {
       try {
         await syncForUser(user);
       } catch (err) {
         // Log and continue — a single user failure should not abort the whole run.
-        logger.error('Sync failed for user', { userId: user.id, error: String(err) });
+        console.error('Sync failed for user', { userId: user.id, error: String(err) });
       }
     }
 
-    logger.log('Sync run complete');
+    console.log('Sync run complete');
   }
 });
 
 async function syncForUser(user: { id: string; access_token: { refresh_token: string | null } | null }) {
   if (!user.access_token?.refresh_token) {
-    logger.log('Skipping user — no refresh token', { userId: user.id });
+    console.log('Skipping user — no refresh token', { userId: user.id });
     return;
   }
 
@@ -53,7 +53,7 @@ async function syncForUser(user: { id: string; access_token: { refresh_token: st
 
   const tokens = await prisma.access_token.findUnique({ where: { user_id: user.id } });
   if (!tokens?.access_token) {
-    logger.warn('No access token after refresh, skipping', { userId: user.id });
+    console.warn('No access token after refresh, skipping', { userId: user.id });
     return;
   }
 
@@ -73,7 +73,7 @@ async function syncForUser(user: { id: string; access_token: { refresh_token: st
     .map(p => p.id);
 
   if (activePlaylistIds.length === 0) {
-    logger.log('No New Albums playlists found, skipping', { userId: user.id });
+    console.log('No New Albums playlists found, skipping', { userId: user.id });
     return;
   }
 
@@ -90,12 +90,12 @@ async function syncForUser(user: { id: string; access_token: { refresh_token: st
 
   const items = recentlyPlayedResponse.items;
   if (items.length === 0) {
-    logger.log('No new recently-played items', { userId: user.id });
+    console.log('No new recently-played items', { userId: user.id });
     await updateSyncLog(user.id, null);
     return;
   }
 
-  logger.log('Recently-played items fetched', { userId: user.id, count: items.length });
+  console.log('Recently-played items fetched', { userId: user.id, count: items.length });
 
   // ── Step 3: Batch-resolve track → album → playlist (single Prisma query) ────
   const trackIds = [
@@ -225,7 +225,7 @@ async function syncForUser(user: { id: string; access_token: { refresh_token: st
     upsertCount++;
   }
 
-  logger.log('Progress upserts complete', { userId: user.id, upsertCount });
+  console.log('Progress upserts complete', { userId: user.id, upsertCount });
 
   // ── Step 6: Advance the cursor ───────────────────────────────────────────────
   // items[0] is the most recent (Spotify returns newest first).
