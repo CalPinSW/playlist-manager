@@ -49,7 +49,7 @@ async function syncForUser(user: { id: string; access_token: { refresh_token: st
   }
 
   // Refresh the Spotify access token (transaction-wrapped to prevent token loss).
-  await refreshSpotifyAccessToken(user as Parameters<typeof refreshSpotifyAccessToken>[0]);
+  await refreshSpotifyAccessToken(user as unknown as Parameters<typeof refreshSpotifyAccessToken>[0]);
 
   const tokens = await prisma.access_token.findUnique({ where: { user_id: user.id } });
   if (!tokens?.access_token) {
@@ -57,10 +57,12 @@ async function syncForUser(user: { id: string; access_token: { refresh_token: st
     return;
   }
 
-  const spotifySdk = SpotifyApi.withAccessToken(
-    process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!,
-    { access_token: tokens.access_token, token_type: tokens.token_type ?? 'Bearer', expires_in: tokens.expires_in ?? 3600, refresh_token: tokens.refresh_token ?? '' }
-  );
+  const spotifySdk = SpotifyApi.withAccessToken(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!, {
+    access_token: tokens.access_token,
+    token_type: tokens.token_type ?? 'Bearer',
+    expires_in: tokens.expires_in ?? 3600,
+    refresh_token: tokens.refresh_token ?? ''
+  });
 
   // ── Step 1: Identify active New Albums playlists for this user ──────────────
   const playlists = await prisma.playlist.findMany({
@@ -68,9 +70,7 @@ async function syncForUser(user: { id: string; access_token: { refresh_token: st
     select: { id: true, name: true }
   });
 
-  const activePlaylistIds = playlists
-    .filter(p => NEW_ALBUMS_REGEX.test(p.name))
-    .map(p => p.id);
+  const activePlaylistIds = playlists.filter(p => NEW_ALBUMS_REGEX.test(p.name)).map(p => p.id);
 
   if (activePlaylistIds.length === 0) {
     console.log('No New Albums playlists found, skipping', { userId: user.id });
@@ -98,13 +98,7 @@ async function syncForUser(user: { id: string; access_token: { refresh_token: st
   console.log('Recently-played items fetched', { userId: user.id, count: items.length });
 
   // ── Step 3: Batch-resolve track → album → playlist (single Prisma query) ────
-  const trackIds = [
-    ...new Set(
-      items
-        .map(item => item.track?.id)
-        .filter((id): id is string => typeof id === 'string')
-    )
-  ];
+  const trackIds = [...new Set(items.map(item => item.track?.id).filter((id): id is string => typeof id === 'string'))];
 
   const trackMappings = await prisma.track.findMany({
     where: { id: { in: trackIds } },

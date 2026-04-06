@@ -16,6 +16,8 @@
     "cypress:run": "cypress run --browser chrome",
     "cypress:open": "cypress open --browser chrome",
     "prisma:generate": "prisma generate",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "typecheck": "tsc --noEmit",
     "trigger:deploy": "npx trigger.dev@latest deploy"
   },
   "dependencies": {

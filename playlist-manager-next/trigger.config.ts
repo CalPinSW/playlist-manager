@@ -1,4 +1,4 @@
-import { defineConfig } from '@trigger.dev/sdk/v3';
+import { defineConfig } from '@trigger.dev/sdk';
 import { syncVercelEnvVars } from '@trigger.dev/build/extensions/core';
 import { prismaExtension } from '@trigger.dev/build/extensions/prisma';
 
@@ -25,6 +25,7 @@ export default defineConfig({
     extensions: [
       syncVercelEnvVars(),
       prismaExtension({
+        mode: 'legacy',
         clientGenerator: 'client',
         version: '6.9.0',
         schema: 'prisma/schema.prisma'

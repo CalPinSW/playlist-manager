@@ -20,9 +20,9 @@ export const refreshSpotifyAccessToken = async (user: user) => {
     throw new Error('No refresh token found for user');
   }
 
-  const basicAuth = Buffer.from(
-    `${process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_SECRET}`
-  ).toString('base64');
+  const basicAuth = Buffer.from(`${process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_SECRET}`).toString(
+    'base64'
+  );
 
   const params = new URLSearchParams();
   params.append('grant_type', 'refresh_token');
@@ -52,7 +52,7 @@ export const refreshSpotifyAccessToken = async (user: user) => {
   // Write both tokens atomically. If this fails, the old refresh_token is still
   // in the DB and the next retry will succeed (Spotify hasn't yet invalidated it
   // because we captured it above before the DB write).
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async tx => {
     await tx.access_token.update({
       where: { user_id: user.id },
       data: {
