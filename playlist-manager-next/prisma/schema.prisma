@@ -33,7 +33,9 @@ model album {
   albumgenrerelationship         albumgenrerelationship[]
   playbackstatealbumrelationship playbackstatealbumrelationship[]
   playlistalbumrelationship      playlistalbumrelationship[]
-  tracks                          track[]
+  tracks                         track[]
+  listening_progress             listening_progress[]
+  album_rating                   album_rating[]
 }
 
 model album_notes {
@@ -140,6 +142,7 @@ model playlist {
   playbackstateplaylistrelationship playbackstateplaylistrelationship[]
   user                              user                                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   playlistalbumrelationship         playlistalbumrelationship[]
+  listening_progress                listening_progress[]
 
   @@index([user_id], map: "dbplaylist_user_id")
 }
@@ -195,4 +198,56 @@ model user {
   playbackstatealbumrelationship    playbackstatealbumrelationship[]
   playbackstateplaylistrelationship playbackstateplaylistrelationship[]
   playlist                          playlist[]
+  listening_progress                listening_progress[]
+  sync_log                          sync_log?
+  album_rating                      album_rating[]
+}
+
+// Tracks per-album listening progress, synced from Spotify's recently_played endpoint.
+// Upsert key: (user_id, album_id, playlist_id) — one row per album per playlist per user.
+// last_track_index is 0-based and only ever advances (no regression on upsert).
+model listening_progress {
+  id               Int      @id @default(autoincrement())
+  user_id          String   @db.VarChar(255)
+  album_id         String   @db.VarChar(255)
+  playlist_id      String   @db.VarChar(255)
+  last_track_index Int      // 0-based track index, highest seen wins
+  total_tracks     Int
+  listened_at      DateTime // timestamp of the most recent play that updated this row
+  source           String   @db.VarChar(50) // 'recently_played' | 'manual'
+  user             user     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  album            album    @relation(fields: [album_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  playlist         playlist @relation(fields: [playlist_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, album_id, playlist_id])
+  @@index([user_id])
+  @@index([album_id])
+  @@index([playlist_id])
+}
+
+// Stores the cursor for the syncRecentlyPlayed Trigger.dev task.
+// One row per user — updated after each successful sync run.
+model sync_log {
+  id             Int       @id @default(autoincrement())
+  user_id        String    @unique @db.VarChar(255)
+  last_played_at DateTime? // cursor: passed as `after` param to recently_played on next run
+  last_run_at    DateTime  @default(now())
+  user           user      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+// Album ratings. Stored as 1-10 integers; displayed as 0.5-5.0 half stars (value ÷ 2).
+// rated_at is used for conflict resolution: last write wins.
+model album_rating {
+  id       Int      @id @default(autoincrement())
+  album_id String   @db.VarChar(255)
+  user_id  String   @db.VarChar(255)
+  rating   Int      // 1-10; display as value/2 (e.g. 8 → ★★★★☆)
+  rated_at DateTime
+  notes    String?  @db.VarChar(1000)
+  album    album    @relation(fields: [album_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user     user     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([album_id, user_id])
+  @@index([user_id])
+  @@index([album_id])
 }

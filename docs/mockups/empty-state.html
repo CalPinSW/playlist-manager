@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Empty State + Widget — Personal Listening OS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1a1a2e; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; gap: 40px; padding: 40px 20px; flex-wrap: wrap; }
+
+  .label {
+    color: #aeacb0;
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+
+  /* Phone */
+  .phone-shell {
+    width: 390px;
+    background: #24143d;
+    border-radius: 44px;
+    padding: 12px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  .screen {
+    background: #0f0a1e;
+    border-radius: 36px;
+    overflow: hidden;
+    height: 560px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .status-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 28px 0;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(132,61,255,0.1);
+    border: 1.5px dashed rgba(132,61,255,0.3);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: rgba(132,61,255,0.5);
+  }
+
+  .empty-title {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .empty-body {
+    color: #aeacb0;
+    font-size: 14px;
+    text-align: center;
+    line-height: 1.6;
+    max-width: 260px;
+    margin-top: 10px;
+  }
+
+  .empty-cta {
+    margin-top: 28px;
+    background: #843dff;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Syncing state variant */
+  .syncing-screen {
+    background: #0f0a1e;
+    border-radius: 36px;
+    overflow: hidden;
+    height: 560px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sync-spinner {
+    width: 60px;
+    height: 60px;
+    border: 3px solid rgba(132,61,255,0.15);
+    border-top-color: #843dff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .sync-title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .sync-body {
+    color: #aeacb0;
+    font-size: 14px;
+    text-align: center;
+    max-width: 240px;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  /* Widget mockups */
+  .widget-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  /* Small widget (2x2) */
+  .widget-small {
+    width: 170px;
+    height: 170px;
+    background: linear-gradient(135deg, #24143d 0%, #0f0a1e 100%);
+    border-radius: 22px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .widget-small::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #843dff, #6b04fd);
+    opacity: 0.15;
+    border-radius: 0 22px 0 80px;
+  }
+
+  .widget-app-name {
+    color: rgba(255,255,255,0.4);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .widget-album-name {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .widget-artist {
+    color: #aeacb0;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  .widget-progress {
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    margin-top: 8px;
+  }
+
+  .widget-progress-fill {
+    height: 100%;
+    width: 58%;
+    background: #843dff;
+    border-radius: 2px;
+  }
+
+  .widget-pct {
+    color: #bea6ff;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  /* Medium widget (2x4) */
+  .widget-medium {
+    width: 360px;
+    height: 170px;
+    background: linear-gradient(135deg, #24143d 0%, #0f0a1e 100%);
+    border-radius: 22px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .widget-art {
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #843dff, #24143d);
+    flex-shrink: 0;
+  }
+
+  .widget-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 120px;
+  }
+
+  .widget-top { }
+
+  .widget-album-big {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .widget-artist-big {
+    color: #aeacb0;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .widget-track {
+    color: #bea6ff;
+    font-size: 12px;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+
+  .widget-bottom { }
+
+  .widget-prog-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    margin-bottom: 6px;
+  }
+
+  .widget-prog-fill {
+    height: 100%;
+    width: 58%;
+    background: linear-gradient(90deg, #843dff, #bea6ff);
+    border-radius: 2px;
+  }
+
+  .widget-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .widget-track-count {
+    color: #aeacb0;
+    font-size: 11px;
+  }
+
+  .widget-star-btn {
+    background: rgba(222,124,56,0.2);
+    border: 1px solid rgba(222,124,56,0.3);
+    border-radius: 12px;
+    padding: 5px 10px;
+    color: #de7c38;
+    font-size: 11px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<div>
+  <div class="label">Empty State — No Album in Progress</div>
+  <div class="phone-shell">
+    <div class="screen">
+      <div class="status-bar">
+        <span style="font-size:16px;font-weight:700">9:41</span>
+        <span style="font-size:13px;color:#aeacb0">●●● WiFi 🔋</span>
+      </div>
+      <div class="empty-icon">♫</div>
+      <div class="empty-title">Nothing playing</div>
+      <div class="empty-body">Start listening to a New Albums playlist in Spotify and your progress will appear here after the next sync.</div>
+      <button class="empty-cta">Open Spotify</button>
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="label">First Sync State</div>
+  <div class="phone-shell">
+    <div class="syncing-screen">
+      <div class="sync-spinner"></div>
+      <div class="sync-title">Getting your history</div>
+      <div class="sync-body">Checking what you've listened to on Spotify. This only takes a moment.</div>
+    </div>
+  </div>
+</div>
+
+<div class="widget-section">
+  <div class="label">iOS Widget — Small (2×2)</div>
+  <div class="widget-small">
+    <div class="widget-app-name">Listening OS</div>
+    <div>
+      <div class="widget-album-name">Romance</div>
+      <div class="widget-artist">Fontaines D.C.</div>
+      <div class="widget-progress"><div class="widget-progress-fill"></div></div>
+      <div class="widget-pct">Track 7 · 58%</div>
+    </div>
+  </div>
+
+  <div class="label">iOS Widget — Medium (2×4)</div>
+  <div class="widget-medium">
+    <div class="widget-art"></div>
+    <div class="widget-content">
+      <div class="widget-top">
+        <div class="widget-album-big">Romance</div>
+        <div class="widget-artist-big">Fontaines D.C.</div>
+        <div class="widget-track">Now: Favourite</div>
+      </div>
+      <div class="widget-bottom">
+        <div class="widget-prog-bar"><div class="widget-prog-fill"></div></div>
+        <div class="widget-stats">
+          <span class="widget-track-count">Track 7 of 12 · New Albums 04/04/26</span>
+          <span class="widget-star-btn">☆ Rate</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

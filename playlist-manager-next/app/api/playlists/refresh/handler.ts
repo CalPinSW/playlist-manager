@@ -4,6 +4,7 @@ import executeWithRetries from '../../../utils/executeWithRetries';
 import getAllPlaylistTracks from '../../spotify/utilities/spotify/getAllPlaylistTracks';
 import { getOrCreateAlbum, createTrackOrNone } from '../../spotify/utilities/spotifyUtils';
 import { playlist } from '../../../../generated/prisma';
+import { ALL_ALBUMS_REGEX } from '../../../utils/playlistFilters';
 
 export const refreshSpotifyPlaylists = async (spotifySdk: SpotifyApi, userId: string): Promise<void> => {
   console.log('Fetching spotify playlists:');
@@ -18,7 +19,7 @@ export const refreshSpotifyPlaylists = async (spotifySdk: SpotifyApi, userId: st
 
   for (const simplifiedPlaylist of simplifiedPlaylists) {
     try {
-      if (simplifiedPlaylist.name.includes('Albums')) {
+      if (ALL_ALBUMS_REGEX.test(simplifiedPlaylist.name)) {
         const dbPlaylist = await prisma.playlist.findUnique({
           where: { id: simplifiedPlaylist.id, user_id: userId }
         });
