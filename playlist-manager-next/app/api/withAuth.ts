@@ -30,10 +30,7 @@ export function withAuth(handler: Handler): Handler {
         // Return the specific error message so the client can diagnose issues
         // without needing to check Vercel function logs.
         const detail = err instanceof Error ? err.message : 'Unknown verification error';
-        return NextResponse.json(
-          { error: 'Invalid or expired token', detail },
-          { status: 401 }
-        );
+        return NextResponse.json({ error: 'Invalid or expired token', detail }, { status: 401 });
       }
     }
 

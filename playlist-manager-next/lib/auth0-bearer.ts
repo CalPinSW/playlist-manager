@@ -33,9 +33,9 @@ export async function verifyBearerToken(token: string): Promise<{ sub: string }>
   if (!token.startsWith('eyJ')) {
     console.error(
       '[auth0-bearer] Token is not a JWT (does not start with eyJ). ' +
-      'This usually means AUTH0_AUDIENCE was not set in the mobile app .env, ' +
-      'so Auth0 issued an opaque token instead of a signed JWT. ' +
-      'Set EXPO_PUBLIC_AUTH0_AUDIENCE in your .env to fix this.'
+        'This usually means AUTH0_AUDIENCE was not set in the mobile app .env, ' +
+        'so Auth0 issued an opaque token instead of a signed JWT. ' +
+        'Set EXPO_PUBLIC_AUTH0_AUDIENCE in your .env to fix this.'
     );
     throw new Error('Token is opaque (not a JWT) — set EXPO_PUBLIC_AUTH0_AUDIENCE in the mobile app .env');
   }
@@ -55,8 +55,7 @@ export async function verifyBearerToken(token: string): Promise<{ sub: string }>
     // Log the specific jose error so it appears in Vercel function logs.
     const message = err instanceof Error ? err.message : String(err);
     console.error(
-      `[auth0-bearer] jwtVerify failed: ${message} | ` +
-      `domain=${domain} | audience=${audience ?? '(not set)'}`
+      `[auth0-bearer] jwtVerify failed: ${message} | ` + `domain=${domain} | audience=${audience ?? '(not set)'}`
     );
     throw err;
   }
