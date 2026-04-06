@@ -9,5 +9,6 @@ export const spotifyScopes = [
   'playlist-read-collaborative',
   'playlist-modify-private',
   'playlist-modify-public',
-  'user-modify-playback-state'
+  'user-modify-playback-state',
+  'user-read-recently-played'
 ];
