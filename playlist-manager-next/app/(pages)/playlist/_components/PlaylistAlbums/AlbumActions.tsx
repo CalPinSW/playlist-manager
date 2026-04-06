@@ -49,8 +49,7 @@ const AlbumActions: FC<AlbumActionsProps> = ({
           onClick={async () => {
             await handleAddAlbumToPlaylistClick(ap.id);
           }}
-          className="border-background-interactive border-1 sm:border-0"
-        >
+          className="border-background-interactive border-1 sm:border-0">
           Add to {ap.name}
         </AsyncButton>
       ))}
@@ -61,8 +60,7 @@ const AlbumActions: FC<AlbumActionsProps> = ({
         className={
           'border-background-interactive border-1 sm:border-0 text-center p-2 rounded hover:bg-background-interactive cursor-pointer active:bg-primary'
         }
-        href={`/album/${selectedAlbum.id}`}
-      >
+        href={`/album/${selectedAlbum.id}`}>
         View Album Info
       </Link>
     </div>

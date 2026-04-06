@@ -20,14 +20,12 @@ export const foo: FC<AlbumContainerProps> = ({ album, onClick, selected, active 
       className={`group size-40 max-size-40 lg:size-72 lg:max-size-72 [perspective:1000px]`}
       onClick={() => {
         onClick(album);
-      }}
-    >
+      }}>
       <RotatingBorderBox active={active}>
         <div
           className={`size-full p-1 relative transition-all duration-500 [transform-style:preserve-3d] ${
             selected && '[transform:rotateY(180deg)]'
-          }`}
-        >
+          }`}>
           <AlbumCover name={album.name} imageUrl={album.image_url} blur={selected} />
           {selected && (
             <div className="absolute top-0 [transform:rotateY(180deg)] [backface-visibility:hidden]">
@@ -50,8 +48,7 @@ export const AlbumContainer: FC<AlbumContainerProps> = ({ album, onClick, active
       className="flex-col space-y-2 max-w-32"
       onClick={() => {
         onClick(album);
-      }}
-    >
+      }}>
       <RotatingBorderBox active={active}>
         {album?.image_url ? (
           <Image
