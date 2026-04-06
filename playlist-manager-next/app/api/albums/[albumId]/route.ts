@@ -3,10 +3,7 @@ import { withAuth } from '../../withAuth';
 import prisma from '../../../../lib/prisma';
 import { getUserFromRequest } from '../../user/handler';
 
-const getAlbumHandler = async (
-  request: NextRequest,
-  { params }: { params: Promise<{ albumId: string }> }
-) => {
+const getAlbumHandler = async (request: NextRequest, { params }: { params: Promise<{ albumId: string }> }) => {
   try {
     const { albumId } = await params;
     const user = await getUserFromRequest(request);
