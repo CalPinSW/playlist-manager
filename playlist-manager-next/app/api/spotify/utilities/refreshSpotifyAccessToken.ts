@@ -24,7 +24,9 @@ export const refreshSpotifyAccessToken = async (user: user) => {
   const clientSecret = process.env.SPOTIFY_SECRET;
   if (!clientId || !clientSecret) {
     throw new Error(
-      `Spotify credentials missing: clientId=${clientId ? 'set' : 'MISSING'}, secret=${clientSecret ? 'set' : 'MISSING'}`
+      `Spotify credentials missing: clientId=${clientId ? 'set' : 'MISSING'}, secret=${
+        clientSecret ? 'set' : 'MISSING'
+      }`
     );
   }
 
