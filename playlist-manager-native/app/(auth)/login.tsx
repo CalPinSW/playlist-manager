@@ -39,8 +39,14 @@ export default function LoginScreen() {
 
     exchangeCodeForTokens(code, request.codeVerifier)
       .then(async () => {
-        // Fire sync on first login — don't block navigation on it.
-        syncHistory().catch(() => null);
+        // Attempt sync — log failures visibly so we can debug, but don't block navigation.
+        try {
+          await syncHistory();
+          console.log('Initial sync complete');
+        } catch (err) {
+          // Log the full error so it appears in the Expo dev console / device logs.
+          console.warn('Initial sync failed (non-blocking):', err);
+        }
 
         router.replace('/(tabs)');
       })

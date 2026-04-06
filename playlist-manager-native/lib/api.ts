@@ -19,8 +19,13 @@ async function authedFetch(url: string, options: RequestInit = {}): Promise<Resp
   let token: string;
   try {
     token = await getValidAccessToken();
-  } catch {
+  } catch (err) {
+    console.error('[api] Failed to get access token:', err);
     throw new AuthError();
+  }
+
+  if (__DEV__) {
+    console.log(`[api] ${options.method ?? 'GET'} ${url}`);
   }
 
   const response = await fetch(url, {
@@ -31,6 +36,10 @@ async function authedFetch(url: string, options: RequestInit = {}): Promise<Resp
       ...options.headers
     }
   });
+
+  if (__DEV__) {
+    console.log(`[api] → ${response.status} ${response.statusText}`);
+  }
 
   return response;
 }
@@ -56,7 +65,11 @@ export interface ProgressEntry {
  */
 export async function fetchProgress(): Promise<ProgressEntry[]> {
   const res = await authedFetch(API_ENDPOINTS.progress);
-  if (!res.ok) throw new Error(`fetchProgress failed: ${res.statusText}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[api] fetchProgress failed:', res.status, body);
+    throw new Error(`fetchProgress failed: ${res.status} ${res.statusText}`);
+  }
   return res.json();
 }
 
@@ -67,5 +80,9 @@ export async function fetchProgress(): Promise<ProgressEntry[]> {
  */
 export async function syncHistory(): Promise<void> {
   const res = await authedFetch(API_ENDPOINTS.syncHistory, { method: 'POST' });
-  if (!res.ok) throw new Error(`syncHistory failed: ${res.statusText}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[api] syncHistory failed:', res.status, body);
+    throw new Error(`syncHistory failed: ${res.status} ${res.statusText}`);
+  }
 }
