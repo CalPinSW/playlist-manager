@@ -6,7 +6,7 @@
  */
 
 import { getValidAccessToken } from './auth';
-import { API_ENDPOINTS, albumUrl, playlistAlbumsUrl } from '../constants/api';
+import { API_ENDPOINTS, albumUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl } from '../constants/api';
 
 export class AuthError extends Error {
   constructor(message = 'Not authenticated') {
@@ -220,4 +220,20 @@ export async function fetchAlbumDetail(albumId: string): Promise<AlbumDetail> {
     throw new Error(`fetchAlbumDetail failed: ${res.status}`);
   }
   return res.json();
+}
+
+/**
+ * POST /api/playlists/[playlistId]/add-album — promote an album to a playlist.
+ * Used for "Add to Best Albums". Idempotent — returns 403 if already present.
+ */
+export async function promoteAlbum(albumId: string, targetPlaylistId: string): Promise<void> {
+  const res = await authedFetch(addAlbumToPlaylistUrl(targetPlaylistId), {
+    method: 'POST',
+    body: JSON.stringify({ albumId })
+  });
+  if (!res.ok && res.status !== 403) {
+    const body = await res.text().catch(() => '');
+    console.error('[api] promoteAlbum failed:', res.status, body);
+    throw new Error(`promoteAlbum failed: ${res.status}`);
+  }
 }

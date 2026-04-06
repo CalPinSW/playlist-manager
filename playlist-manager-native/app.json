@@ -41,7 +41,8 @@
         {
           "root": "./app"
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "extra": {
       "eas": {

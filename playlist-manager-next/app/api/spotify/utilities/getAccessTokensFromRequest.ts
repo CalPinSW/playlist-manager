@@ -17,7 +17,7 @@ type HandlerWithAccessToken = (accessToken: access_token, req: NextRequest, cont
 
 export function withSpotifyAccessToken(handler: HandlerWithAccessToken): Handler {
   return async (req, context) => {
-    const user = await getUserFromRequest();
+    const user = await getUserFromRequest(req);
     const accessTokens = await prisma.access_token.findUnique({
       where: {
         user_id: user.id

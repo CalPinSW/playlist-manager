@@ -13,8 +13,9 @@ import {
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchProgress, syncHistory, ProgressEntry, AuthError } from '../../lib/api';
+import { getCachedProgress, cacheProgress } from '../../lib/db';
 import { Colors } from '../../constants/colors';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import { clearTokens } from '../../lib/auth';
 
 /**
@@ -38,11 +39,21 @@ export default function NowScreen() {
   const loadData = useCallback(async (opts: { showRefreshing?: boolean } = {}) => {
     if (opts.showRefreshing) setRefreshing(true);
     setError(null);
+
+    // Show cached data immediately so the screen isn't blank while fetching.
+    if (!opts.showRefreshing) {
+      const cached = await getCachedProgress().catch(() => []);
+      if (cached.length > 0) {
+        setProgress(cached);
+        setLoading(false);
+      }
+    }
+
     try {
-      // Sync first so progress reflects the latest listening session.
-      await syncHistory().catch(() => null); // non-blocking if it fails
+      await syncHistory().catch(() => null);
       const data = await fetchProgress();
       setProgress(data);
+      await cacheProgress(data).catch(() => null);
     } catch (err) {
       if (err instanceof AuthError) {
         await clearTokens();
@@ -54,7 +65,7 @@ export default function NowScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     loadData();
@@ -99,7 +110,7 @@ export default function NowScreen() {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : current ? (
-          <CurrentAlbumCard entry={current} />
+          <CurrentAlbumCard entry={current} onPress={() => router.push(`/album/${current.albumId}`)} />
         ) : (
           <EmptyState />
         )}
@@ -108,7 +119,7 @@ export default function NowScreen() {
           <>
             <Text style={styles.sectionHeading}>In Progress</Text>
             {progress.slice(1).map((entry) => (
-              <AlbumRow key={`${entry.albumId}:${entry.playlistId}`} entry={entry} />
+              <AlbumRow key={`${entry.albumId}:${entry.playlistId}`} entry={entry} onPress={() => router.push(`/album/${entry.albumId}`)} />
             ))}
           </>
         )}
@@ -119,9 +130,9 @@ export default function NowScreen() {
 
 // ── Sub-components ───────────────────────��─────────────────────────────���───────
 
-function CurrentAlbumCard({ entry }: { entry: ProgressEntry }) {
+function CurrentAlbumCard({ entry, onPress }: { entry: ProgressEntry; onPress: () => void }) {
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <Image
         source={{ uri: entry.albumImageUrl }}
         style={styles.albumArt}
@@ -136,13 +147,13 @@ function CurrentAlbumCard({ entry }: { entry: ProgressEntry }) {
         Track {entry.lastTrackIndex + 1} of {entry.totalTracks}
         {'  ·  '}{entry.progressPercent}%
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
-function AlbumRow({ entry }: { entry: ProgressEntry }) {
+function AlbumRow({ entry, onPress }: { entry: ProgressEntry; onPress: () => void }) {
   return (
-    <View style={styles.row}>
+    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.75}>
       <Image
         source={{ uri: entry.albumImageUrl }}
         style={styles.rowArt}
@@ -154,7 +165,7 @@ function AlbumRow({ entry }: { entry: ProgressEntry }) {
         <ProgressBar percent={entry.progressPercent} compact />
       </View>
       <Text style={styles.rowPercent}>{entry.progressPercent}%</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 

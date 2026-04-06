@@ -12,7 +12,9 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { fetchPlaylists, fetchProgress, searchAlbums, syncHistory, AuthError, PlaylistSummary, PlaylistAlbum } from '../../../lib/api';
+import { AppState, AppStateStatus } from 'react-native';
+import { fetchPlaylists, searchAlbums, syncHistory, AuthError, PlaylistSummary, PlaylistAlbum } from '../../../lib/api';
+import { getCachedPlaylists, cachePlaylists } from '../../../lib/db';
 import { Colors } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
 
@@ -32,6 +34,7 @@ export default function AlbumsIndexScreen() {
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<TextInput>(null);
+  const appState = useRef(AppState.currentState);
 
   const handleAuthError = useCallback(async () => {
     await clearTokens();
@@ -40,10 +43,21 @@ export default function AlbumsIndexScreen() {
 
   const loadPlaylists = useCallback(async (opts: { showRefreshing?: boolean } = {}) => {
     if (opts.showRefreshing) setRefreshing(true);
+
+    // Render cached playlists immediately on first load.
+    if (!opts.showRefreshing) {
+      const cached = await getCachedPlaylists().catch(() => []);
+      if (cached.length > 0) {
+        setPlaylists(cached);
+        setLoading(false);
+      }
+    }
+
     try {
       await syncHistory().catch(() => null);
       const data = await fetchPlaylists('', 50);
       setPlaylists(data);
+      await cachePlaylists(data).catch(() => null);
     } catch (err) {
       if (err instanceof AuthError) { await handleAuthError(); return; }
     } finally {
@@ -52,7 +66,19 @@ export default function AlbumsIndexScreen() {
     }
   }, [handleAuthError]);
 
-  useEffect(() => { loadPlaylists(); }, [loadPlaylists]);
+  useEffect(() => {
+    loadPlaylists();
+
+    // Re-sync when app comes back to foreground (mirrors Now tab behaviour).
+    const subscription = AppState.addEventListener('change', (next: AppStateStatus) => {
+      if (appState.current.match(/inactive|background/) && next === 'active') {
+        loadPlaylists();
+      }
+      appState.current = next;
+    });
+
+    return () => subscription.remove();
+  }, [loadPlaylists]);
 
   const runSearch = useCallback(async (q: string) => {
     if (!q.trim()) {
