@@ -52,9 +52,24 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: '#0f0a1e' }
+        }}
+      >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen
+          name="album/[albumId]"
+          options={{
+            headerShown: true,
+            headerStyle: { backgroundColor: '#0f0a1e' },
+            headerTintColor: '#843dff',
+            headerTitle: '',
+            headerBackTitle: 'Back'
+          }}
+        />
       </Stack>
     </>
   );

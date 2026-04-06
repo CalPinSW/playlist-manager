@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search — Personal Listening OS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    padding: 40px;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    flex-wrap: wrap;
+  }
+
+  .caption {
+    text-align: center;
+    color: rgba(255,255,255,0.4);
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; }
+
+  .phone-shell {
+    width: 390px;
+    background: #24143d;
+    border-radius: 44px;
+    padding: 12px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08);
+    position: relative;
+  }
+
+  .screen {
+    background: #0f0a1e;
+    border-radius: 36px;
+    overflow: hidden;
+    min-height: 780px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 28px 0;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .status-bar .time { font-size: 16px; font-weight: 700; }
+  .status-icons { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+
+  .dynamic-island {
+    width: 120px;
+    height: 34px;
+    background: #000;
+    border-radius: 20px;
+    margin: 8px auto 0;
+    flex-shrink: 0;
+  }
+
+  /* Page header */
+  .page-header {
+    padding: 16px 20px 12px;
+    flex-shrink: 0;
+  }
+
+  .page-title {
+    color: #fff;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 14px;
+  }
+
+  /* Search bar */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 13px;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .search-bar.focused {
+    border-color: rgba(132,61,255,0.5);
+    background: rgba(132,61,255,0.06);
+  }
+
+  .search-icon {
+    color: #aeacb0;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .search-input {
+    flex: 1;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 400;
+    background: none;
+    border: none;
+    outline: none;
+  }
+
+  .search-input::placeholder { color: #aeacb0; }
+
+  .search-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 18px;
+    background: #843dff;
+    margin-left: 1px;
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .cancel-btn {
+    color: #843dff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Scroll content */
+  .scroll-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 100px;
+  }
+
+  /* Section */
+  .section-header {
+    padding: 20px 20px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .section-title {
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  .section-count {
+    color: rgba(255,255,255,0.25);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* Playlist results */
+  .playlist-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+
+  .playlist-result:active { background: rgba(255,255,255,0.04); }
+
+  .playlist-thumb {
+    width: 46px;
+    height: 46px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .playlist-thumb.new { background: linear-gradient(135deg, #843dff, #4a0fc4); }
+  .playlist-thumb.best { background: linear-gradient(135deg, #de7c38, #a04e12); }
+
+  .playlist-text { flex: 1; min-width: 0; }
+
+  .playlist-name {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .playlist-name em {
+    color: #bea6ff;
+    font-style: normal;
+  }
+
+  .playlist-meta {
+    color: #aeacb0;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  .playlist-chevron {
+    color: rgba(255,255,255,0.2);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    margin: 0 20px;
+  }
+
+  /* Album results */
+  .album-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+
+  .album-result:active { background: rgba(255,255,255,0.04); }
+
+  .album-thumb {
+    width: 46px;
+    height: 46px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .album-thumb.t1 { background: linear-gradient(135deg, #843dff, #24143d); }
+  .album-thumb.t2 { background: linear-gradient(135deg, #78a63c, #24143d); }
+  .album-thumb.t3 { background: linear-gradient(135deg, #de7c38, #24143d); }
+  .album-thumb.t4 { background: linear-gradient(135deg, #3d84ff, #24143d); }
+  .album-thumb.t5 { background: linear-gradient(135deg, #c43dff, #24143d); }
+  .album-thumb.t6 { background: linear-gradient(135deg, #ff3d6b, #24143d); }
+
+  .album-text { flex: 1; min-width: 0; }
+
+  .album-name {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .album-name em {
+    color: #bea6ff;
+    font-style: normal;
+  }
+
+  .album-artist {
+    color: #aeacb0;
+    font-size: 12px;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .album-artist em {
+    color: #bea6ff;
+    font-style: normal;
+  }
+
+  .album-playlist-tag {
+    background: rgba(132,61,255,0.12);
+    border: 1px solid rgba(132,61,255,0.2);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: #bea6ff;
+    font-size: 10px;
+    font-weight: 500;
+    margin-top: 3px;
+    display: inline-block;
+  }
+
+  /* Progress pip on album thumb */
+  .progress-pip {
+    position: relative;
+  }
+
+  .progress-pip::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 0 0 6px 6px;
+  }
+
+  .progress-pip-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: #78a63c;
+    border-radius: 0 0 0 6px;
+    z-index: 1;
+  }
+
+  /* Empty/idle state */
+  .idle-state {
+    padding: 32px 20px 0;
+  }
+
+  .idle-section-title {
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .playlist-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15,10,30,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 10px 0 28px;
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: #aeacb0;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .tab-item.active { color: #843dff; }
+  .tab-icon { font-size: 22px; line-height: 1; }
+
+  /* No results */
+  .no-results {
+    padding: 48px 20px;
+    text-align: center;
+  }
+
+  .no-results-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+  .no-results-title { color: #fff; font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .no-results-sub { color: #aeacb0; font-size: 14px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<!-- State 1: Albums tab, search idle (default) -->
+<div class="phone-wrap">
+  <div class="phone-shell">
+    <div class="screen">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="dynamic-island"></div>
+        <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+
+      <div class="page-header">
+        <div class="page-title">Albums</div>
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <span class="search-input" style="color:#aeacb0;">Search playlists & albums…</span>
+        </div>
+      </div>
+
+      <div class="scroll-content">
+        <div class="idle-state">
+          <div class="idle-section-title">Your Playlists</div>
+          <div class="playlist-row">
+
+            <div class="playlist-result">
+              <div class="playlist-thumb new">♫</div>
+              <div class="playlist-text">
+                <div class="playlist-name">New Albums 04/04/26</div>
+                <div class="playlist-meta">8 albums · 3 in progress</div>
+              </div>
+              <span class="playlist-chevron">›</span>
+            </div>
+            <div class="divider"></div>
+
+            <div class="playlist-result">
+              <div class="playlist-thumb new">♫</div>
+              <div class="playlist-text">
+                <div class="playlist-name">New Albums 28/03/26</div>
+                <div class="playlist-meta">6 albums · Completed</div>
+              </div>
+              <span class="playlist-chevron">›</span>
+            </div>
+            <div class="divider"></div>
+
+            <div class="playlist-result">
+              <div class="playlist-thumb best">★</div>
+              <div class="playlist-text">
+                <div class="playlist-name">Best Albums 2026</div>
+                <div class="playlist-meta">12 albums</div>
+              </div>
+              <span class="playlist-chevron">›</span>
+            </div>
+            <div class="divider"></div>
+
+            <div class="playlist-result">
+              <div class="playlist-thumb new">♫</div>
+              <div class="playlist-text">
+                <div class="playlist-name">New Albums 21/03/26</div>
+                <div class="playlist-meta">7 albums · Completed</div>
+              </div>
+              <span class="playlist-chevron">›</span>
+            </div>
+            <div class="divider"></div>
+
+            <div class="playlist-result">
+              <div class="playlist-thumb new">♫</div>
+              <div class="playlist-text">
+                <div class="playlist-name">New Albums 14/03/26</div>
+                <div class="playlist-meta">5 albums · Completed</div>
+              </div>
+              <span class="playlist-chevron">›</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <div class="tab-item"><div class="tab-icon">⊙</div><span>Now</span></div>
+        <div class="tab-item active"><div class="tab-icon">♫</div><span>Albums</span></div>
+        <div class="tab-item"><div class="tab-icon">★</div><span>Ratings</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">Albums tab — idle</div>
+</div>
+
+<!-- State 2: Active search with results -->
+<div class="phone-wrap">
+  <div class="phone-shell">
+    <div class="screen">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="dynamic-island"></div>
+        <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+
+      <div class="page-header">
+        <div class="page-title" style="display:none"></div>
+        <div style="display:flex; align-items:center; gap:12px; margin-top:16px;">
+          <div class="search-bar focused" style="flex:1;">
+            <span class="search-icon" style="color:#843dff;">🔍</span>
+            <span class="search-input">fontaine<span class="search-cursor"></span></span>
+          </div>
+          <span class="cancel-btn">Cancel</span>
+        </div>
+      </div>
+
+      <div class="scroll-content">
+
+        <!-- Playlists section: no match, hidden -->
+
+        <!-- Albums section -->
+        <div class="section-header">
+          <span class="section-title">Albums</span>
+          <span class="section-count">2 results</span>
+        </div>
+
+        <div class="album-result">
+          <div class="album-thumb t1 progress-pip">
+            <div class="progress-pip-fill" style="width:58%"></div>
+          </div>
+          <div class="album-text">
+            <div class="album-name">Romance</div>
+            <div class="album-artist"><em>Fontaines D.C.</em></div>
+            <span class="album-playlist-tag">New Albums 04/04/26</span>
+          </div>
+          <span class="playlist-chevron">›</span>
+        </div>
+        <div class="divider"></div>
+
+        <div class="album-result">
+          <div class="album-thumb t5 progress-pip">
+            <div class="progress-pip-fill" style="width:100%"></div>
+          </div>
+          <div class="album-text">
+            <div class="album-name">A Hero's Death</div>
+            <div class="album-artist"><em>Fontaines D.C.</em></div>
+            <span class="album-playlist-tag">New Albums 21/03/26</span>
+          </div>
+          <span class="playlist-chevron">›</span>
+        </div>
+
+        <div style="height:32px"></div>
+
+        <!-- Playlists section — no matches hint -->
+        <div class="section-header">
+          <span class="section-title">Playlists</span>
+          <span class="section-count">0 results</span>
+        </div>
+        <div style="padding: 12px 20px 0;">
+          <span style="color: #aeacb0; font-size: 13px;">No playlists match "fontaine"</span>
+        </div>
+
+      </div>
+
+      <div class="tab-bar">
+        <div class="tab-item"><div class="tab-icon">⊙</div><span>Now</span></div>
+        <div class="tab-item active"><div class="tab-icon">♫</div><span>Albums</span></div>
+        <div class="tab-item"><div class="tab-icon">★</div><span>Ratings</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">Active search — album results</div>
+</div>
+
+<!-- State 3: Search with both playlist + album results -->
+<div class="phone-wrap">
+  <div class="phone-shell">
+    <div class="screen">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="dynamic-island"></div>
+        <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+
+      <div class="page-header">
+        <div style="display:flex; align-items:center; gap:12px; margin-top:16px;">
+          <div class="search-bar focused" style="flex:1;">
+            <span class="search-icon" style="color:#843dff;">🔍</span>
+            <span class="search-input">new albums<span class="search-cursor"></span></span>
+          </div>
+          <span class="cancel-btn">Cancel</span>
+        </div>
+      </div>
+
+      <div class="scroll-content">
+
+        <div class="section-header">
+          <span class="section-title">Playlists</span>
+          <span class="section-count">5 results</span>
+        </div>
+
+        <div class="playlist-result">
+          <div class="playlist-thumb new">♫</div>
+          <div class="playlist-text">
+            <div class="playlist-name"><em>New Albums</em> 04/04/26</div>
+            <div class="playlist-meta">8 albums · 3 in progress</div>
+          </div>
+          <span class="playlist-chevron">›</span>
+        </div>
+        <div class="divider"></div>
+
+        <div class="playlist-result">
+          <div class="playlist-thumb new">♫</div>
+          <div class="playlist-text">
+            <div class="playlist-name"><em>New Albums</em> 28/03/26</div>
+            <div class="playlist-meta">6 albums · Completed</div>
+          </div>
+          <span class="playlist-chevron">›</span>
+        </div>
+        <div class="divider"></div>
+
+        <div class="playlist-result">
+          <div class="playlist-thumb new">♫</div>
+          <div class="playlist-text">
+            <div class="playlist-name"><em>New Albums</em> 21/03/26</div>
+            <div class="playlist-meta">7 albums · Completed</div>
+          </div>
+          <span class="playlist-chevron">›</span>
+        </div>
+        <div class="divider"></div>
+
+        <div class="playlist-result">
+          <div class="playlist-thumb new">♫</div>
+          <div class="playlist-text">
+            <div class="playlist-name"><em>New Albums</em> 14/03/26</div>
+            <div class="playlist-meta">5 albums · Completed</div>
+          </div>
+          <span class="playlist-chevron">›</span>
+        </div>
+        <div class="divider"></div>
+
+        <div class="playlist-result">
+          <div class="playlist-thumb new">♫</div>
+          <div class="playlist-text">
+            <div class="playlist-name"><em>New Albums</em> 07/03/26</div>
+            <div class="playlist-meta">9 albums · Completed</div>
+          </div>
+          <span class="playlist-chevron">›</span>
+        </div>
+
+        <div style="height:28px"></div>
+
+        <div class="section-header">
+          <span class="section-title">Albums</span>
+          <span class="section-count">3 results</span>
+        </div>
+
+        <div class="album-result">
+          <div class="album-thumb t1 progress-pip">
+            <div class="progress-pip-fill" style="width:58%"></div>
+          </div>
+          <div class="album-text">
+            <div class="album-name">Romance</div>
+            <div class="album-artist">Fontaines D.C.</div>
+            <span class="album-playlist-tag"><em>New Albums</em> 04/04/26</span>
+          </div>
+          <span class="playlist-chevron">›</span>
+        </div>
+        <div class="divider"></div>
+
+        <div class="album-result">
+          <div class="album-thumb t2 progress-pip">
+            <div class="progress-pip-fill" style="width:100%"></div>
+          </div>
+          <div class="album-text">
+            <div class="album-name">Manning Fireworks</div>
+            <div class="album-artist">MJ Lenderman</div>
+            <span class="album-playlist-tag"><em>New Albums</em> 04/04/26</span>
+          </div>
+          <span class="playlist-chevron">›</span>
+        </div>
+        <div class="divider"></div>
+
+        <div class="album-result">
+          <div class="album-thumb t3 progress-pip">
+            <div class="progress-pip-fill" style="width:15%"></div>
+          </div>
+          <div class="album-text">
+            <div class="album-name">Bright Future</div>
+            <div class="album-artist">Adrianne Lenker</div>
+            <span class="album-playlist-tag"><em>New Albums</em> 28/03/26</span>
+          </div>
+          <span class="playlist-chevron">›</span>
+        </div>
+
+      </div>
+
+      <div class="tab-bar">
+        <div class="tab-item"><div class="tab-icon">⊙</div><span>Now</span></div>
+        <div class="tab-item active"><div class="tab-icon">♫</div><span>Albums</span></div>
+        <div class="tab-item"><div class="tab-icon">★</div><span>Ratings</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">Active search — both sections</div>
+</div>
+
+<!-- State 4: No results -->
+<div class="phone-wrap">
+  <div class="phone-shell">
+    <div class="screen">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="dynamic-island"></div>
+        <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+
+      <div class="page-header">
+        <div style="display:flex; align-items:center; gap:12px; margin-top:16px;">
+          <div class="search-bar focused" style="flex:1; border-color: rgba(255,255,255,0.15);">
+            <span class="search-icon" style="color:#aeacb0;">🔍</span>
+            <span class="search-input">qwerty<span class="search-cursor"></span></span>
+          </div>
+          <span class="cancel-btn">Cancel</span>
+        </div>
+      </div>
+
+      <div class="scroll-content">
+        <div class="no-results">
+          <div class="no-results-icon">🔍</div>
+          <div class="no-results-title">No results for "qwerty"</div>
+          <div class="no-results-sub">Try searching by album name,<br>artist, or playlist date</div>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <div class="tab-item"><div class="tab-icon">⊙</div><span>Now</span></div>
+        <div class="tab-item active"><div class="tab-icon">♫</div><span>Albums</span></div>
+        <div class="tab-item"><div class="tab-icon">★</div><span>Ratings</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">No results</div>
+</div>
+
+</body>
+</html>

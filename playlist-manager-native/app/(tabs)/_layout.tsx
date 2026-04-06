@@ -34,14 +34,14 @@ export default function TabLayout() {
         name="albums"
         options={{
           title: 'Albums',
-          tabBarAccessibilityLabel: 'Albums tab — all albums in progress'
+          tabBarAccessibilityLabel: 'Albums tab — browse playlists and albums'
         }}
       />
       <Tabs.Screen
-        name="playlists"
+        name="ratings"
         options={{
-          title: 'Playlists',
-          tabBarAccessibilityLabel: 'Playlists tab — New Albums playlists'
+          title: 'Ratings',
+          tabBarAccessibilityLabel: 'Ratings tab — your rated albums'
         }}
       />
       <Tabs.Screen

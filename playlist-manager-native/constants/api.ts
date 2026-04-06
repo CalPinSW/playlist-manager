@@ -20,5 +20,12 @@ export const API_ENDPOINTS = {
   progress: `${API_BASE_URL}/api/progress`,
   syncHistory: `${API_BASE_URL}/api/sync-history`,
   playlists: `${API_BASE_URL}/api/playlists`,
+  albums: `${API_BASE_URL}/api/albums`,
   user: `${API_BASE_URL}/api/user`,
 } as const;
+
+export const playlistAlbumsUrl = (playlistId: string) =>
+  `${API_BASE_URL}/api/playlists/${playlistId}/albums`;
+
+export const albumUrl = (albumId: string) =>
+  `${API_BASE_URL}/api/albums/${albumId}`;

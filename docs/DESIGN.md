@@ -347,7 +347,9 @@ tests/app/api/spotify/utilities/refreshSpotifyAccessToken.test.ts
 - Album view: track list, mark progress, skip to track
 - Call `/api/sync-history` on every app open (after auth)
 
-**Weekend 3 — Core playback features**
+**Weekend 3 — Core playback features + search**
+
+**Playback:**
 - SDK decision gate (do this before writing playback code): evaluate
   `react-native-spotify-remote` against the current Spotify RN SDK. Check the repo's
   last commit date and open issues. If it looks unmaintained (no commits in 6+ months,
@@ -368,6 +370,57 @@ tests/app/api/spotify/utilities/refreshSpotifyAccessToken.test.ts
 - Fallback if SDK not chosen: open `spotify:` URI scheme to hand off playback to the
   Spotify app. No in-app playback control — user controls playback in Spotify, app
   tracks progress via `recently_played` sync only.
+
+**Search (Albums tab):**
+
+Mockup: `mockups/search.html`
+
+The Albums tab gains a persistent search bar at the top. The idle state shows the
+playlists list (same as before). Tapping the bar activates search mode with a Cancel
+button — no separate Search tab needed.
+
+Search queries the existing `/api/albums` and `/api/playlists` endpoints (already
+support `?search=` param). Results are split into two sections: **Playlists** first,
+then **Albums**. Each section shows a result count and is omitted entirely if empty
+(rather than showing a "0 results" row for both when there is a partial match).
+The no-results state shows a single centred message with search hints.
+
+- **Playlist results:** playlist name (match highlighted in purple), album count,
+  completion status ("3 in progress" / "Completed"). Tapping navigates to playlist
+  detail.
+- **Album results:** 46×46 album art thumbnail with a 3px progress bar along the
+  bottom edge (green fill = listened fraction), album name, artist, and a small pill
+  showing which playlist it belongs to. Tapping navigates to album detail.
+- **Match highlighting:** wrap matched substring in a `<Text style={{color:'#bea6ff'}}>`
+  span. Apply to: playlist name, album name, artist name, and the playlist pill on
+  album results.
+- **Debounce:** 350ms — same pattern as web app.
+- **Offline:** search runs against SQLite cache when offline (albums and playlists are
+  already cached from sync). No network call needed for search; the `/api/*` endpoints
+  are only hit when online. Banner behaviour same as rest of app.
+- **No new API endpoints required.** `/api/albums?search=` and
+  `/api/playlists?search=` already exist and support this query.
+
+**Implementation notes:**
+```
+// Two parallel React Query calls, keyed by search term
+const { data: albums } = useQuery(['albums', search], () =>
+  fetch(`/api/albums?search=${search}&limit=20`).then(r => r.json()),
+  { enabled: search.length > 0, keepPreviousData: true }
+);
+const { data: playlists } = useQuery(['playlists', search], () =>
+  fetch(`/api/playlists?search=${search}&limit=10`).then(r => r.json()),
+  { enabled: search.length > 0, keepPreviousData: true }
+);
+```
+`keepPreviousData: true` keeps the last results visible while the debounced query
+is in-flight, preventing flash of empty state on each keystroke.
+
+**Interaction states:**
+- Typing → skeleton rows (1 playlist placeholder, 3 album placeholders) while
+  query is in-flight, then swap to real results.
+- Cancel → clear input, dismiss keyboard, revert to idle playlists list.
+- No results → centred empty state with icon and hint text (see mockup state 4).
 
 **Weekend 4 — Ratings + iOS widget**
 - Star rating component on album view (writes to `/api/ratings` → `album_ratings`)

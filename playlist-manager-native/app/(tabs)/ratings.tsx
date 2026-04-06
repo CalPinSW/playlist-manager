@@ -3,15 +3,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/colors';
 
 /**
- * Playlists tab — lists New Albums playlists.
- * Full implementation in Weekend 3. Placeholder for now.
+ * Ratings tab — all rated albums, filterable by star/date/genre.
+ * Full implementation in Weekend 4. Placeholder for now.
  */
-export default function PlaylistsScreen() {
+export default function RatingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>Playlists</Text>
+      <Text style={styles.heading}>Ratings</Text>
       <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>Playlist management coming in Weekend 3.</Text>
+        <Text style={styles.placeholderText}>Your rated albums will appear here.</Text>
       </View>
     </SafeAreaView>
   );
