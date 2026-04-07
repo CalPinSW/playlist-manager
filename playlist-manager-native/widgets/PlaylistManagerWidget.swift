@@ -372,6 +372,21 @@ struct MediumWidgetView: View {
   }
 }
 
+// MARK: - iOS 16/17 compatibility
+
+extension View {
+  /// Applies containerBackground on iOS 17+; no-op on 16.x where the widget
+  /// view's own background fills the space instead.
+  @ViewBuilder
+  func widgetContainerBackground() -> some View {
+    if #available(iOS 17.0, *) {
+      self.containerBackground(.fill.tertiary, for: .widget)
+    } else {
+      self
+    }
+  }
+}
+
 // MARK: - Widget definition
 
 struct PlaylistManagerWidget: Widget {
@@ -380,7 +395,7 @@ struct PlaylistManagerWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: NowPlayingProvider()) { entry in
       PlaylistManagerWidgetEntryView(entry: entry)
-        .containerBackground(.fill.tertiary, for: .widget)
+        .widgetContainerBackground()
     }
     .configurationDisplayName("Now Playing")
     .description("See what album is playing and rate it from your Home Screen.")
