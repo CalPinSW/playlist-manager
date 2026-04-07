@@ -10,7 +10,20 @@ export const addAlbumToPlaylist = async (
   playlistId: string,
   requestBody: AddAlbumToSpotifyPlaylistRequest
 ): Promise<void> => {
-  await addAlbumToSpotifyPlaylist(spotifySdk, playlistId, requestBody);
+  // Attempt to add to Spotify. A 403 means the album is already present in
+  // the playlist (all tracks matched), which is acceptable — we still want
+  // to ensure the DB row exists so the mobile UI stays consistent.
+  try {
+    await addAlbumToSpotifyPlaylist(spotifySdk, playlistId, requestBody);
+  } catch (err) {
+    if (err?.status !== 403) {
+      throw err; // real Spotify error — propagate so the client knows
+    }
+    // 403 = already in Spotify playlist: fall through and upsert DB row below
+  }
+
+  // Always upsert the DB row so mobile and web stay in sync regardless of
+  // whether the Spotify add was a fresh insert or a no-op (already present).
   await addAlbumToDbPlaylist(playlistId, requestBody);
 };
 
@@ -26,16 +39,29 @@ const addAlbumToDbPlaylist = async (playlistId: string, requestBody: AddAlbumToS
       ? requestBody.albumIndex
       : maxAlbumIndex + 1;
 
-  const result = await prisma.playlistalbumrelationship.create({
-    data: {
+  // Use upsert so this is idempotent — calling it when the row already exists
+  // (e.g. because the album was already in the Spotify playlist and the 15-min
+  // sync had already created the DB row) doesn't throw a unique-constraint error.
+  const result = await prisma.playlistalbumrelationship.upsert({
+    where: {
+      playlist_id_album_id: {
+        playlist_id: playlistId,
+        album_id: requestBody.albumId
+      }
+    },
+    create: {
       playlist_id: playlistId,
       album_id: requestBody.albumId,
       album_index: insertIndex
-    }
+    },
+    update: {} // row already exists — leave album_index unchanged
   });
 
   return result;
 };
+
+/** Maximum URIs Spotify accepts per addItemsToPlaylist call. */
+const SPOTIFY_ADD_CHUNK_SIZE = 100;
 
 const addAlbumToSpotifyPlaylist = async (
   spotifySdk: SpotifyApi,
@@ -45,17 +71,31 @@ const addAlbumToSpotifyPlaylist = async (
   const album = await getSpotifyAlbum(spotifySdk, requestBody.albumId);
   const playlistTracks = await getAllPlaylistTracks(spotifySdk, playlistId);
 
-  await saveAlbums(spotifySdk, [album.id]);
+  // Save to Spotify library (liked albums) — best-effort, not critical.
+  // A missing user-library-modify scope or an expired token should NOT
+  // prevent the album from being added to the playlist.
+  try {
+    await saveAlbums(spotifySdk, [album.id]);
+  } catch (err) {
+    console.warn('[add-album] saveAlbums failed (non-fatal):', err?.message ?? err);
+  }
 
   if (await isAlbumInPlaylist(playlistTracks, album)) {
     throw new ErrorWithStatus('Album already present in playlist', 403);
-  } else {
-    const trackUris = album.tracks.items.map(item => item.uri);
-    let trackPosition = undefined;
-    if (requestBody.albumIndex || requestBody.albumIndex == 0) {
-      trackPosition = convertAlbumIndexToPositionIndexForPlaylist(playlistTracks, requestBody.albumIndex);
-    }
-    await spotifySdk.playlists.addItemsToPlaylist(playlistId, trackUris, trackPosition);
+  }
+
+  const trackUris = album.tracks.items.map(item => item.uri);
+  let trackPosition: number | undefined = undefined;
+  if (requestBody.albumIndex || requestBody.albumIndex == 0) {
+    trackPosition = convertAlbumIndexToPositionIndexForPlaylist(playlistTracks, requestBody.albumIndex);
+  }
+
+  // Spotify rejects batches of more than 100 URIs — chunk the requests.
+  for (let i = 0; i < trackUris.length; i += SPOTIFY_ADD_CHUNK_SIZE) {
+    const chunk = trackUris.slice(i, i + SPOTIFY_ADD_CHUNK_SIZE);
+    // Only pass a position for the first chunk; subsequent chunks append.
+    const position = i === 0 ? trackPosition : undefined;
+    await spotifySdk.playlists.addItemsToPlaylist(playlistId, chunk, position);
   }
 };
 
