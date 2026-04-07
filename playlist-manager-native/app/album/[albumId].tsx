@@ -4,6 +4,7 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   ActivityIndicator,
   Linking,
@@ -211,12 +212,40 @@ export default function AlbumDetailScreen() {
 
 // ── Star rating ────────────────────────────────────────────────────────────────
 
+const STAR_SIZE = 26;
+
 /**
- * Half-star interactive rating row.
- * Each visible star is split into left (N-0.5) and right (N) touch zones.
- * Tapping the same half-star value again clears the rating (toggles off).
+ * Renders a single star glyph: empty, half-filled, or fully filled.
  *
- * rating: 1–10 integer (stored in DB) or null = unrated.
+ * Half-star is drawn by overlaying a clipped `★` on top of a full-width `☆`,
+ * avoiding Unicode characters like ⯨ that are missing from most mobile fonts.
+ */
+function StarGlyph({ fill, faded }: { fill: 'empty' | 'half' | 'full'; faded?: boolean }) {
+  return (
+    <View style={styles.starGlyph} pointerEvents="none">
+      {/* Background: empty outline star at full width */}
+      <Text style={[styles.star, styles.starEmpty, faded && styles.starPending]}>☆</Text>
+      {/* Foreground: filled star clipped to 50% (half) or 100% (full) */}
+      {fill !== 'empty' && (
+        <View
+          style={[
+            styles.starClip,
+            fill === 'half' ? { width: STAR_SIZE / 2 } : { width: STAR_SIZE }
+          ]}
+        >
+          <Text style={[styles.star, styles.starFilled, faded && styles.starPending]}>★</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+/**
+ * Interactive half-star rating row.
+ *
+ * Each star is split into left (N–0.5) and right (N) Pressable zones.
+ * While a finger is held down, pressedRating drives the display so the
+ * user sees exactly what they are about to select before lifting.
  */
 function StarRating({
   rating,
@@ -227,47 +256,45 @@ function StarRating({
   pending: boolean;
   onRate: (newRating: number) => void;
 }) {
-  const displayValue = rating !== null ? rating / 2 : 0; // 0–5 in 0.5 steps
-  const labelText = rating !== null ? `${(rating / 2).toFixed(1)} / 5` : 'Tap to rate';
+  const [pressedRating, setPressedRating] = useState<number | null>(null);
+
+  // While pressing show the preview; otherwise show the committed rating.
+  const displayValue = (pressedRating ?? rating ?? 0) / 2;
+
+  const labelText = pressedRating !== null
+    ? `${(pressedRating / 2).toFixed(1)} / 5`
+    : rating !== null
+      ? `${(rating / 2).toFixed(1)} / 5`
+      : 'Tap to rate';
 
   return (
     <View style={styles.ratingRow}>
       {[1, 2, 3, 4, 5].map(star => {
         const filled = displayValue >= star;
-        const half = !filled && displayValue >= star - 0.5 && displayValue < star;
+        const half = !filled && displayValue >= star - 0.5;
+        const fill: 'full' | 'half' | 'empty' = filled ? 'full' : half ? 'half' : 'empty';
+        const leftVal = (star - 1) * 2 + 1;
+        const rightVal = star * 2;
+
         return (
           <View key={star} style={styles.starWrap}>
-            {/* Left half = half-star (e.g. star 3 left = 2.5 → DB value 5) */}
-            <TouchableOpacity
+            {/* Left half-star touch zone */}
+            <Pressable
               style={[styles.starHalf, styles.starHalfLeft]}
-              onPress={() => {
-                const newVal = (star - 1) * 2 + 1; // e.g. left of star 1 → 1
-                if (newVal !== rating) onRate(newVal);
-              }}
-              activeOpacity={0.6}
+              onPressIn={() => setPressedRating(leftVal)}
+              onPressOut={() => setPressedRating(null)}
+              onPress={() => { if (leftVal !== rating) onRate(leftVal); }}
               disabled={pending}
             />
-            {/* Right half = full star (e.g. star 3 right → DB value 6) */}
-            <TouchableOpacity
+            {/* Right full-star touch zone */}
+            <Pressable
               style={[styles.starHalf, styles.starHalfRight]}
-              onPress={() => {
-                const newVal = star * 2; // e.g. right of star 3 → 6
-                if (newVal !== rating) onRate(newVal);
-              }}
-              activeOpacity={0.6}
+              onPressIn={() => setPressedRating(rightVal)}
+              onPressOut={() => setPressedRating(null)}
+              onPress={() => { if (rightVal !== rating) onRate(rightVal); }}
               disabled={pending}
             />
-            {/* Star glyph rendered on top, pointer-events none */}
-            <Text
-              style={[
-                styles.star,
-                (filled || half) ? styles.starFilled : styles.starEmpty,
-                pending && styles.starPending
-              ]}
-              pointerEvents="none"
-            >
-              {filled ? '★' : half ? '⯨' : '☆'}
-            </Text>
+            <StarGlyph fill={fill} faded={pending} />
           </View>
         );
       })}
@@ -343,13 +370,17 @@ const styles = StyleSheet.create({
     gap: 2, marginBottom: 4
   },
   starWrap: {
-    position: 'relative', width: 32, height: 32,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center'
+    // Sized to the glyph; touch zones sit absolutely inside.
+    width: STAR_SIZE, height: STAR_SIZE,
+    position: 'relative', alignItems: 'center', justifyContent: 'center'
   },
   starHalf: { position: 'absolute', top: 0, bottom: 0, width: '50%' },
   starHalfLeft: { left: 0 },
   starHalfRight: { right: 0 },
-  star: { fontSize: 26, pointerEvents: 'none' } as any,
+  // StarGlyph layout: empty star in place, filled star overlaid + clipped.
+  starGlyph: { width: STAR_SIZE, height: STAR_SIZE, position: 'relative' },
+  starClip: { position: 'absolute', top: 0, left: 0, height: STAR_SIZE, overflow: 'hidden' },
+  star: { fontSize: STAR_SIZE, lineHeight: STAR_SIZE },
   starFilled: { color: '#de7c38' },
   starEmpty: { color: 'rgba(255,255,255,0.18)' },
   starPending: { opacity: 0.5 },
