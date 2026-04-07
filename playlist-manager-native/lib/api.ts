@@ -6,7 +6,7 @@
  */
 
 import { getValidAccessToken } from './auth';
-import { API_ENDPOINTS, albumUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl } from '../constants/api';
+import { API_ENDPOINTS, albumUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl } from '../constants/api';
 
 export class AuthError extends Error {
   constructor(message = 'Not authenticated') {
@@ -117,6 +117,30 @@ export interface AlbumDetail {
   } | null;
   rating: number | null;
 }
+
+/**
+ * Live playback response from GET /api/now-playing.
+ * isPlaying: false means nothing tracked is currently playing.
+ */
+export type NowPlaying =
+  | { isPlaying: false }
+  | {
+      isPlaying: boolean;
+      albumId: string;
+      albumName: string;
+      albumImageUrl: string;
+      albumUri: string;
+      playlistId: string | null;
+      playlistName: string | null;
+      /** Zero-based index of the current track within the album */
+      trackIndex: number;
+      trackName: string;
+      totalTracks: number;
+      /** Milliseconds through the current track */
+      progressMs: number;
+      /** Total duration of the current track in ms */
+      durationMs: number;
+    };
 
 export interface RatedAlbum {
   albumId: string;
@@ -230,6 +254,21 @@ export async function fetchAlbumDetail(albumId: string): Promise<AlbumDetail> {
     const body = await res.text().catch(() => '');
     console.error('[api] fetchAlbumDetail failed:', res.status, body);
     throw new Error(`fetchAlbumDetail failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+/**
+ * GET /api/now-playing — current Spotify playback state for a tracked album.
+ * Returns { isPlaying: false } when nothing relevant is playing.
+ * Throws AuthError on 401.
+ */
+export async function fetchNowPlaying(): Promise<NowPlaying> {
+  const res = await authedFetch(nowPlayingUrl);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[api] fetchNowPlaying failed:', res.status, body);
+    throw new Error(`fetchNowPlaying failed: ${res.status}`);
   }
   return res.json();
 }

@@ -12,10 +12,10 @@ import {
 } from 'react-native';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { fetchProgress, syncHistory, ProgressEntry, AuthError } from '../../lib/api';
+import { fetchProgress, fetchNowPlaying, syncHistory, ProgressEntry, NowPlaying, AuthError } from '../../lib/api';
 import { getCachedProgress, cacheProgress } from '../../lib/db';
 import { Colors } from '../../constants/colors';
-import { useRouter, usePathname } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { clearTokens } from '../../lib/auth';
 
 /**
@@ -28,13 +28,19 @@ import { clearTokens } from '../../lib/auth';
  *
  * The first entry from /api/progress is the "current album" (ordered by listened_at desc).
  */
+/** Interval in ms for polling the live now-playing endpoint while foregrounded. */
+const POLL_INTERVAL_MS = 10_000;
+
 export default function NowScreen() {
   const router = useRouter();
   const [progress, setProgress] = useState<ProgressEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Live playback data — overlaid on top of DB progress while app is foregrounded.
+  const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
   const appState = useRef(AppState.currentState);
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadData = useCallback(async (opts: { showRefreshing?: boolean } = {}) => {
     if (opts.showRefreshing) setRefreshing(true);
@@ -67,21 +73,88 @@ export default function NowScreen() {
     }
   }, [router]);
 
+  // ── Live playback polling ────────────────────────────────────────────────────
+
+  const pollNowPlaying = useCallback(async () => {
+    try {
+      const live = await fetchNowPlaying();
+      setNowPlaying(live);
+    } catch {
+      // Silently fail — the DB data is still shown. Don't interrupt the user.
+    }
+  }, []);
+
+  const startPolling = useCallback(() => {
+    if (pollTimerRef.current) return; // already running
+    pollNowPlaying(); // immediate first hit
+    pollTimerRef.current = setInterval(pollNowPlaying, POLL_INTERVAL_MS);
+  }, [pollNowPlaying]);
+
+  const stopPolling = useCallback(() => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     loadData();
+    startPolling();
 
-    // Re-sync when app comes back to foreground.
+    // Re-sync when app comes back to foreground; pause polling when backgrounded.
     const subscription = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && next === 'active') {
         loadData();
+        startPolling();
+      } else if (next.match(/inactive|background/)) {
+        stopPolling();
       }
       appState.current = next;
     });
 
-    return () => subscription.remove();
-  }, [loadData]);
+    return () => {
+      subscription.remove();
+      stopPolling();
+    };
+  }, [loadData, startPolling, stopPolling]);
 
-  const current = progress[0] ?? null;
+  // ── Merge live + DB data ─────────────────────────────────────────────────────
+  //
+  // If Spotify says something is playing right now, prefer that data for the
+  // "current album" card so the track counter and progress bar stay fresh.
+  // The DB list is used for ordering and the "In Progress" section unchanged.
+
+  const dbCurrent = progress[0] ?? null;
+
+  // Build a live-overridden version of the current album entry when possible.
+  const liveActive = nowPlaying && 'albumId' in nowPlaying && nowPlaying.isPlaying;
+  const current: ProgressEntry | null = (() => {
+    if (!dbCurrent) return null;
+    if (!liveActive) return dbCurrent;
+    // If live data is for the same album, override track position.
+    if ((nowPlaying as Extract<NowPlaying, { isPlaying: true }>).albumId === dbCurrent.albumId) {
+      const live = nowPlaying as Extract<NowPlaying, { isPlaying: true }>;
+      return {
+        ...dbCurrent,
+        lastTrackIndex: live.trackIndex,
+        totalTracks: live.totalTracks,
+        progressPercent: Math.round(((live.trackIndex + 1) / live.totalTracks) * 100)
+      };
+    }
+    // Live data is for a *different* album — find it in the progress list or
+    // build a minimal entry from live data so the card switches albums.
+    const live = nowPlaying as Extract<NowPlaying, { isPlaying: true }>;
+    const inList = progress.find(p => p.albumId === live.albumId);
+    if (inList) {
+      return {
+        ...inList,
+        lastTrackIndex: live.trackIndex,
+        totalTracks: live.totalTracks,
+        progressPercent: Math.round(((live.trackIndex + 1) / live.totalTracks) * 100)
+      };
+    }
+    return dbCurrent; // album not in our list; keep DB current
+  })();
 
   if (loading) {
     return (
@@ -110,7 +183,14 @@ export default function NowScreen() {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : current ? (
-          <CurrentAlbumCard entry={current} onPress={() => router.push(`/album/${current.albumId}`)} />
+          <CurrentAlbumCard
+            entry={current}
+            isLive={liveActive && (nowPlaying as Extract<NowPlaying, { isPlaying: true }>).albumId === current.albumId}
+            trackName={liveActive && (nowPlaying as Extract<NowPlaying, { isPlaying: true }>).albumId === current.albumId
+              ? (nowPlaying as Extract<NowPlaying, { isPlaying: true }>).trackName
+              : null}
+            onPress={() => router.push(`/album/${current.albumId}`)}
+          />
         ) : (
           <EmptyState />
         )}
@@ -130,7 +210,17 @@ export default function NowScreen() {
 
 // ── Sub-components ───────────────────────��─────────────────────────────���───────
 
-function CurrentAlbumCard({ entry, onPress }: { entry: ProgressEntry; onPress: () => void }) {
+function CurrentAlbumCard({
+  entry,
+  isLive,
+  trackName,
+  onPress
+}: {
+  entry: ProgressEntry;
+  isLive: boolean;
+  trackName: string | null;
+  onPress: () => void;
+}) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <Image
@@ -138,8 +228,24 @@ function CurrentAlbumCard({ entry, onPress }: { entry: ProgressEntry; onPress: (
         style={styles.albumArt}
         accessibilityLabel={`Album art for ${entry.albumName}`}
       />
+
       <Text style={styles.albumName}>{entry.albumName}</Text>
-      <Text style={styles.playlistName}>{entry.playlistName}</Text>
+
+      {/* Playlist badge row with optional live indicator */}
+      <View style={styles.cardMeta}>
+        <Text style={styles.playlistName}>{entry.playlistName}</Text>
+        {isLive && (
+          <View style={styles.liveBadge}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveText}>Live</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Current track name when live data is available */}
+      {trackName && (
+        <Text style={styles.trackName} numberOfLines={1}>{trackName}</Text>
+      )}
 
       <ProgressBar percent={entry.progressPercent} />
 
@@ -222,12 +328,46 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.text,
     textAlign: 'center',
-    marginBottom: 4
+    marginBottom: 6
+  },
+  cardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6
   },
   playlistName: {
     fontSize: 13,
-    color: Colors.textMuted,
-    marginBottom: 16
+    color: Colors.textMuted
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(120,166,60,0.15)',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2
+  },
+  liveDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#78a63c'
+  },
+  liveText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#78a63c',
+    letterSpacing: 0.4
+  },
+  trackName: {
+    fontSize: 13,
+    color: Colors.text,
+    opacity: 0.75,
+    textAlign: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 8
   },
   progressText: {
     fontSize: 13,
