@@ -19,17 +19,6 @@ import { useRouter } from 'expo-router';
 import { clearTokens } from '../../lib/auth';
 import { writeNowPlaying } from '../../modules/widget-bridge';
 
-/**
- * Now tab — shows the most recently listened album with a progress bar.
- *
- * Data flow:
- * 1. On mount: trigger syncHistory (background) + fetchProgress (display).
- * 2. On AppState 'active' (app foregrounded): re-sync + re-fetch.
- * 3. Pull-to-refresh: force sync + fetch.
- *
- * The first entry from /api/progress is the "current album" (ordered by listened_at desc).
- */
-/** Interval in ms for polling the live now-playing endpoint while foregrounded. */
 const POLL_INTERVAL_MS = 10_000;
 
 export default function NowScreen() {
@@ -38,7 +27,6 @@ export default function NowScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Live playback data — overlaid on top of DB progress while app is foregrounded.
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
   const appState = useRef(AppState.currentState);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -47,7 +35,6 @@ export default function NowScreen() {
     if (opts.showRefreshing) setRefreshing(true);
     setError(null);
 
-    // Show cached data immediately so the screen isn't blank while fetching.
     if (!opts.showRefreshing) {
       const cached = await getCachedProgress().catch(() => []);
       if (cached.length > 0) {
@@ -87,25 +74,24 @@ export default function NowScreen() {
       const live = await fetchNowPlaying();
       setNowPlaying(live);
 
-      // Push to widget — runs only on iOS, no-op elsewhere.
       if ('albumId' in live && live.isPlaying) {
         writeNowPlaying({
           albumId:    live.albumId,
           albumName:  live.albumName,
           artistName: live.artistName,
           imageUrl:   live.albumImageUrl,
-          rating:     0,  // progress list may have a rating; updated below if we have it
+          rating:     0,
           isPlaying:  live.isPlaying,
         });
       }
     } catch {
-      // Silently fail — the DB data is still shown. Don't interrupt the user.
+      // Silently fail — DB data is still shown.
     }
   }, []);
 
   const startPolling = useCallback(() => {
-    if (pollTimerRef.current) return; // already running
-    pollNowPlaying(); // immediate first hit
+    if (pollTimerRef.current) return;
+    pollNowPlaying();
     pollTimerRef.current = setInterval(pollNowPlaying, POLL_INTERVAL_MS);
   }, [pollNowPlaying]);
 
@@ -120,7 +106,6 @@ export default function NowScreen() {
     loadData();
     startPolling();
 
-    // Re-sync when app comes back to foreground; pause polling when backgrounded.
     const subscription = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && next === 'active') {
         loadData();
@@ -138,19 +123,13 @@ export default function NowScreen() {
   }, [loadData, startPolling, stopPolling]);
 
   // ── Merge live + DB data ─────────────────────────────────────────────────────
-  //
-  // If Spotify says something is playing right now, prefer that data for the
-  // "current album" card so the track counter and progress bar stay fresh.
-  // The DB list is used for ordering and the "In Progress" section unchanged.
 
   const dbCurrent = progress[0] ?? null;
-
-  // Build a live-overridden version of the current album entry when possible.
   const liveActive = nowPlaying && 'albumId' in nowPlaying && nowPlaying.isPlaying;
+
   const current: ProgressEntry | null = (() => {
     if (!dbCurrent) return null;
     if (!liveActive) return dbCurrent;
-    // If live data is for the same album, override track position.
     if ((nowPlaying as Extract<NowPlaying, { isPlaying: true }>).albumId === dbCurrent.albumId) {
       const live = nowPlaying as Extract<NowPlaying, { isPlaying: true }>;
       return {
@@ -160,8 +139,6 @@ export default function NowScreen() {
         progressPercent: Math.round(((live.trackIndex + 1) / live.totalTracks) * 100)
       };
     }
-    // Live data is for a *different* album — find it in the progress list or
-    // build a minimal entry from live data so the card switches albums.
     const live = nowPlaying as Extract<NowPlaying, { isPlaying: true }>;
     const inList = progress.find(p => p.albumId === live.albumId);
     if (inList) {
@@ -172,8 +149,12 @@ export default function NowScreen() {
         progressPercent: Math.round(((live.trackIndex + 1) / live.totalTracks) * 100)
       };
     }
-    return dbCurrent; // album not in our list; keep DB current
+    return dbCurrent;
   })();
+
+  const navigateToAlbum = useCallback((entry: ProgressEntry) => {
+    router.push(`/album/${entry.albumId}?playlistId=${entry.playlistId}`);
+  }, [router]);
 
   if (loading) {
     return (
@@ -182,6 +163,10 @@ export default function NowScreen() {
       </SafeAreaView>
     );
   }
+
+  const liveAlbumId = liveActive
+    ? (nowPlaying as Extract<NowPlaying, { isPlaying: true }>).albumId
+    : null;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -204,11 +189,13 @@ export default function NowScreen() {
         ) : current ? (
           <CurrentAlbumCard
             entry={current}
-            isLive={liveActive && (nowPlaying as Extract<NowPlaying, { isPlaying: true }>).albumId === current.albumId}
-            trackName={liveActive && (nowPlaying as Extract<NowPlaying, { isPlaying: true }>).albumId === current.albumId
-              ? (nowPlaying as Extract<NowPlaying, { isPlaying: true }>).trackName
-              : null}
-            onPress={() => router.push(`/album/${current.albumId}`)}
+            isLive={liveActive && liveAlbumId === current.albumId}
+            trackName={
+              liveActive && liveAlbumId === current.albumId
+                ? (nowPlaying as Extract<NowPlaying, { isPlaying: true }>).trackName
+                : null
+            }
+            onPress={() => navigateToAlbum(current)}
           />
         ) : (
           <EmptyState />
@@ -218,7 +205,11 @@ export default function NowScreen() {
           <>
             <Text style={styles.sectionHeading}>In Progress</Text>
             {progress.slice(1).map((entry) => (
-              <AlbumRow key={`${entry.albumId}:${entry.playlistId}`} entry={entry} onPress={() => router.push(`/album/${entry.albumId}`)} />
+              <AlbumRow
+                key={`${entry.albumId}:${entry.playlistId}`}
+                entry={entry}
+                onPress={() => navigateToAlbum(entry)}
+              />
             ))}
           </>
         )}
@@ -227,7 +218,7 @@ export default function NowScreen() {
   );
 }
 
-// ── Sub-components ───────────────────────��─────────────────────────────���───────
+// ── Sub-components ─────────────────────────────────────────────────────────────
 
 function CurrentAlbumCard({
   entry,
@@ -242,17 +233,9 @@ function CurrentAlbumCard({
 }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      <Image
-        source={{ uri: entry.albumImageUrl }}
-        style={styles.albumArt}
-        accessibilityLabel={`Album art for ${entry.albumName}`}
-      />
-
-      <Text style={styles.albumName}>{entry.albumName}</Text>
-
-      {/* Playlist badge row with optional live indicator */}
-      <View style={styles.cardMeta}>
-        <Text style={styles.playlistName}>{entry.playlistName}</Text>
+      {/* Playlist header — prominent coloured band at top of card */}
+      <View style={styles.cardPlaylistHeader}>
+        <Text style={styles.cardPlaylistLabel} numberOfLines={1}>{entry.playlistName}</Text>
         {isLive && (
           <View style={styles.liveBadge}>
             <View style={styles.liveDot} />
@@ -261,7 +244,14 @@ function CurrentAlbumCard({
         )}
       </View>
 
-      {/* Current track name when live data is available */}
+      <Image
+        source={{ uri: entry.albumImageUrl }}
+        style={styles.albumArt}
+        accessibilityLabel={`Album art for ${entry.albumName}`}
+      />
+
+      <Text style={styles.albumName}>{entry.albumName}</Text>
+
       {trackName && (
         <Text style={styles.trackName} numberOfLines={1}>{trackName}</Text>
       )}
@@ -285,8 +275,9 @@ function AlbumRow({ entry, onPress }: { entry: ProgressEntry; onPress: () => voi
         accessibilityLabel={`Album art for ${entry.albumName}`}
       />
       <View style={styles.rowText}>
-        <Text style={styles.rowAlbumName} numberOfLines={1}>{entry.albumName}</Text>
+        {/* Playlist name is now the primary label */}
         <Text style={styles.rowPlaylist} numberOfLines={1}>{entry.playlistName}</Text>
+        <Text style={styles.rowAlbumName} numberOfLines={1}>{entry.albumName}</Text>
         <ProgressBar percent={entry.progressPercent} compact />
       </View>
       <Text style={styles.rowPercent}>{entry.progressPercent}%</Text>
@@ -331,15 +322,36 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
-    padding: 20,
+    overflow: 'hidden',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: Colors.border
+  },
+  // Prominent playlist header band
+  cardPlaylistHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(132,61,255,0.15)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(132,61,255,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  cardPlaylistLabel: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#c9a8ff',
+    letterSpacing: 0.2,
   },
   albumArt: {
     width: 220,
     height: 220,
     borderRadius: 12,
+    marginTop: 20,
     marginBottom: 16
   },
   albumName: {
@@ -347,23 +359,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.text,
     textAlign: 'center',
-    marginBottom: 6
-  },
-  cardMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 6
-  },
-  playlistName: {
-    fontSize: 13,
-    color: Colors.textMuted
+    marginBottom: 6,
+    paddingHorizontal: 16,
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(120,166,60,0.15)',
+    backgroundColor: 'rgba(120,166,60,0.2)',
     borderRadius: 8,
     paddingHorizontal: 6,
     paddingVertical: 2
@@ -391,7 +394,8 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 13,
     color: Colors.textMuted,
-    marginTop: 8
+    marginTop: 8,
+    marginBottom: 20,
   },
 
   // Progress bar
@@ -400,7 +404,9 @@ const styles = StyleSheet.create({
     height: 6,
     backgroundColor: Colors.progressTrack,
     borderRadius: 3,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    paddingHorizontal: 0,
+    marginHorizontal: 0,
   },
   progressTrackCompact: { height: 4, marginTop: 6 },
   progressFill: {
@@ -422,8 +428,9 @@ const styles = StyleSheet.create({
   },
   rowArt: { width: 56, height: 56, borderRadius: 8, marginRight: 12 },
   rowText: { flex: 1, justifyContent: 'center' },
-  rowAlbumName: { fontSize: 14, fontWeight: '600', color: Colors.text },
-  rowPlaylist: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+  // Playlist is now the primary row label
+  rowPlaylist: { fontSize: 13, fontWeight: '700', color: '#c9a8ff', marginBottom: 2 },
+  rowAlbumName: { fontSize: 13, color: Colors.text, marginBottom: 2 },
   rowPercent: { fontSize: 13, color: Colors.textMuted, marginLeft: 8 },
 
   // Error

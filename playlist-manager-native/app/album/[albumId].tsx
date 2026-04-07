@@ -2,6 +2,7 @@ import {
   View,
   Text,
   ScrollView,
+  FlatList,
   Image,
   TouchableOpacity,
   Pressable,
@@ -10,9 +11,9 @@ import {
   Linking,
   Alert
 } from 'react-native';
-import { useCallback, useEffect, useState } from 'react';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { fetchAlbumDetail, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistSummary } from '../../lib/api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { fetchAlbumDetail, fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Colors } from '../../constants/colors';
 import { clearTokens } from '../../lib/auth';
@@ -20,18 +21,21 @@ import { clearTokens } from '../../lib/auth';
 const BEST_ALBUMS_PATTERN = /best albums/i;
 
 export default function AlbumDetailScreen() {
-  const { albumId } = useLocalSearchParams<{ albumId: string }>();
-  const navigation = useNavigation();
+  const { albumId, playlistId } = useLocalSearchParams<{ albumId: string; playlistId?: string }>();
   const router = useRouter();
 
   const [album, setAlbum] = useState<AlbumDetail | null>(null);
   const [bestAlbumsPlaylist, setBestAlbumsPlaylist] = useState<PlaylistSummary | null>(null);
+  const [playlistAlbums, setPlaylistAlbums] = useState<PlaylistAlbum[]>([]);
+  const [playlistName, setPlaylistName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [promoting, setPromoting] = useState(false);
   const [promoted, setPromoted] = useState(false);
-  // Rating state (1–10 integer; null = unrated). Managed locally after initial load.
   const [localRating, setLocalRating] = useState<number | null>(null);
   const [ratingPending, setRatingPending] = useState(false);
+
+  // Ref for scrolling the playlist strip to the current album on load.
+  const stripRef = useRef<FlatList<PlaylistAlbum>>(null);
 
   const handleAuthError = useCallback(async () => {
     await clearTokens();
@@ -40,37 +44,53 @@ export default function AlbumDetailScreen() {
 
   const loadAlbum = useCallback(async () => {
     try {
-      const [data, playlists] = await Promise.all([
+      const requests: [Promise<AlbumDetail>, Promise<PlaylistSummary[]>, Promise<PlaylistAlbum[]>] = [
         fetchAlbumDetail(albumId),
-        fetchPlaylists('Best Albums', 5)
-      ]);
+        fetchPlaylists('Best Albums', 5),
+        playlistId ? fetchPlaylistAlbums(playlistId) : Promise.resolve([]),
+      ];
+      const [data, playlists, siblingAlbums] = await Promise.all(requests);
+
       setAlbum(data);
-      // Determine promoted state from onPlaylists
-      const alreadyPromoted = data.onPlaylists.some(p => BEST_ALBUMS_PATTERN.test(p.name));
-      setPromoted(alreadyPromoted);
-      // Store the target Best Albums playlist (first one found)
+      setPromoted(data.onPlaylists.some(p => BEST_ALBUMS_PATTERN.test(p.name)));
       setBestAlbumsPlaylist(playlists[0] ?? null);
-      // Seed local rating from server response
       setLocalRating(data.rating);
+
+      if (siblingAlbums.length > 0) {
+        setPlaylistAlbums(siblingAlbums);
+        // Infer playlist name from album's onPlaylists if we have it, else from the data itself.
+        const match = data.onPlaylists.find(p => p.id === playlistId);
+        setPlaylistName(match?.name ?? '');
+      }
     } catch (err) {
       if (err instanceof AuthError) { await handleAuthError(); return; }
       Alert.alert('Error', 'Could not load album.');
     } finally {
       setLoading(false);
     }
-  }, [albumId, handleAuthError]);
+  }, [albumId, playlistId, handleAuthError]);
 
   useEffect(() => { loadAlbum(); }, [loadAlbum]);
+
+  // Scroll the playlist strip so the current album is centred after data loads.
+  useEffect(() => {
+    if (playlistAlbums.length === 0) return;
+    const idx = playlistAlbums.findIndex(a => a.id === albumId);
+    if (idx > 0) {
+      // Small delay lets the FlatList finish layout before scrolling.
+      setTimeout(() => {
+        stripRef.current?.scrollToIndex({ index: idx, animated: false, viewPosition: 0.5 });
+      }, 100);
+    }
+  }, [playlistAlbums, albumId]);
 
   const handlePromote = useCallback(async () => {
     if (!album || !bestAlbumsPlaylist || promoted || promoting) return;
     setPromoting(true);
-    // Optimistic update
     setPromoted(true);
     try {
       await promoteAlbum(album.id, bestAlbumsPlaylist.id);
     } catch (err) {
-      // Revert on failure
       setPromoted(false);
       if (err instanceof AuthError) { await handleAuthError(); return; }
       Alert.alert('Error', 'Could not add to Best Albums. Please try again.');
@@ -82,7 +102,6 @@ export default function AlbumDetailScreen() {
   const handleRating = useCallback(async (newRating: number) => {
     if (!album || ratingPending) return;
     const previous = localRating;
-    // Optimistic update
     setLocalRating(newRating);
     setRatingPending(true);
     try {
@@ -98,10 +117,13 @@ export default function AlbumDetailScreen() {
 
   const openInSpotify = useCallback(() => {
     if (!album) return;
-    Linking.openURL(album.uri).catch(() => {
-      Alert.alert('Spotify not installed', 'Could not open Spotify.');
-    });
+    Linking.openURL(album.uri).catch(() => Alert.alert('Spotify not installed', 'Could not open Spotify.'));
   }, [album]);
+
+  const navigateToSibling = useCallback((targetAlbumId: string) => {
+    // Replace rather than push so the back stack doesn't grow with each album.
+    router.replace(`/album/${targetAlbumId}?playlistId=${playlistId}`);
+  }, [router, playlistId]);
 
   if (loading || !album) {
     return (
@@ -117,22 +139,32 @@ export default function AlbumDetailScreen() {
   const artistNames = album.artists.map(a => a.name).join(', ');
   const releaseYear = album.releaseDate ? new Date(album.releaseDate).getFullYear() : null;
 
-  const canPromote = !!bestAlbumsPlaylist && !promoted;
-
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      {/* Art */}
+
+      {/* ── Playlist strip ──────────────────────────────────────────────────── */}
+      {playlistAlbums.length > 0 && (
+        <PlaylistStrip
+          ref={stripRef}
+          albums={playlistAlbums}
+          currentAlbumId={albumId}
+          playlistName={playlistName}
+          onSelect={navigateToSibling}
+        />
+      )}
+
+      {/* ── Art ──────────────────────────────────────────────────────────────── */}
       {album.imageUrl ? (
         <Image
           source={{ uri: album.imageUrl }}
-          style={styles.art}
+          style={[styles.art, playlistAlbums.length > 0 && styles.artWithStrip]}
           accessibilityLabel={`${album.name} by ${artistNames}`}
         />
       ) : (
-        <View style={[styles.art, styles.artPlaceholder]} />
+        <View style={[styles.art, styles.artPlaceholder, playlistAlbums.length > 0 && styles.artWithStrip]} />
       )}
 
-      {/* Meta */}
+      {/* ── Meta ─────────────────────────────────────────────────────────────── */}
       <View style={styles.meta}>
         <Text style={styles.albumName}>{album.name}</Text>
         <Text style={styles.artistName}>{artistNames}</Text>
@@ -143,14 +175,14 @@ export default function AlbumDetailScreen() {
         </View>
       </View>
 
-      {/* Rating — interactive half-star picker */}
+      {/* ── Rating ───────────────────────────────────────────────────────────── */}
       <StarRating
         rating={localRating}
         pending={ratingPending}
         onRate={handleRating}
       />
 
-      {/* Progress */}
+      {/* ── Progress ─────────────────────────────────────────────────────────── */}
       {prog && (
         <View style={styles.progressSection}>
           <View style={styles.progressHeader}>
@@ -161,13 +193,12 @@ export default function AlbumDetailScreen() {
         </View>
       )}
 
-      {/* Actions */}
+      {/* ── Actions ──────────────────────────────────────────────────────────── */}
       <View style={styles.actions}>
         <TouchableOpacity style={styles.btnSpotify} onPress={openInSpotify} activeOpacity={0.8}>
           <Text style={styles.btnSpotifyText}>▶  Open in Spotify</Text>
         </TouchableOpacity>
 
-        {/* Promote button — hidden if no Best Albums playlist found */}
         {bestAlbumsPlaylist && (
           promoted ? (
             <View style={styles.btnPromotedDone}>
@@ -179,8 +210,6 @@ export default function AlbumDetailScreen() {
               onPress={handlePromote}
               activeOpacity={0.8}
               disabled={promoting}
-              accessibilityRole="button"
-              accessibilityLabel="Add to Best Albums"
             >
               <Text style={styles.btnPromoteText}>
                 {promoting ? 'Adding…' : '★  Add to Best Albums'}
@@ -190,7 +219,7 @@ export default function AlbumDetailScreen() {
         )}
       </View>
 
-      {/* Playlist membership tags */}
+      {/* ── Playlist membership tags ─────────────────────────────────────────── */}
       {album.onPlaylists.length > 0 && (
         <View style={styles.playlistTags}>
           {album.onPlaylists.map(p => (
@@ -203,36 +232,145 @@ export default function AlbumDetailScreen() {
         </View>
       )}
 
-      {/* Track list */}
+      {/* ── Track list ───────────────────────────────────────────────────────── */}
       <Text style={styles.tracksHeading}>Tracks</Text>
       <TrackList tracks={album.tracks} currentTrackIndex={currentTrackIndex} />
     </ScrollView>
   );
 }
 
+// ── Playlist strip ─────────────────────────────────────────────────────────────
+
+import { forwardRef } from 'react';
+
+const STRIP_THUMB = 64;
+
+const PlaylistStrip = forwardRef<
+  FlatList<PlaylistAlbum>,
+  {
+    albums: PlaylistAlbum[];
+    currentAlbumId: string;
+    playlistName: string;
+    onSelect: (albumId: string) => void;
+  }
+>(({ albums, currentAlbumId, playlistName, onSelect }, ref) => {
+  return (
+    <View style={stripStyles.container}>
+      {playlistName ? (
+        <Text style={stripStyles.heading} numberOfLines={1}>{playlistName}</Text>
+      ) : null}
+      <FlatList
+        ref={ref}
+        data={albums}
+        horizontal
+        keyExtractor={item => item.id}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={stripStyles.list}
+        onScrollToIndexFailed={() => {}}
+        renderItem={({ item }) => {
+          const isCurrent = item.id === currentAlbumId;
+          return (
+            <TouchableOpacity
+              style={[stripStyles.thumb, isCurrent && stripStyles.thumbCurrent]}
+              onPress={() => !isCurrent && onSelect(item.id)}
+              activeOpacity={isCurrent ? 1 : 0.7}
+            >
+              <Image
+                source={{ uri: item.imageUrl }}
+                style={stripStyles.thumbImg}
+                accessibilityLabel={item.name}
+              />
+              {isCurrent && <View style={stripStyles.thumbCurrentOverlay} />}
+              {/* Progress dot — show if album has any progress */}
+              {item.progress && item.progress.progressPercent > 0 && (
+                <View style={[
+                  stripStyles.progressDot,
+                  item.progress.progressPercent >= 95 && stripStyles.progressDotDone
+                ]} />
+              )}
+            </TouchableOpacity>
+          );
+        }}
+      />
+    </View>
+  );
+});
+
+PlaylistStrip.displayName = 'PlaylistStrip';
+
+const stripStyles = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    paddingTop: 12,
+    paddingBottom: 14,
+  },
+  heading: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#c9a8ff',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  list: {
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  thumb: {
+    width: STRIP_THUMB,
+    height: STRIP_THUMB,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
+    position: 'relative',
+  },
+  thumbCurrent: {
+    borderColor: Colors.primary,
+    // Slight scale-up via padding trick — shadows the current album
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  thumbImg: {
+    width: '100%',
+    height: '100%',
+  },
+  thumbCurrentOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(132,61,255,0.15)',
+  },
+  progressDot: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+    borderWidth: 1,
+    borderColor: Colors.surface,
+  },
+  progressDotDone: {
+    backgroundColor: '#78a63c',
+  },
+});
+
 // ── Star rating ────────────────────────────────────────────────────────────────
 
 const STAR_SIZE = 26;
 
-/**
- * Renders a single star glyph: empty, half-filled, or fully filled.
- *
- * Half-star is drawn by overlaying a clipped `★` on top of a full-width `☆`,
- * avoiding Unicode characters like ⯨ that are missing from most mobile fonts.
- */
 function StarGlyph({ fill, faded }: { fill: 'empty' | 'half' | 'full'; faded?: boolean }) {
   return (
     <View style={styles.starGlyph} pointerEvents="none">
-      {/* Background: empty outline star at full width */}
       <Text style={[styles.star, styles.starEmpty, faded && styles.starPending]}>☆</Text>
-      {/* Foreground: filled star clipped to 50% (half) or 100% (full) */}
       {fill !== 'empty' && (
-        <View
-          style={[
-            styles.starClip,
-            fill === 'half' ? { width: STAR_SIZE / 2 } : { width: STAR_SIZE }
-          ]}
-        >
+        <View style={[styles.starClip, fill === 'half' ? { width: STAR_SIZE / 2 } : { width: STAR_SIZE }]}>
           <Text style={[styles.star, styles.starFilled, faded && styles.starPending]}>★</Text>
         </View>
       )}
@@ -240,13 +378,6 @@ function StarGlyph({ fill, faded }: { fill: 'empty' | 'half' | 'full'; faded?: b
   );
 }
 
-/**
- * Interactive half-star rating row.
- *
- * Each star is split into left (N–0.5) and right (N) Pressable zones.
- * While a finger is held down, pressedRating drives the display so the
- * user sees exactly what they are about to select before lifting.
- */
 function StarRating({
   rating,
   pending,
@@ -257,8 +388,6 @@ function StarRating({
   onRate: (newRating: number) => void;
 }) {
   const [pressedRating, setPressedRating] = useState<number | null>(null);
-
-  // While pressing show the preview; otherwise show the committed rating.
   const displayValue = (pressedRating ?? rating ?? 0) / 2;
 
   const labelText = pressedRating !== null
@@ -275,10 +404,8 @@ function StarRating({
         const fill: 'full' | 'half' | 'empty' = filled ? 'full' : half ? 'half' : 'empty';
         const leftVal = (star - 1) * 2 + 1;
         const rightVal = star * 2;
-
         return (
           <View key={star} style={styles.starWrap}>
-            {/* Left half-star touch zone */}
             <Pressable
               style={[styles.starHalf, styles.starHalfLeft]}
               onPressIn={() => setPressedRating(leftVal)}
@@ -286,7 +413,6 @@ function StarRating({
               onPress={() => { if (leftVal !== rating) onRate(leftVal); }}
               disabled={pending}
             />
-            {/* Right full-star touch zone */}
             <Pressable
               style={[styles.starHalf, styles.starHalfRight]}
               onPressIn={() => setPressedRating(rightVal)}
@@ -351,6 +477,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
 
   art: { width: '100%', aspectRatio: 1 },
+  artWithStrip: { },
   artPlaceholder: { backgroundColor: Colors.surface },
 
   meta: { padding: 20 },
@@ -369,15 +496,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, paddingVertical: 10,
     gap: 2, marginBottom: 4
   },
-  starWrap: {
-    // Sized to the glyph; touch zones sit absolutely inside.
-    width: STAR_SIZE, height: STAR_SIZE,
-    position: 'relative', alignItems: 'center', justifyContent: 'center'
-  },
+  starWrap: { width: STAR_SIZE, height: STAR_SIZE, position: 'relative', alignItems: 'center', justifyContent: 'center' },
   starHalf: { position: 'absolute', top: 0, bottom: 0, width: '50%' },
   starHalfLeft: { left: 0 },
   starHalfRight: { right: 0 },
-  // StarGlyph layout: empty star in place, filled star overlaid + clipped.
   starGlyph: { width: STAR_SIZE, height: STAR_SIZE, position: 'relative' },
   starClip: { position: 'absolute', top: 0, left: 0, height: STAR_SIZE, overflow: 'hidden' },
   star: { fontSize: STAR_SIZE, lineHeight: STAR_SIZE },
@@ -392,10 +514,7 @@ const styles = StyleSheet.create({
   progressPct: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
 
   actions: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 10 },
-  btnSpotify: {
-    backgroundColor: Colors.primary, borderRadius: 14,
-    paddingVertical: 16, alignItems: 'center'
-  },
+  btnSpotify: { backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   btnSpotifyText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   btnPromote: {
     backgroundColor: 'rgba(120,166,60,0.15)', borderWidth: 1,
@@ -406,8 +525,7 @@ const styles = StyleSheet.create({
   btnPromoteText: { color: '#b3d581', fontSize: 15, fontWeight: '700' },
   btnPromotedDone: {
     borderRadius: 14, paddingVertical: 16, alignItems: 'center',
-    backgroundColor: 'rgba(120,166,60,0.08)', borderWidth: 1,
-    borderColor: 'rgba(120,166,60,0.2)'
+    backgroundColor: 'rgba(120,166,60,0.08)', borderWidth: 1, borderColor: 'rgba(120,166,60,0.2)'
   },
   btnPromotedDoneText: { color: 'rgba(179,213,129,0.5)', fontSize: 15, fontWeight: '600' },
 
