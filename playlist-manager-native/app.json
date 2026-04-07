@@ -17,7 +17,11 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.calum.playlistmanager",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["fetch", "remote-notification"]
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": ["group.com.calum.playlistmanager"]
       }
     },
     "android": {
@@ -42,7 +46,16 @@
           "root": "./app"
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "react-native-widget-extension",
+        {
+          "widgetsFolder": "widgets",
+          "groupIdentifier": "group.com.calum.playlistmanager",
+          "keychainAccessGroup": "group.com.calum.playlistmanager",
+          "deploymentTarget": "16.2"
+        }
+      ]
     ],
     "extra": {
       "eas": {

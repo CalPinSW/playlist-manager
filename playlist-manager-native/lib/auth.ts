@@ -18,6 +18,7 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as SecureStore from 'expo-secure-store';
+import { writeAuthToken } from '../modules/widget-bridge';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -58,6 +59,9 @@ export async function saveTokens(tokens: {
   if (tokens.id_token) {
     await SecureStore.setItemAsync(STORE_KEYS.idToken, tokens.id_token);
   }
+  // Mirror the Vercel JWT to the App Group Keychain so the widget's
+  // SetRatingIntent can make authenticated API calls without opening the app.
+  writeAuthToken(tokens.access_token).catch(() => null);
 }
 
 export async function getStoredTokens(): Promise<{

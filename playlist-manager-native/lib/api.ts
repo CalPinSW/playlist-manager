@@ -128,6 +128,7 @@ export type NowPlaying =
       isPlaying: boolean;
       albumId: string;
       albumName: string;
+      artistName: string;
       albumImageUrl: string;
       albumUri: string;
       playlistId: string | null;

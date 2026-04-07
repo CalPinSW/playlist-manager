@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playlist Manager — Widget v2: Now Playing + Rate</title>
+<style>
+  :root {
+    --primary: #843dff;
+    --secondary: #78a63c;
+    --surface: #1a1030;
+    --surface-dark: #0f0a1e;
+    --text: #f0ecff;
+    --text-muted: #9d8ec4;
+    --border: #2d1f5e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #07040f;
+    color: #f0ecff;
+    font-family: -apple-system, 'SF Pro Display', BlinkMacSystemFont, sans-serif;
+    padding: 48px 32px 72px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, #843dff, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    color: #9d8ec4;
+    font-size: 13px;
+    margin-bottom: 52px;
+    line-height: 1.6;
+    max-width: 640px;
+  }
+
+  .section { margin-bottom: 64px; }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #6b5a9e;
+    margin-bottom: 28px;
+    border-bottom: 1px solid #1e1340;
+    padding-bottom: 10px;
+  }
+
+  .variant-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 52px;
+    align-items: flex-start;
+  }
+
+  .variant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .variant-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #9d8ec4;
+    letter-spacing: 0.5px;
+  }
+
+  .variant-desc {
+    font-size: 11px;
+    color: #4a3a72;
+    text-align: center;
+    max-width: 180px;
+    line-height: 1.55;
+  }
+
+  /* ─── Widget chrome ─────────────────────────────────────── */
+
+  .widget-small {
+    width: 170px;
+    height: 170px;
+    border-radius: 22px;
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(132,61,255,0.2),
+      0 12px 48px rgba(0,0,0,0.75);
+  }
+
+  .widget-medium {
+    width: 364px;
+    height: 170px;
+    border-radius: 22px;
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(132,61,255,0.2),
+      0 12px 48px rgba(0,0,0,0.75);
+  }
+
+  /* ─── Simulated album art palettes ─────────────────────── */
+  .art-a { background: linear-gradient(145deg, #6b1f9e 0%, #1a0550 45%, #0a1a40 100%); }
+  .art-b { background: linear-gradient(145deg, #8b3a1a 0%, #2a0a20 45%, #0a0a1e 100%); }
+  .art-c { background: linear-gradient(145deg, #1a4a1a 0%, #0a2210 45%, #050a10 100%); }
+
+  .art-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    opacity: 0.12;
+  }
+
+  /* ─── Stars ─────────────────────────────────────────────── */
+
+  .stars {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .star {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .star-filled { color: #843dff; }
+  .star-half {
+    position: relative;
+    display: inline-block;
+    color: #2d1f5e;
+  }
+  .star-half::after {
+    content: '★';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #843dff;
+    width: 50%;
+    overflow: hidden;
+    display: block;
+  }
+  .star-empty { color: #2d1f5e; }
+
+  /* ─── Star button chips (iOS 17 interactive) ────────────── */
+
+  .rating-chips {
+    display: flex;
+    gap: 2px;
+  }
+
+  .chip {
+    width: 28px;
+    height: 24px;
+    background: rgba(45,31,94,0.7);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .chip-active {
+    background: rgba(132,61,255,0.5);
+    box-shadow: 0 0 8px rgba(132,61,255,0.4);
+  }
+
+  /* ─── "Currently Playing" dot ───────────────────────────── */
+  .now-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #78a63c;
+    box-shadow: 0 0 5px #78a63c;
+    vertical-align: middle;
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+
+  /* ─── iOS 17 badge ──────────────────────────────────────── */
+  .ios17-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(120,166,60,0.12);
+    border: 1px solid rgba(120,166,60,0.25);
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #78a63c;
+    letter-spacing: 0.3px;
+    margin-bottom: 10px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     VARIANT 1 — Small: Art + frosted rating strip
+  ══════════════════════════════════════════════════════════ */
+
+  .v1 { background: #0f0a1e; }
+
+  .v1 .art-fill {
+    position: absolute;
+    inset: 0;
+  }
+
+  .v1 .strip {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top,
+      rgba(7,4,15,0.96) 0%,
+      rgba(7,4,15,0.88) 50%,
+      transparent 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 8px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .v1 .v1-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #f0ecff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  }
+
+  .v1 .v1-artist {
+    font-size: 9.5px;
+    color: rgba(157,142,196,0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     VARIANT 2 — Small: Square art + dark panel below
+  ══════════════════════════════════════════════════════════ */
+
+  .v2 {
+    background: #12091f;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .v2 .v2-art {
+    width: 170px;
+    height: 100px;
+    position: relative;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .v2 .v2-panel {
+    flex: 1;
+    padding: 7px 10px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .v2 .v2-name {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #f0ecff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .v2 .v2-artist {
+    font-size: 9px;
+    color: #9d8ec4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .v2 .stars { gap: 2px; }
+  .v2 .star { font-size: 15px; }
+
+  /* ═══════════════════════════════════════════════════════════
+     VARIANT 3 — Medium: Side-by-side, large art + info + chips
+  ══════════════════════════════════════════════════════════ */
+
+  .v3 {
+    background: #10091c;
+    display: flex;
+  }
+
+  .v3 .v3-art {
+    width: 170px;
+    height: 170px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .v3 .v3-info {
+    flex: 1;
+    min-width: 0;
+    padding: 14px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .v3 .v3-now {
+    display: flex;
+    align-items: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: #78a63c;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .v3 .v3-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: #f0ecff;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 3px;
+  }
+
+  .v3 .v3-artist {
+    font-size: 11px;
+    color: #9d8ec4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .v3 .v3-rating-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .v3 .v3-rating-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #6b5a9e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .v3 .v3-chips { gap: 3px; }
+  .v3 .chip { width: 32px; height: 28px; font-size: 15px; border-radius: 8px; }
+
+  /* ═══════════════════════════════════════════════════════════
+     VARIANT 4 — Medium: Wide art banner + chips below
+  ══════════════════════════════════════════════════════════ */
+
+  .v4 {
+    background: #10091c;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .v4 .v4-art {
+    position: relative;
+    height: 100px;
+    overflow: hidden;
+  }
+
+  .v4 .v4-blur {
+    position: absolute;
+    inset: -8px;
+    filter: blur(4px);
+    transform: scale(1.05);
+  }
+
+  .v4 .v4-fade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 30%, rgba(16,9,28,0.95) 100%);
+  }
+
+  .v4 .v4-art-thumb {
+    position: absolute;
+    left: 14px;
+    bottom: -14px;
+    width: 58px;
+    height: 58px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #1a1030;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  }
+
+  .v4 .v4-meta {
+    position: absolute;
+    left: 84px;
+    right: 12px;
+    bottom: 8px;
+  }
+
+  .v4 .v4-now {
+    display: flex;
+    align-items: center;
+    font-size: 8.5px;
+    font-weight: 700;
+    color: #78a63c;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .v4 .v4-name {
+    font-size: 12px;
+    font-weight: 800;
+    color: #f0ecff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .v4 .v4-artist {
+    font-size: 10px;
+    color: #9d8ec4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .v4 .v4-bottom {
+    flex: 1;
+    padding: 20px 14px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .v4 .v4-rating-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #6b5a9e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+
+  .v4 .chip { width: 34px; height: 30px; font-size: 16px; border-radius: 8px; }
+
+  .v4 .v4-current-rating {
+    text-align: right;
+  }
+
+  .v4 .v4-rating-val {
+    font-size: 28px;
+    font-weight: 800;
+    color: #843dff;
+    line-height: 1;
+  }
+
+  .v4 .v4-rating-sub {
+    font-size: 9px;
+    color: #6b5a9e;
+  }
+
+  /* ─── Empty state ───────────────────────────────────────── */
+
+  .empty-widget {
+    background: #10091c;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .empty-icon { font-size: 24px; opacity: 0.2; }
+  .empty-text { font-size: 10px; color: #4a3a72; line-height: 1.5; }
+
+  /* ─── Plan ──────────────────────────────────────────────── */
+
+  .plan-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .plan-card {
+    background: #0d0820;
+    border: 1px solid #1e1340;
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+
+  .plan-card h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: #843dff;
+    margin-bottom: 12px;
+    letter-spacing: 0.3px;
+  }
+
+  .plan-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .plan-card li {
+    font-size: 12px;
+    color: #9d8ec4;
+    line-height: 1.5;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(132,61,255,0.18);
+    color: #843dff;
+    font-size: 9px;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 10.5px;
+    color: #c084fc;
+    background: rgba(132,61,255,0.1);
+    padding: 1px 4px;
+    border-radius: 4px;
+  }
+
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(132,61,255,0.08), rgba(120,166,60,0.04));
+    border: 1px solid rgba(132,61,255,0.2);
+    border-radius: 12px;
+    padding: 18px 22px;
+    font-size: 13px;
+    color: #c9bde8;
+    line-height: 1.75;
+    margin-top: 24px;
+  }
+
+  .highlight-box strong { color: #843dff; }
+  .highlight-box .green { color: #78a63c; }
+
+  .tag {
+    display: inline-block;
+    background: rgba(132,61,255,0.12);
+    border: 1px solid rgba(132,61,255,0.25);
+    color: #b47fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+    margin-right: 6px;
+    margin-top: 6px;
+  }
+
+  .tag.green {
+    background: rgba(120,166,60,0.1);
+    border-color: rgba(120,166,60,0.25);
+    color: #78a63c;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #1e1340;
+    margin: 48px 0;
+  }
+
+  @media (max-width: 900px) {
+    .plan-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Widget v2 — Now Playing + Quick Rate</h1>
+<p class="subtitle">
+  Redesigned around the actual job: see what album is playing, rate it without opening the app.<br>
+  Progress tracking moved back to the Now tab. Widget is purely a <em>now playing</em> surface.
+</p>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SMALL WIDGETS
+════════════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <div class="section-label">Small — 2×2 &nbsp;·&nbsp; 170 × 170 pt</div>
+  <div class="ios17-badge">⚡ Interactive buttons require iOS 17+</div>
+  <div class="variant-row">
+
+    <!-- V1: Full art + frosted strip -->
+    <div class="variant">
+      <div class="widget-small v1">
+        <div class="art-fill art-a">
+          <div class="art-icon">♫</div>
+        </div>
+        <div class="strip">
+          <div class="v1-name">Blonde</div>
+          <div class="v1-artist">Frank Ocean</div>
+          <!-- Star rating chips -->
+          <div class="rating-chips">
+            <div class="chip chip-active">★</div>
+            <div class="chip chip-active">★</div>
+            <div class="chip chip-active">★</div>
+            <div class="chip chip-active">★</div>
+            <div class="chip">☆</div>
+          </div>
+        </div>
+      </div>
+      <div class="variant-label">S1 — Art + Rating Strip</div>
+      <div class="variant-desc">Full-bleed art, frosted footer with album name and 5 tappable star chips</div>
+    </div>
+
+    <!-- V2: Split small — art top, info+stars bottom panel -->
+    <div class="variant">
+      <div class="widget-small v2">
+        <div class="v2-art art-b">
+          <div class="art-icon" style="font-size:40px;">♫</div>
+        </div>
+        <div class="v2-panel">
+          <div>
+            <div class="v2-name">Blonde</div>
+            <div class="v2-artist">Frank Ocean</div>
+          </div>
+          <div class="stars">
+            <span class="star star-filled">★</span>
+            <span class="star star-filled">★</span>
+            <span class="star star-filled">★</span>
+            <span class="star star-filled">★</span>
+            <span class="star star-empty">☆</span>
+          </div>
+        </div>
+      </div>
+      <div class="variant-label">S2 — Split Panel</div>
+      <div class="variant-desc">Art top, dark panel below with name and star display (read-only on small)</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MEDIUM WIDGETS
+════════════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <div class="section-label">Medium — 4×2 &nbsp;·&nbsp; 364 × 170 pt</div>
+  <div class="ios17-badge">⚡ Interactive buttons require iOS 17+</div>
+  <div class="variant-row">
+
+    <!-- V3: Art left + info + chips right -->
+    <div class="variant">
+      <div class="widget-medium v3">
+        <div class="v3-art art-a">
+          <div class="art-icon">♫</div>
+        </div>
+        <div class="v3-info">
+          <div>
+            <div class="v3-now">
+              <span class="now-dot"></span>Now Playing
+            </div>
+            <div class="v3-name">Blonde</div>
+            <div class="v3-artist">Frank Ocean</div>
+          </div>
+          <div class="v3-rating-section">
+            <div class="v3-rating-label">Rate this album</div>
+            <div class="rating-chips v3-chips">
+              <div class="chip chip-active">★</div>
+              <div class="chip chip-active">★</div>
+              <div class="chip chip-active">★</div>
+              <div class="chip chip-active">★</div>
+              <div class="chip">☆</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="variant-label">M1 — Art + Info + Chips</div>
+      <div class="variant-desc">Art left, album info top-right, 5 interactive star chips bottom-right</div>
+    </div>
+
+    <!-- V4: Blurred banner + thumb + bottom rating row -->
+    <div class="variant">
+      <div class="widget-medium v4">
+        <div class="v4-art">
+          <div class="v4-blur art-b"></div>
+          <div class="v4-fade"></div>
+          <!-- Lifted thumbnail -->
+          <div class="v4-art-thumb">
+            <div class="art-b" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:22px;opacity:0.15;">♫</span>
+            </div>
+          </div>
+          <!-- Meta beside thumb -->
+          <div class="v4-meta">
+            <div class="v4-now">
+              <span class="now-dot" style="width:4px;height:4px;margin-right:3px;"></span>Now Playing
+            </div>
+            <div class="v4-name">Blonde</div>
+            <div class="v4-artist">Frank Ocean</div>
+          </div>
+        </div>
+        <!-- Bottom row: chips + current score -->
+        <div class="v4-bottom">
+          <div>
+            <div class="v4-rating-label">Rate</div>
+            <div class="rating-chips">
+              <div class="chip chip-active" style="width:34px;height:30px;font-size:15px;border-radius:8px;">★</div>
+              <div class="chip chip-active" style="width:34px;height:30px;font-size:15px;border-radius:8px;">★</div>
+              <div class="chip chip-active" style="width:34px;height:30px;font-size:15px;border-radius:8px;">★</div>
+              <div class="chip chip-active" style="width:34px;height:30px;font-size:15px;border-radius:8px;">★</div>
+              <div class="chip" style="width:34px;height:30px;font-size:15px;border-radius:8px;">☆</div>
+            </div>
+          </div>
+          <div class="v4-current-rating">
+            <div class="v4-rating-val">4</div>
+            <div class="v4-rating-sub">/ 5 stars</div>
+          </div>
+        </div>
+      </div>
+      <div class="variant-label">M2 — Banner + Rate Row</div>
+      <div class="variant-desc">Blurred art banner, thumbnail lifts into lower rating row with current score</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     STATES
+════════════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <div class="section-label">States</div>
+  <div class="variant-row">
+
+    <!-- Not playing -->
+    <div class="variant">
+      <div class="widget-small empty-widget" style="border-radius:22px;box-shadow:0 0 0 1px rgba(132,61,255,0.15),0 12px 40px rgba(0,0,0,0.7);">
+        <div class="empty-icon">🎵</div>
+        <div class="empty-text">Nothing<br>playing</div>
+      </div>
+      <div class="variant-label">Small — Nothing Playing</div>
+    </div>
+
+    <!-- Playing but no rating yet — stars all empty -->
+    <div class="variant">
+      <div class="widget-small v1">
+        <div class="art-fill art-c">
+          <div class="art-icon">♫</div>
+        </div>
+        <div class="strip">
+          <div class="v1-name">Kind of Blue</div>
+          <div class="v1-artist">Miles Davis</div>
+          <div class="rating-chips">
+            <div class="chip">☆</div>
+            <div class="chip">☆</div>
+            <div class="chip">☆</div>
+            <div class="chip">☆</div>
+            <div class="chip">☆</div>
+          </div>
+        </div>
+      </div>
+      <div class="variant-label">Small — Unrated</div>
+    </div>
+
+    <!-- Medium not playing -->
+    <div class="variant">
+      <div class="widget-medium empty-widget" style="border-radius:22px;box-shadow:0 0 0 1px rgba(132,61,255,0.15),0 12px 40px rgba(0,0,0,0.7);">
+        <div class="empty-icon">🎵</div>
+        <div class="empty-text">Nothing playing right now.<br>Open Spotify to get started.</div>
+      </div>
+      <div class="variant-label">Medium — Nothing Playing</div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════════════════════════
+     IMPLEMENTATION PLAN
+════════════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <div class="section-label">Implementation Plan</div>
+
+  <div class="plan-grid">
+
+    <div class="plan-card">
+      <h3>📦 Phase 1 — Native Scaffold</h3>
+      <ul>
+        <li><span class="step-num">1</span>Install <code>@bndkt/react-native-widget-extension</code> + add plugin to <code>app.json</code></li>
+        <li><span class="step-num">2</span>Create App Group in Apple Dev Portal (e.g. <code>group.com.you.playlistmanager</code>) — one-time</li>
+        <li><span class="step-num">3</span>Add App Group entitlement to both main app and widget extension targets in <code>app.json</code></li>
+        <li><span class="step-num">4</span>EAS Build to compile native targets — required before anything works</li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h3>🗃️ Phase 2 — Data Bridge (JS → Widget)</h3>
+      <ul>
+        <li><span class="step-num">1</span>On every <code>fetchNowPlaying()</code> poll tick (already 10s), write JSON to App Group UserDefaults</li>
+        <li><span class="step-num">2</span>Payload: <code>albumId, albumName, artistName, imageUrl (local path!), rating</code></li>
+        <li><span class="step-num">3</span>Download and cache album art to App Group container — widgets cannot load http:// URLs</li>
+        <li><span class="step-num">4</span>Call <code>WidgetCenter.shared.reloadAllTimelines()</code> after each write (bridged to JS via module)</li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h3>⌚ Phase 3 — SwiftUI Widget Views</h3>
+      <ul>
+        <li><span class="step-num">1</span>Read App Group UserDefaults in <code>TimelineProvider</code>, decode JSON to <code>NowPlayingEntry</code></li>
+        <li><span class="step-num">2</span>Implement <code>.systemSmall</code> (S1) and <code>.systemMedium</code> (M1) views in SwiftUI</li>
+        <li><span class="step-num">3</span>Timeline policy: <code>.never</code> (app drives all refreshes via <code>reloadAllTimelines</code>)</li>
+        <li><span class="step-num">4</span>Tap on widget body → deep-links to <code>playlistmanager://album/{albumId}</code></li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h3>⚡ Phase 4 — Interactive Rating (iOS 17+)</h3>
+      <ul>
+        <li><span class="step-num">1</span>Define <code>SetRatingIntent: AppIntent</code> with <code>albumId: String</code> + <code>rating: Int</code> params</li>
+        <li><span class="step-num">2</span>In <code>perform()</code>: POST to Vercel <code>/api/ratings</code> using stored auth token, write new rating to UserDefaults, call <code>reloadAllTimelines()</code></li>
+        <li><span class="step-num">3</span>Wrap each star chip in SwiftUI <code>Button(intent: SetRatingIntent(rating: n))</code></li>
+        <li><span class="step-num">4</span>On older iOS: chips hidden, tap opens app to album detail — graceful fallback</li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h3>🔔 Phase 5 — Album Change Detection</h3>
+      <ul>
+        <li><span class="step-num">1</span><strong>Foreground (free):</strong> existing 10s poll already fires reloadTimelines via Phase 2 — widget updates in real time while app is open</li>
+        <li><span class="step-num">2</span><strong>Background (device config):</strong> enable Background App Refresh in iOS Settings → app wakes every ~15 min, polls now-playing, updates widget</li>
+        <li><span class="step-num">3</span><strong>Silent push (best):</strong> Vercel backend detects album change during history sync, sends APNs silent push → app wakes, polls, updates widget within ~30s of change</li>
+        <li><span class="step-num">4</span>Silent push requires APNs cert + <code>remote-notification</code> background mode in <code>app.json</code></li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h3>🔑 Auth in Swift (Phase 4 dependency)</h3>
+      <ul>
+        <li><span class="step-num">1</span>Widget extension runs in a separate process — it cannot read Expo SecureStore directly</li>
+        <li><span class="step-num">2</span>Store the Vercel JWT in App Group Keychain (shared across app + extension) rather than SecureStore</li>
+        <li><span class="step-num">3</span>JS side: on login/token refresh, write new token to App Group Keychain via a native module</li>
+        <li><span class="step-num">4</span>Swift side: <code>SetRatingIntent.perform()</code> reads token from App Group Keychain, calls API</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="highlight-box">
+    <strong>Recommended build order:</strong> Phases 1–3 ship a read-only widget that shows now-playing with a displayed (non-tappable) rating. That's already useful and validates the whole pipeline. Phase 4 adds the interactive rating — the payoff feature — but depends on Phase 6 (auth in Swift) being solved first. Phase 5 step 3 (silent push) is optional but makes the "updates when album changes" promise feel real without the app being open.<br><br>
+    <strong>The interactive rating chips</strong> are the standout feature — <span class="green">no other music app does this</span>. You tap a star from your Home Screen and the rating is saved. That's the whole value proposition of this widget.
+  </div>
+
+</div>
+
+<!-- Tags -->
+<div style="margin-top: 8px;">
+  <span class="tag">WidgetKit</span>
+  <span class="tag">AppIntent</span>
+  <span class="tag">iOS 17</span>
+  <span class="tag">SwiftUI</span>
+  <span class="tag">App Group</span>
+  <span class="tag green">EAS Build</span>
+  <span class="tag green">Silent Push APNs</span>
+  <span class="tag green">@bndkt/react-native-widget-extension</span>
+</div>
+
+</body>
+</html>

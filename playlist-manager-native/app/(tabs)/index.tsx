@@ -17,6 +17,7 @@ import { getCachedProgress, cacheProgress } from '../../lib/db';
 import { Colors } from '../../constants/colors';
 import { useRouter } from 'expo-router';
 import { clearTokens } from '../../lib/auth';
+import { writeNowPlaying } from '../../modules/widget-bridge';
 
 /**
  * Now tab — shows the most recently listened album with a progress bar.
@@ -79,6 +80,18 @@ export default function NowScreen() {
     try {
       const live = await fetchNowPlaying();
       setNowPlaying(live);
+
+      // Push to widget — runs only on iOS, no-op elsewhere.
+      if ('albumId' in live && live.isPlaying) {
+        writeNowPlaying({
+          albumId:    live.albumId,
+          albumName:  live.albumName,
+          artistName: live.artistName,
+          imageUrl:   live.albumImageUrl,
+          rating:     0,  // progress list may have a rating; updated below if we have it
+          isPlaying:  live.isPlaying,
+        });
+      }
     } catch {
       // Silently fail — the DB data is still shown. Don't interrupt the user.
     }

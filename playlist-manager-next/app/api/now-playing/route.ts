@@ -27,10 +27,7 @@ const NEW_ALBUMS_PATTERN = /new albums/i;
 const handler = async (accessToken: access_token, req: NextRequest) => {
   try {
     const user = await getUserFromRequest(req);
-    const sdk = SpotifyApi.withAccessToken(
-      process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!,
-      accessToken
-    );
+    const sdk = SpotifyApi.withAccessToken(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!, accessToken);
 
     const playback = await sdk.player.getPlaybackState();
 
@@ -75,20 +72,26 @@ const handler = async (accessToken: access_token, req: NextRequest) => {
       album.playlistalbumrelationship.find(r => NEW_ALBUMS_PATTERN.test(r.playlist.name)) ??
       album.playlistalbumrelationship[0];
 
-    return NextResponse.json({
-      isPlaying: playback.is_playing,
-      albumId: album.id,
-      albumName: album.name,
-      albumImageUrl: album.image_url ?? '',
-      albumUri: album.uri,
-      playlistId: playlistRel?.playlist.id ?? null,
-      playlistName: playlistRel?.playlist.name ?? null,
-      trackIndex: trackIndex >= 0 ? trackIndex : 0,
-      trackName: track.name,
-      totalTracks: album.tracks.length,
-      progressMs: playback.progress_ms ?? 0,
-      durationMs: track.duration_ms
-    }, { status: 200 });
+    const artistName = track.artists?.map(a => a.name).join(', ') ?? album.name;
+
+    return NextResponse.json(
+      {
+        isPlaying: playback.is_playing,
+        albumId: album.id,
+        albumName: album.name,
+        artistName,
+        albumImageUrl: album.image_url ?? '',
+        albumUri: album.uri,
+        playlistId: playlistRel?.playlist.id ?? null,
+        playlistName: playlistRel?.playlist.name ?? null,
+        trackIndex: trackIndex >= 0 ? trackIndex : 0,
+        trackName: track.name,
+        totalTracks: album.tracks.length,
+        progressMs: playback.progress_ms ?? 0,
+        durationMs: track.duration_ms
+      },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
