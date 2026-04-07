@@ -57,7 +57,13 @@ export default function NowScreen() {
     }
 
     try {
-      await syncHistory().catch(() => null);
+      const syncResult = await syncHistory().catch((err) => {
+        console.warn('[sync] syncHistory failed:', err?.message ?? err);
+        return null;
+      });
+      if (!syncResult) {
+        console.warn('[sync] Sync returned null — progress may be stale.');
+      }
       const data = await fetchProgress();
       setProgress(data);
       await cacheProgress(data).catch(() => null);
