@@ -6,8 +6,7 @@ import AppIntents
 
 private let kAppGroup      = "group.com.calum.playlistmanager"
 private let kNowPlayingKey = "widget_now_playing"
-private let kKeychainService  = "com.calum.playlistmanager.widget"
-private let kKeychainAccount  = "vercel_jwt"
+private let kAuthTokenKey  = "widget_auth_token"
 
 // MARK: - Data model
 
@@ -140,21 +139,10 @@ struct SetRatingIntent: AppIntent {
     return .result()
   }
 
-  // ── Read Vercel JWT from App Group Keychain ────────────────────────────────
+  // ── Read Vercel JWT from App Group UserDefaults ───────────────────────────
 
   private func readToken() -> String? {
-    let query: [String: Any] = [
-      kSecClass as String:           kSecClassGenericPassword,
-      kSecAttrService as String:     kKeychainService,
-      kSecAttrAccount as String:     kKeychainAccount,
-      kSecAttrAccessGroup as String: kAppGroup,
-      kSecReturnData as String:      true,
-      kSecMatchLimit as String:      kSecMatchLimitOne,
-    ]
-    var result: AnyObject?
-    let status = SecItemCopyMatching(query as CFDictionary, &result)
-    guard status == errSecSuccess, let data = result as? Data else { return nil }
-    return String(data: data, encoding: .utf8)
+    UserDefaults(suiteName: kAppGroup)?.string(forKey: kAuthTokenKey)
   }
 }
 

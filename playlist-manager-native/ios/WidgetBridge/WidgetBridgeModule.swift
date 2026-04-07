@@ -4,19 +4,14 @@ import WidgetKit
 /// App Group identifier — must match app.json and the widget extension target.
 private let kAppGroup = "group.com.calum.playlistmanager"
 
-/// UserDefaults key for now-playing JSON.
+/// UserDefaults keys.
 private let kNowPlayingKey = "widget_now_playing"
-
-/// Keychain service name for the Vercel auth token.
-private let kKeychainService = "com.calum.playlistmanager.widget"
-private let kKeychainAccount = "vercel_jwt"
+private let kAuthTokenKey  = "widget_auth_token"
 
 // MARK: - Objective-C bridge
 
 @objc(WidgetBridgeModule)
 class WidgetBridgeModule: NSObject {
-
-  // ── RCT export ──────────────────────────────────────────────────────────────
 
   @objc static func requiresMainQueueSetup() -> Bool { false }
 
@@ -25,7 +20,7 @@ class WidgetBridgeModule: NSObject {
   /// Writes album metadata + cached art path to App Group UserDefaults,
   /// then reloads all WidgetKit timelines.
   ///
-  /// albumId      — Spotify album ID (used as a change key for deduplication)
+  /// albumId      — Spotify album ID
   /// albumName    — Display name
   /// artistName   — Primary artist
   /// imageUrl     — Remote https:// URL for album art; downloaded & cached here
@@ -43,14 +38,13 @@ class WidgetBridgeModule: NSObject {
   ) {
     Task {
       do {
-        // Download + cache album art to App Group container.
         let artPath = try await downloadAndCacheArt(imageUrl: imageUrl, albumId: albumId)
 
         let payload: [String: Any] = [
           "albumId":    albumId,
           "albumName":  albumName,
           "artistName": artistName,
-          "artPath":    artPath,      // local file:// path readable by widget
+          "artPath":    artPath,
           "rating":     rating,
           "isPlaying":  isPlaying,
           "updatedAt":  Date().timeIntervalSince1970
@@ -64,7 +58,6 @@ class WidgetBridgeModule: NSObject {
 
         defaults.set(data, forKey: kNowPlayingKey)
 
-        // Tell WidgetKit the timeline is stale — it will re-read UserDefaults.
         if #available(iOS 14.0, *) {
           WidgetCenter.shared.reloadAllTimelines()
         }
@@ -78,43 +71,25 @@ class WidgetBridgeModule: NSObject {
 
   // ── writeAuthToken ───────────────────────────────────────────────────────────
 
-  /// Stores the Vercel JWT in the App Group Keychain so the widget extension's
-  /// SetRatingIntent can make authenticated API calls.
+  /// Stores the Vercel JWT in App Group UserDefaults so SetRatingIntent
+  /// can make authenticated API calls without opening the app.
+  /// UserDefaults is sufficient for a personal app; the token is already
+  /// in the device's sandbox and this avoids Keychain Sharing entitlements.
   @objc func writeAuthToken(
     _ token: String,
     resolve: @escaping RCTPromiseResolveBlock,
     reject: @escaping RCTPromiseRejectBlock
   ) {
-    let tokenData = Data(token.utf8)
-
-    // Build a Keychain query with the App Group access group.
-    var query: [String: Any] = [
-      kSecClass as String:            kSecClassGenericPassword,
-      kSecAttrService as String:      kKeychainService,
-      kSecAttrAccount as String:      kKeychainAccount,
-      kSecAttrAccessGroup as String:  kAppGroup,
-    ]
-
-    // Try to update first; if nothing exists, add.
-    let updateAttrs: [String: Any] = [kSecValueData as String: tokenData]
-    var status = SecItemUpdate(query as CFDictionary, updateAttrs as CFDictionary)
-
-    if status == errSecItemNotFound {
-      query[kSecValueData as String] = tokenData
-      status = SecItemAdd(query as CFDictionary, nil)
+    guard let defaults = UserDefaults(suiteName: kAppGroup) else {
+      reject("WIDGET_BRIDGE_ERROR", "Could not open App Group UserDefaults", nil)
+      return
     }
-
-    if status == errSecSuccess {
-      resolve(nil)
-    } else {
-      reject("KEYCHAIN_ERROR", "SecItem error \(status)", nil)
-    }
+    defaults.set(token, forKey: kAuthTokenKey)
+    resolve(nil)
   }
 
   // ── Private helpers ──────────────────────────────────────────────────────────
 
-  /// Downloads album art and saves it to the App Group container.
-  /// Returns the local file path. Re-uses cached file if it already exists.
   private func downloadAndCacheArt(imageUrl: String, albumId: String) async throws -> String {
     guard let containerURL = FileManager.default
       .containerURL(forSecurityApplicationGroupIdentifier: kAppGroup) else {
@@ -127,7 +102,6 @@ class WidgetBridgeModule: NSObject {
 
     let destURL = artDir.appendingPathComponent("\(albumId).jpg")
 
-    // If already cached, return immediately.
     if FileManager.default.fileExists(atPath: destURL.path) {
       return destURL.path
     }
