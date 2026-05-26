@@ -56,6 +56,7 @@ export interface ProgressEntry {
   albumId: string;
   albumName: string;
   albumImageUrl: string;
+  artistNames: string[];
   playlistId: string;
   playlistName: string;
   lastTrackIndex: number;

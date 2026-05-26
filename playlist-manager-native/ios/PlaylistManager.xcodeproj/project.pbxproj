@@ -16,6 +16,8 @@
 		BD929A6AF576C21F283BE75E /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74AFA9282DF4D2157CCCF71D /* ExpoModulesProvider.swift */; };
 		CCEDE61E9720434AA5AB0A8E /* PlaylistManagerWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D62F8A3B81D4B75AC975664 /* PlaylistManagerWidget.swift */; };
 		D43EA215818743F8639B7581 /* libPods-PlaylistManager.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 04ACD49085794B1FC498BD39 /* libPods-PlaylistManager.a */; };
+		E41E30892F8639780058DC90 /* WidgetBridgeModule.m in Sources */ = {isa = PBXBuildFile; fileRef = E41E30862F8639780058DC90 /* WidgetBridgeModule.m */; };
+		E41E308A2F8639780058DC90 /* WidgetBridgeModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E41E30872F8639780058DC90 /* WidgetBridgeModule.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		FC4C67353DC93F39F8DD0499 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4E24AA877426D50680876A28 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
@@ -52,19 +54,21 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = PlaylistManager/Info.plist; sourceTree = "<group>"; };
 		24C4786B68E6A5156D3C085D /* libPods-PlaylistManagerWidgets.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PlaylistManagerWidgets.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		260CBF49F3B439F4CD548805 /* Pods-PlaylistManager.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PlaylistManager.debug.xcconfig"; path = "Target Support Files/Pods-PlaylistManager/Pods-PlaylistManager.debug.xcconfig"; sourceTree = "<group>"; };
-		2BE589472B8D4079A9E49BDE /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
+		2BE589472B8D4079A9E49BDE /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		386CA1DCCE6852D4CAD03257 /* Pods-PlaylistManagerWidgets.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PlaylistManagerWidgets.debug.xcconfig"; path = "Target Support Files/Pods-PlaylistManagerWidgets/Pods-PlaylistManagerWidgets.debug.xcconfig"; sourceTree = "<group>"; };
-		4E24AA877426D50680876A28 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = PlaylistManager/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		5D62F8A3B81D4B75AC975664 /* PlaylistManagerWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = PlaylistManagerWidget.swift; path = PlaylistManagerWidget.swift; sourceTree = "<group>"; };
-		6B8DC35153134DEAADB8DAF7 /* PlaylistManagerWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = undefined; name = PlaylistManagerWidgets.appex; path = PlaylistManagerWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E24AA877426D50680876A28 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = PlaylistManager/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		5D62F8A3B81D4B75AC975664 /* PlaylistManagerWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = PlaylistManagerWidget.swift; sourceTree = "<group>"; };
+		6B8DC35153134DEAADB8DAF7 /* PlaylistManagerWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 9; includeInIndex = 0; path = PlaylistManagerWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		74AFA9282DF4D2157CCCF71D /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-PlaylistManager/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		8E8C0995B767927A5215772A /* Pods-PlaylistManagerWidgets.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PlaylistManagerWidgets.release.xcconfig"; path = "Target Support Files/Pods-PlaylistManagerWidgets/Pods-PlaylistManagerWidgets.release.xcconfig"; sourceTree = "<group>"; };
-		A281F32871E64164A9357F91 /* WidgetKit.framework */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
-		A6D754BAFC1E48B6AA30FD67 /* PlaylistManagerWidgets.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = PlaylistManagerWidgets.entitlements; path = PlaylistManagerWidgets.entitlements; sourceTree = "<group>"; };
+		A281F32871E64164A9357F91 /* WidgetKit.framework */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		A6D754BAFC1E48B6AA30FD67 /* PlaylistManagerWidgets.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; path = PlaylistManagerWidgets.entitlements; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = PlaylistManager/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		CD8E3CAFB79B42DD8F7BACC0 /* SwiftUI.framework */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		D066D793384147419ED4DAF6 /* Attributes.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = Attributes.swift; path = Attributes.swift; sourceTree = "<group>"; };
+		CD8E3CAFB79B42DD8F7BACC0 /* SwiftUI.framework */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		D066D793384147419ED4DAF6 /* Attributes.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = Attributes.swift; sourceTree = "<group>"; };
+		E41E30862F8639780058DC90 /* WidgetBridgeModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WidgetBridgeModule.m; sourceTree = "<group>"; };
+		E41E30872F8639780058DC90 /* WidgetBridgeModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetBridgeModule.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = PlaylistManager/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* PlaylistManager-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "PlaylistManager-Bridging-Header.h"; path = "PlaylistManager/PlaylistManager-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -134,6 +138,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				E41E30882F8639780058DC90 /* WidgetBridge */,
 				13B07FAE1A68108700A75B9A /* PlaylistManager */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
@@ -164,7 +169,6 @@
 				2BE589472B8D4079A9E49BDE /* Info.plist */,
 				A6D754BAFC1E48B6AA30FD67 /* PlaylistManagerWidgets.entitlements */,
 			);
-			name = PlaylistManagerWidgets;
 			path = PlaylistManagerWidgets;
 			sourceTree = "<group>";
 		};
@@ -193,8 +197,16 @@
 				386CA1DCCE6852D4CAD03257 /* Pods-PlaylistManagerWidgets.debug.xcconfig */,
 				8E8C0995B767927A5215772A /* Pods-PlaylistManagerWidgets.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		E41E30882F8639780058DC90 /* WidgetBridge */ = {
+			isa = PBXGroup;
+			children = (
+				E41E30862F8639780058DC90 /* WidgetBridgeModule.m */,
+				E41E30872F8639780058DC90 /* WidgetBridgeModule.swift */,
+			);
+			path = WidgetBridge;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -445,6 +457,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E41E30892F8639780058DC90 /* WidgetBridgeModule.m in Sources */,
+				E41E308A2F8639780058DC90 /* WidgetBridgeModule.swift in Sources */,
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
 				BD929A6AF576C21F283BE75E /* ExpoModulesProvider.swift in Sources */,
 			);

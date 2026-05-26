@@ -7,6 +7,7 @@ export interface ProgressEntry {
   albumId: string;
   albumName: string;
   albumImageUrl: string;
+  artistNames: string[];
   playlistId: string;
   playlistName: string;
   lastTrackIndex: number; // 0-based
@@ -28,7 +29,13 @@ export const getProgress = async (req: NextRequest): Promise<ProgressEntry[]> =>
     where: { user_id: user.id },
     include: {
       album: {
-        select: { id: true, name: true, image_url: true, total_tracks: true }
+        select: {
+          id: true,
+          name: true,
+          image_url: true,
+          total_tracks: true,
+          artists: { select: { id: true, name: true }, orderBy: { name: 'asc' } }
+        }
       },
       playlist: {
         select: { id: true, name: true }
@@ -45,6 +52,7 @@ export const getProgress = async (req: NextRequest): Promise<ProgressEntry[]> =>
     albumId: row.album_id,
     albumName: row.album.name,
     albumImageUrl: row.album.image_url,
+    artistNames: row.album.artists.map(a => a.name),
     playlistId: row.playlist_id,
     playlistName: row.playlist.name,
     lastTrackIndex: row.last_track_index,
