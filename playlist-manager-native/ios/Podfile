@@ -21,7 +21,11 @@ platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
 prepare_react_native_project!
 
 target 'PlaylistManager' do
-  use_expo_modules!
+  # Exclude react-native-widget-extension from autolinking: the npm package ships
+  # no Module.swift so the pod has no Swift sources, which causes ExpoModulesProvider
+  # to fail with "no such module 'ReactNativeWidgetExtension'" on EAS cloud builds.
+  # We use our own WidgetBridgeModule for all widget data — the JS API is not needed.
+  use_expo_modules!({ exclude: ['react-native-widget-extension'] })
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
