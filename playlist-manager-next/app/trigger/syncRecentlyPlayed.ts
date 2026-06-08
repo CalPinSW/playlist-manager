@@ -3,6 +3,7 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk';
 import prisma from '../../lib/prisma';
 import { refreshSpotifyAccessToken } from '../api/spotify/utilities/refreshSpotifyAccessToken';
 import { NEW_ALBUMS_REGEX } from '../utils/playlistFilters';
+import { syncPlaylistTask } from './syncPlaylist';
 
 /**
  * syncRecentlyPlayed — runs every 15 minutes via Trigger.dev scheduler.
@@ -179,6 +180,7 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
 
   // ── Step 5: Upsert listening_progress — only advance, never regress ──────────
   let upsertCount = 0;
+  const playlistsWithNewActivity = new Set<string>();
 
   for (const progress of progressMap.values()) {
     const existing = await prisma.listening_progress.findUnique({
@@ -222,11 +224,26 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
     });
 
     upsertCount++;
+    playlistsWithNewActivity.add(progress.playlistId);
   }
 
   console.log('Progress upserts complete', { userId: user.id, upsertCount });
 
-  // ── Step 6: Advance the cursor ───────────────────────────────────────────────
+  // ── Step 6 (new): Trigger playlist sync for playlists with new activity ──────
+  // syncPlaylistTask self-throttles to once per 4 hours, so it is safe to fire
+  // on every recently-played run without hammering the Spotify API.
+  for (const playlistId of playlistsWithNewActivity) {
+    await syncPlaylistTask.trigger({ userId: user.id, playlistId });
+  }
+
+  if (playlistsWithNewActivity.size > 0) {
+    console.log('Playlist sync tasks triggered', {
+      userId: user.id,
+      playlists: [...playlistsWithNewActivity]
+    });
+  }
+
+  // ── Step 7: Advance the cursor ───────────────────────────────────────────────
   // items[0] is the most recent (Spotify returns newest first).
   const mostRecentPlayedAt = new Date(items[0].played_at);
   await updateSyncLog(user.id, mostRecentPlayedAt);

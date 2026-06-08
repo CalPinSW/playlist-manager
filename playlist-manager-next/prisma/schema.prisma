@@ -139,6 +139,7 @@ model playlist {
   uri                               String                              @db.VarChar(255)
   created_at                        DateTime                            @default(now())
   updated_at                        DateTime                            @default(now())
+  last_synced_at                    DateTime?
   playbackstateplaylistrelationship playbackstateplaylistrelationship[]
   user                              user                                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   playlistalbumrelationship         playlistalbumrelationship[]
