@@ -39,9 +39,7 @@ export async function refreshPlaylistAlbumsInDb(
     where: { id: spotifyPlaylist.id, user_id: userId }
   });
   if (!existing) {
-    throw new Error(
-      `Playlist ${spotifyPlaylist.id} not found or does not belong to user ${userId}`
-    );
+    throw new Error(`Playlist ${spotifyPlaylist.id} not found or does not belong to user ${userId}`);
   }
 
   // Replace album memberships (safe — no cascade to listening_progress).

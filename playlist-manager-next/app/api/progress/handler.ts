@@ -34,7 +34,10 @@ export const getProgress = async (req: NextRequest): Promise<ProgressEntry[]> =>
           name: true,
           image_url: true,
           total_tracks: true,
-          artists: { select: { id: true, name: true }, orderBy: { name: 'asc' } }
+          albumartistrelationship: {
+            select: { artist: { select: { id: true, name: true } } },
+            orderBy: { artist: { name: 'asc' } }
+          }
         }
       },
       playlist: {
@@ -52,7 +55,7 @@ export const getProgress = async (req: NextRequest): Promise<ProgressEntry[]> =>
     albumId: row.album_id,
     albumName: row.album.name,
     albumImageUrl: row.album.image_url,
-    artistNames: row.album.artists.map(a => a.name),
+    artistNames: row.album.albumartistrelationship.map(r => r.artist.name),
     playlistId: row.playlist_id,
     playlistName: row.playlist.name,
     lastTrackIndex: row.last_track_index,

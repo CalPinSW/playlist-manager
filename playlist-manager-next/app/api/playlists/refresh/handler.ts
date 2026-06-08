@@ -79,4 +79,3 @@ export async function getPlaylists(
 export async function getPlaylist(spotifySdk: SpotifyApi, playlistId: string): Promise<Playlist<Track>> {
   return spotifySdk.playlists.getPlaylist(playlistId);
 }
-

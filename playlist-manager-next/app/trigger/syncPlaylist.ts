@@ -40,8 +40,7 @@ export const syncPlaylistTask = task({
     }
 
     if (playlist.last_synced_at) {
-      const hoursSince =
-        (Date.now() - playlist.last_synced_at.getTime()) / (1000 * 60 * 60);
+      const hoursSince = (Date.now() - playlist.last_synced_at.getTime()) / (1000 * 60 * 60);
       if (hoursSince < PLAYLIST_SYNC_THROTTLE_HOURS) {
         logger.log('Playlist synced recently — skipping', {
           playlistId,
@@ -60,9 +59,7 @@ export const syncPlaylistTask = task({
       return { skipped: true, reason: 'user-not-found' };
     }
 
-    await refreshSpotifyAccessToken(
-      user as unknown as Parameters<typeof refreshSpotifyAccessToken>[0]
-    );
+    await refreshSpotifyAccessToken(user as unknown as Parameters<typeof refreshSpotifyAccessToken>[0]);
 
     const tokens = await prisma.access_token.findUnique({ where: { user_id: userId } });
     if (!tokens?.access_token) {
