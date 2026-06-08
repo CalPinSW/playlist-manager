@@ -19,6 +19,20 @@ import { Colors } from '../../constants/colors';
 import { clearTokens } from '../../lib/auth';
 
 const BEST_ALBUMS_PATTERN = /best albums/i;
+const NEW_ALBUMS_PATTERN  = /new albums/i;
+
+/**
+ * Strip a leading "New Albums" or "Best Albums" label and normalise the
+ * remainder so we can match the date/period part across the two playlist types.
+ * e.g. "New Albums 2024 H2" → "2024 h2"
+ *      "Best Albums 2024 H2" → "2024 h2"
+ */
+function extractPeriodKey(name: string): string {
+  return name
+    .replace(/^(new|best)\s+albums\b/i, '')
+    .trim()
+    .toLowerCase();
+}
 
 export default function AlbumDetailScreen() {
   const { albumId, playlistId } = useLocalSearchParams<{ albumId: string; playlistId?: string }>();
@@ -53,7 +67,29 @@ export default function AlbumDetailScreen() {
 
       setAlbum(data);
       setPromoted(data.onPlaylists.some(p => BEST_ALBUMS_PATTERN.test(p.name)));
-      setBestAlbumsPlaylist(playlists[0] ?? null);
+
+      // Find the "Best Albums" playlist whose period matches the source playlist.
+      // We only promote if we can identify an exact corresponding playlist —
+      // falling back to "first result" risks silently adding to the wrong one.
+      const sourceName =
+        // Prefer the playlist the user explicitly navigated from.
+        data.onPlaylists.find(p => p.id === playlistId)?.name ??
+        // If no playlistId, look for a single unambiguous "New Albums" playlist
+        // on this album (if there are multiple we can't safely guess).
+        (() => {
+          const newAlbumPlaylists = data.onPlaylists.filter(
+            p => NEW_ALBUMS_PATTERN.test(p.name)
+          );
+          return newAlbumPlaylists.length === 1 ? newAlbumPlaylists[0].name : null;
+        })();
+
+      const targetBestAlbums = sourceName
+        ? (playlists.find(
+            p => extractPeriodKey(p.name) === extractPeriodKey(sourceName)
+          ) ?? null)
+        : null;
+
+      setBestAlbumsPlaylist(targetBestAlbums);
       setLocalRating(data.rating);
 
       if (siblingAlbums.length > 0) {
@@ -212,7 +248,7 @@ export default function AlbumDetailScreen() {
               disabled={promoting}
             >
               <Text style={styles.btnPromoteText}>
-                {promoting ? 'Adding…' : '★  Add to Best Albums'}
+                {promoting ? 'Adding…' : `★  Add to ${bestAlbumsPlaylist.name}`}
               </Text>
             </TouchableOpacity>
           )
