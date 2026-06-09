@@ -3,6 +3,8 @@ import '../global.css';
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 import { getStoredTokens, isTokenExpired, getValidAccessToken } from '../lib/auth';
 
 /**
@@ -18,6 +20,11 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [authChecked, setAuthChecked] = useState(false);
+
+  // Pre-load Ionicons font before the tab bar renders so Font.loadAsync
+  // is never called lazily in a production build (where an unhandled rejection
+  // would crash the app via Hermes' strict promise-rejection handling).
+  const [fontsLoaded] = useFonts({ ...Ionicons.font });
 
   useEffect(() => {
     async function checkAuth() {
@@ -47,7 +54,7 @@ export default function RootLayout() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!authChecked) return null;
+  if (!authChecked || !fontsLoaded) return null;
 
   return (
     <>

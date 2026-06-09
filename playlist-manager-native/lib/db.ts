@@ -34,18 +34,28 @@ async function getDb(): Promise<SQLite.SQLiteDatabase> {
     );
 
     CREATE TABLE IF NOT EXISTS progress (
-      album_id        TEXT NOT NULL,
-      playlist_id     TEXT NOT NULL,
-      album_name      TEXT NOT NULL,
-      album_image_url TEXT NOT NULL DEFAULT '',
-      playlist_name   TEXT NOT NULL DEFAULT '',
-      last_track_index INTEGER NOT NULL,
-      total_tracks    INTEGER NOT NULL,
-      listened_at     TEXT NOT NULL,
-      progress_percent INTEGER NOT NULL,
+      album_id               TEXT NOT NULL,
+      playlist_id            TEXT NOT NULL,
+      album_name             TEXT NOT NULL,
+      album_image_url        TEXT NOT NULL DEFAULT '',
+      playlist_name          TEXT NOT NULL DEFAULT '',
+      last_track_index       INTEGER NOT NULL,
+      total_tracks           INTEGER NOT NULL,
+      listened_at            TEXT NOT NULL,
+      progress_percent       INTEGER NOT NULL,
+      total_playlist_albums  INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (album_id, playlist_id)
     );
   `);
+
+  // Migration: add total_playlist_albums column to databases created before this field existed.
+  const cols = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(progress)`);
+  if (!cols.some(c => c.name === 'total_playlist_albums')) {
+    await db.execAsync(
+      `ALTER TABLE progress ADD COLUMN total_playlist_albums INTEGER NOT NULL DEFAULT 0`
+    );
+  }
+
   return db;
 }
 
@@ -93,21 +103,23 @@ export async function cacheProgress(entries: ProgressEntry[]): Promise<void> {
       await db.runAsync(
         `INSERT INTO progress
            (album_id, playlist_id, album_name, album_image_url, playlist_name,
-            last_track_index, total_tracks, listened_at, progress_percent)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            last_track_index, total_tracks, listened_at, progress_percent,
+            total_playlist_albums)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(album_id, playlist_id) DO UPDATE SET
-           album_name       = excluded.album_name,
-           album_image_url  = excluded.album_image_url,
-           playlist_name    = excluded.playlist_name,
-           last_track_index = excluded.last_track_index,
-           total_tracks     = excluded.total_tracks,
-           listened_at      = excluded.listened_at,
-           progress_percent = excluded.progress_percent
+           album_name            = excluded.album_name,
+           album_image_url       = excluded.album_image_url,
+           playlist_name         = excluded.playlist_name,
+           last_track_index      = excluded.last_track_index,
+           total_tracks          = excluded.total_tracks,
+           listened_at           = excluded.listened_at,
+           progress_percent      = excluded.progress_percent,
+           total_playlist_albums = excluded.total_playlist_albums
          WHERE excluded.listened_at >= progress.listened_at`,
         [
           e.albumId, e.playlistId, e.albumName, e.albumImageUrl ?? '',
           e.playlistName, e.lastTrackIndex, e.totalTracks,
-          e.listenedAt, e.progressPercent
+          e.listenedAt, e.progressPercent, e.totalPlaylistAlbums ?? 0
         ]
       );
     }
@@ -121,6 +133,7 @@ export async function getCachedProgress(): Promise<ProgressEntry[]> {
     album_image_url: string; playlist_name: string;
     last_track_index: number; total_tracks: number;
     listened_at: string; progress_percent: number;
+    total_playlist_albums: number;
   }>(`SELECT * FROM progress ORDER BY listened_at DESC`);
   return rows.map(r => ({
     albumId: r.album_id,
@@ -131,6 +144,9 @@ export async function getCachedProgress(): Promise<ProgressEntry[]> {
     lastTrackIndex: r.last_track_index,
     totalTracks: r.total_tracks,
     listenedAt: r.listened_at,
-    progressPercent: r.progress_percent
+    progressPercent: r.progress_percent,
+    totalPlaylistAlbums: r.total_playlist_albums ?? 0,
+    // artistNames is not cached in SQLite — will be populated from the server on next sync
+    artistNames: [],
   }));
 }

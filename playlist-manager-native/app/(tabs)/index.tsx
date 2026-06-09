@@ -272,8 +272,11 @@ function PlaylistSection({
 
   // Percentage of the whole playlist listened — weight each album's progress
   // against the full playlist size, not just the albums that have been started.
+  // Fall back to the number of progress entries if totalAlbums is 0/undefined
+  // (e.g. stale cache before the server returns the full count).
+  const safeTotal = group.totalAlbums || group.albums.length;
   const playlistPct = Math.round(
-    group.albums.reduce((sum, a) => sum + a.progressPercent, 0) / group.totalAlbums
+    group.albums.reduce((sum, a) => sum + a.progressPercent, 0) / safeTotal
   );
   const doneCount = group.albums.filter(a => a.progressPercent >= 95).length;
   const coverImages = group.albums.slice(0, 4).map(a => a.albumImageUrl);
@@ -313,7 +316,7 @@ function PlaylistSection({
         <View style={styles.playlistInfo}>
           <Text style={styles.playlistName} numberOfLines={1}>{group.playlistName}</Text>
           <Text style={styles.playlistMeta}>
-            {group.totalAlbums} album{group.totalAlbums !== 1 ? 's' : ''}
+            {safeTotal} album{safeTotal !== 1 ? 's' : ''}
             {doneCount > 0 ? `  ·  ${doneCount} done` : ''}
           </Text>
           <View style={styles.playlistProgressRow}>
