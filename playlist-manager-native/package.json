@@ -12,6 +12,7 @@
     "build:android": "eas build --platform android --profile development"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
     "expo": "~54.0.33",
     "expo-auth-session": "~7.0.10",
     "expo-constants": "~18.0.0",
