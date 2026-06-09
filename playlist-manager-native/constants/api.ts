@@ -35,3 +35,4 @@ export const addAlbumToPlaylistUrl = (playlistId: string) =>
 
 export const ratingsUrl = `${API_BASE_URL}/api/ratings`;
 export const nowPlayingUrl = `${API_BASE_URL}/api/now-playing`;
+export const resumePlaybackUrl = `${API_BASE_URL}/api/playback/resume`;

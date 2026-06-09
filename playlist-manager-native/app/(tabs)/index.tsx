@@ -7,12 +7,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Alert,
   AppState,
   AppStateStatus,
 } from 'react-native';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fetchProgress, fetchNowPlaying, syncHistory, ProgressEntry, NowPlaying, AuthError } from '../../lib/api';
+import { fetchProgress, fetchNowPlaying, syncHistory, resumePlayback, ProgressEntry, NowPlaying, AuthError } from '../../lib/api';
 import { getCachedProgress, cacheProgress } from '../../lib/db';
 import { Colors } from '../../constants/colors';
 import { useRouter } from 'expo-router';
@@ -242,8 +243,32 @@ function PlaylistSection({
 }) {
   const COLLAPSED_COUNT = 2;
   const [expanded, setExpanded] = useState(false);
+  const [resuming, setResuming] = useState(false);
   const sectionRef = useRef<View>(null);
   const insets = useSafeAreaInsets();
+
+  // Most-recently-listened album in this playlist group.
+  const latestAlbum = group.albums[0] ?? null;
+
+  const handleResume = useCallback(async () => {
+    if (!latestAlbum || resuming) return;
+    setResuming(true);
+    try {
+      await resumePlayback(latestAlbum.albumId, latestAlbum.lastTrackIndex);
+    } catch (err: any) {
+      if (err?.code === 'no_active_device') {
+        Alert.alert(
+          'No active device',
+          'Open Spotify on any device first, then try again.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Playback error', err?.message ?? 'Could not start playback.');
+      }
+    } finally {
+      setResuming(false);
+    }
+  }, [latestAlbum, resuming]);
 
   // Percentage of the whole playlist listened — weight each album's progress
   // against the full playlist size, not just the albums that have been started.
@@ -304,6 +329,21 @@ function PlaylistSection({
           <Text style={styles.viewAllChevron}>›</Text>
         </View>
       </TouchableOpacity>
+
+      {/* Resume playback button */}
+      {latestAlbum && (
+        <TouchableOpacity
+          style={[styles.resumeBtn, resuming && styles.resumeBtnDisabled]}
+          onPress={handleResume}
+          activeOpacity={0.75}
+          disabled={resuming}
+        >
+          {resuming
+            ? <ActivityIndicator size="small" color={Colors.primary} />
+            : <Text style={styles.resumeBtnText}>▶  Resume</Text>
+          }
+        </TouchableOpacity>
+      )}
 
       {/* Album card grid */}
       <View style={styles.albumGrid}>
@@ -511,6 +551,31 @@ const styles = StyleSheet.create({
   },
   viewAllText: { fontSize: 12, color: Colors.primary, fontWeight: '600' },
   viewAllChevron: { fontSize: 18, color: Colors.primary, lineHeight: 20 },
+
+  // ── Resume button ───────────────────────────────────────────────────────────
+
+  resumeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginHorizontal: 12,
+    marginBottom: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(120,166,60,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(120,166,60,0.35)',
+    minHeight: 36,
+  },
+  resumeBtnDisabled: {
+    opacity: 0.5,
+  },
+  resumeBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#78a63c',
+    letterSpacing: 0.3,
+  },
 
   // ── Album card grid ─────────────────────────────────────────────────────────
 

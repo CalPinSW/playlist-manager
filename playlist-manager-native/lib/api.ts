@@ -6,7 +6,7 @@
  */
 
 import { getValidAccessToken } from './auth';
-import { API_ENDPOINTS, albumUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl } from '../constants/api';
+import { API_ENDPOINTS, albumUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl, resumePlaybackUrl } from '../constants/api';
 
 export class AuthError extends Error {
   constructor(message = 'Not authenticated') {
@@ -303,6 +303,24 @@ export async function setRating(albumId: string, rating: number): Promise<void> 
     const body = await res.text().catch(() => '');
     console.error('[api] setRating failed:', res.status, body);
     throw new Error(`setRating failed: ${res.status}`);
+  }
+}
+
+/**
+ * POST /api/playback/resume — start Spotify playback from a specific album + track.
+ * Throws an error with `code: 'no_active_device'` if no Spotify device is open.
+ */
+export async function resumePlayback(albumId: string, trackIndex: number): Promise<void> {
+  const res = await authedFetch(resumePlaybackUrl, {
+    method: 'POST',
+    body: JSON.stringify({ albumId, trackIndex })
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body?.message ?? `resumePlayback failed: ${res.status}`) as any;
+    err.code = body?.error;
+    err.status = res.status;
+    throw err;
   }
 }
 
