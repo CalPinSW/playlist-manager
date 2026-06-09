@@ -10,6 +10,7 @@ export interface ProgressEntry {
   artistNames: string[];
   playlistId: string;
   playlistName: string;
+  totalPlaylistAlbums: number; // total albums in the playlist, not just those with progress
   lastTrackIndex: number; // 0-based
   totalTracks: number;
   listenedAt: string; // ISO string
@@ -41,7 +42,11 @@ export const getProgress = async (req: NextRequest): Promise<ProgressEntry[]> =>
         }
       },
       playlist: {
-        select: { id: true, name: true }
+        select: {
+          id: true,
+          name: true,
+          _count: { select: { playlistalbumrelationship: true } }
+        }
       }
     },
     orderBy: { listened_at: 'desc' }
@@ -58,6 +63,7 @@ export const getProgress = async (req: NextRequest): Promise<ProgressEntry[]> =>
     artistNames: row.album.albumartistrelationship.map(r => r.artist.name),
     playlistId: row.playlist_id,
     playlistName: row.playlist.name,
+    totalPlaylistAlbums: row.playlist._count.playlistalbumrelationship,
     lastTrackIndex: row.last_track_index,
     totalTracks: row.total_tracks,
     listenedAt: row.listened_at.toISOString(),

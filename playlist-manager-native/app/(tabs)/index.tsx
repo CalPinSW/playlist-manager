@@ -26,6 +26,7 @@ const POLL_INTERVAL_MS = 10_000;
 type PlaylistGroup = {
   playlistId: string;
   playlistName: string;
+  totalAlbums: number; // all albums in the playlist, not just those with progress
   albums: ProgressEntry[];
 };
 
@@ -36,6 +37,7 @@ function groupByPlaylist(entries: ProgressEntry[]): PlaylistGroup[] {
       map.set(entry.playlistId, {
         playlistId: entry.playlistId,
         playlistName: entry.playlistName,
+        totalAlbums: entry.totalPlaylistAlbums,
         albums: [],
       });
     }
@@ -243,8 +245,10 @@ function PlaylistSection({
   const sectionRef = useRef<View>(null);
   const insets = useSafeAreaInsets();
 
-  const avgProgress = Math.round(
-    group.albums.reduce((sum, a) => sum + a.progressPercent, 0) / group.albums.length
+  // Percentage of the whole playlist listened — weight each album's progress
+  // against the full playlist size, not just the albums that have been started.
+  const playlistPct = Math.round(
+    group.albums.reduce((sum, a) => sum + a.progressPercent, 0) / group.totalAlbums
   );
   const doneCount = group.albums.filter(a => a.progressPercent >= 95).length;
   const coverImages = group.albums.slice(0, 4).map(a => a.albumImageUrl);
@@ -284,14 +288,14 @@ function PlaylistSection({
         <View style={styles.playlistInfo}>
           <Text style={styles.playlistName} numberOfLines={1}>{group.playlistName}</Text>
           <Text style={styles.playlistMeta}>
-            {group.albums.length} album{group.albums.length !== 1 ? 's' : ''}
+            {group.totalAlbums} album{group.totalAlbums !== 1 ? 's' : ''}
             {doneCount > 0 ? `  ·  ${doneCount} done` : ''}
           </Text>
           <View style={styles.playlistProgressRow}>
             <View style={styles.playlistProgressTrack}>
-              <View style={[styles.playlistProgressFill, { width: `${avgProgress}%` }]} />
+              <View style={[styles.playlistProgressFill, { width: `${playlistPct}%` }]} />
             </View>
-            <Text style={styles.playlistProgressPct}>{avgProgress}%</Text>
+            <Text style={styles.playlistProgressPct}>{playlistPct}%</Text>
           </View>
         </View>
 
