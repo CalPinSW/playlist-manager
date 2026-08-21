@@ -1,41 +1,30 @@
+// Covers the unauthenticated experience. There is no bespoke logged-out UI to
+// assert on: middleware.ts redirects every unauthenticated request straight
+// to /auth/login, which itself 307s on to the real Auth0-hosted login page
+// (an external domain) before any of our own React ever renders. cy.request
+// follows that redirect chain server-side without loading third-party UI
+// into the browser, so this spec stays fast and has no external dependency
+// on Auth0's login page being reachable/stable. No credentials required, so
+// this spec always runs in CI. See logged-in.cy.js for the authenticated
+// flows.
+
 describe('logged out', () => {
-  beforeEach(() => cy.visit('/'));
-
-  context('desktop', () => {
-    it('should display the navigation bar', () => {
-      cy.get('[data-testid=navbar]').should('be.visible');
-      cy.get('[data-testid=navbar-items]').should('be.visible');
-      cy.get('[data-testid=navbar-login-desktop]').should('be.visible');
-      cy.get('[data-testid=navbar-login-mobile]').should('not.be.visible');
-      cy.get('[data-testid=navbar-toggle]').should('not.be.visible');
-    });
-
-    it('should display the footer', () => {
-      cy.get('[data-testid=footer]').should('be.visible');
-    });
-
-    it('should display the home page', () => {
-      cy.get('[data-testid=navbar-home]').click();
-      cy.url().should('eq', `${Cypress.config().baseUrl}/`);
-
-      cy.get('[data-testid=navbar-home]').isActive();
-      cy.get('[data-testid=hero]').should('be.visible');
-      cy.get('[data-testid=content]').should('be.visible');
+  it('redirects the home page to Auth0 login', () => {
+    cy.request({ url: '/', followRedirect: true }).then(res => {
+      expect(res.redirects.join(' ')).to.include('/auth/login');
+      expect(res.redirects.join(' ')).to.match(/auth0\.com\/authorize/);
     });
   });
 
-  context('mobile', () => {
-    beforeEach(() => cy.mobileViewport());
+  it('redirects a protected page straight to Auth0 login', () => {
+    cy.request({ url: '/spotify', followRedirect: true }).then(res => {
+      expect(res.redirects.join(' ')).to.match(/auth0\.com\/authorize/);
+    });
+  });
 
-    it('should expand the navigation bar menu', () => {
-      cy.get('[data-testid=navbar-items]').should('not.be.visible');
-      cy.get('[data-testid=navbar-login-mobile]').should('not.be.visible');
-      cy.get('[data-testid=navbar-login-desktop]').should('not.be.visible');
-      cy.get('[data-testid=navbar-toggle]').should('be.visible');
-      cy.get('[data-testid=navbar-toggle]').click();
-      cy.get('[data-testid=navbar-items]').should('be.visible');
-      cy.get('[data-testid=navbar-login-mobile]').should('be.visible');
-      cy.get('[data-testid=navbar-login-desktop]').should('not.be.visible');
+  it('does not redirect API routes through the Auth0 login page (they 401 instead)', () => {
+    cy.request({ url: '/api/user', failOnStatusCode: false }).then(res => {
+      expect(res.status).to.eq(401);
     });
   });
 });

@@ -138,7 +138,7 @@ export default function NowScreen() {
   // ── Live data merge ───────────────────────────────────────────────────────────
 
   const liveActive = !!(nowPlaying && 'albumId' in nowPlaying && nowPlaying.isPlaying);
-  const liveData = liveActive ? (nowPlaying as Extract<NowPlaying, { isPlaying: true }>) : null;
+  const liveData = liveActive ? (nowPlaying as Extract<NowPlaying, { albumId: string }>) : null;
 
   const liveOverrides = useMemo<Map<string, Partial<ProgressEntry>>>(() => {
     if (!liveData) return new Map();

@@ -11,3 +11,6 @@ web-build/
 *.mobileprovision
 *.orig.*
 web-build/
+*.ipa
+*.apk
+*.aab

@@ -10,10 +10,13 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
  * Portrait lock is set in app.json (orientation: 'portrait').
  */
 export default function TabLayout() {
-  const makeIcon = (active: IoniconName, inactive: IoniconName) =>
-    ({ focused, color }: { focused: boolean; color: string }) => (
-      <Ionicons name={focused ? active : inactive} size={24} color={color} />
-    );
+  const makeIcon = (active: IoniconName, inactive: IoniconName) => {
+    function TabIcon({ focused, color }: { focused: boolean; color: string }) {
+      return <Ionicons name={focused ? active : inactive} size={24} color={color} />;
+    }
+    TabIcon.displayName = `TabIcon(${active})`;
+    return TabIcon;
+  };
 
   return (
     <Tabs

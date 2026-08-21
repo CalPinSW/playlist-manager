@@ -24,15 +24,28 @@ const makeRow = (
   trackIndex: number,
   totalTracks: number,
   playlistName: string,
-  listenedAt: Date
+  listenedAt: Date,
+  opts: { artistNames?: string[]; totalPlaylistAlbums?: number } = {}
 ) => ({
   album_id: albumId,
   playlist_id: 'pl-1',
   last_track_index: trackIndex,
   total_tracks: totalTracks,
   listened_at: listenedAt,
-  album: { id: albumId, name: albumName, image_url: 'https://img', total_tracks: totalTracks },
-  playlist: { id: 'pl-1', name: playlistName }
+  album: {
+    id: albumId,
+    name: albumName,
+    image_url: 'https://img',
+    total_tracks: totalTracks,
+    albumartistrelationship: (opts.artistNames ?? ['Some Artist']).map((name, i) => ({
+      artist: { id: `artist-${i}`, name }
+    }))
+  },
+  playlist: {
+    id: 'pl-1',
+    name: playlistName,
+    _count: { playlistalbumrelationship: opts.totalPlaylistAlbums ?? 1 }
+  }
 });
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -53,7 +66,10 @@ describe('getProgress', () => {
   it('returns progress entries for New Albums playlists', async () => {
     const listenedAt = new Date('2026-04-04T10:00:00Z');
     mockPrisma.listening_progress.findMany.mockResolvedValue([
-      makeRow('album-1', 'Some Album', 5, 12, 'New Albums 04/04/26', listenedAt)
+      makeRow('album-1', 'Some Album', 5, 12, 'New Albums 04/04/26', listenedAt, {
+        artistNames: ['Artist B', 'Artist A'],
+        totalPlaylistAlbums: 7
+      })
     ]);
 
     const result = await getProgress({} as never);
@@ -64,6 +80,8 @@ describe('getProgress', () => {
     expect(result[0].totalTracks).toBe(12);
     expect(result[0].progressPercent).toBe(50); // (5+1)/12 = 50%
     expect(result[0].listenedAt).toBe(listenedAt.toISOString());
+    expect(result[0].artistNames).toEqual(['Artist B', 'Artist A']);
+    expect(result[0].totalPlaylistAlbums).toBe(7);
   });
 
   it('filters out non-New Albums playlists', async () => {

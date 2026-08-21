@@ -264,7 +264,7 @@ function SearchResults({
     return (
       <View style={styles.noResults}>
         <Text style={styles.noResultsIcon}>🔍</Text>
-        <Text style={styles.noResultsTitle}>No results for "{query}"</Text>
+        <Text style={styles.noResultsTitle}>No results for &quot;{query}&quot;</Text>
         <Text style={styles.noResultsSub}>Try searching by album name, artist, or playlist date</Text>
       </View>
     );
