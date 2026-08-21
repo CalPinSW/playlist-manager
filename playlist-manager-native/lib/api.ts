@@ -5,7 +5,7 @@
  * Throws AuthError if the token is missing/expired and can't be refreshed.
  */
 
-import { getValidAccessToken } from './auth';
+import { getValidAccessToken, ReauthRequiredError } from './auth';
 import { API_ENDPOINTS, albumUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl, resumePlaybackUrl } from '../constants/api';
 
 export class AuthError extends Error {
@@ -21,7 +21,12 @@ async function authedFetch(url: string, options: RequestInit = {}): Promise<Resp
     token = await getValidAccessToken();
   } catch (err) {
     console.error('[api] Failed to get access token:', err);
-    throw new AuthError();
+    // Only a definitive Auth0 rejection should force a logout. Transient
+    // failures (network blip, Auth0 momentarily unreachable) surface as a
+    // regular error so callers show a retryable message instead of wiping
+    // a perfectly good session.
+    if (err instanceof ReauthRequiredError) throw new AuthError();
+    throw err;
   }
 
   if (__DEV__) {
