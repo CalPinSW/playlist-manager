@@ -18,10 +18,15 @@
       "bundleIdentifier": "com.calum.playlistmanager",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["fetch", "remote-notification"]
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ]
       },
       "entitlements": {
-        "com.apple.security.application-groups": ["group.com.calum.playlistmanager"]
+        "com.apple.security.application-groups": [
+          "group.com.calum.playlistmanager"
+        ]
       }
     },
     "android": {
@@ -53,6 +58,13 @@
           "widgetsFolder": "widgets",
           "groupIdentifier": "group.com.calum.playlistmanager",
           "deploymentTarget": "16.2"
+        }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "softwire-zd",
+          "project": "playlist-manager-mobile"
         }
       ]
     ],

@@ -24,9 +24,11 @@ export default function PlaylistDetailScreen() {
   const [albums, setAlbums] = useState<PlaylistAlbum[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadAlbums = useCallback(async (opts: { showRefreshing?: boolean } = {}) => {
     if (opts.showRefreshing) setRefreshing(true);
+    setError(null);
     try {
       const data = await fetchPlaylistAlbums(playlistId);
       setAlbums(data);
@@ -38,6 +40,7 @@ export default function PlaylistDetailScreen() {
         router.replace('/(auth)/login');
         return;
       }
+      setError('Could not load albums. Pull to retry.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -73,11 +76,18 @@ export default function PlaylistDetailScreen() {
         />
       }
       ListHeaderComponent={
-        albums.length > 0 ? (
-          <Text style={styles.subtitle}>
-            {albums.length} albums · {completedCount} completed
-          </Text>
-        ) : null
+        <>
+          {error && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+          {albums.length > 0 && (
+            <Text style={styles.subtitle}>
+              {albums.length} albums · {completedCount} completed
+            </Text>
+          )}
+        </>
       }
       ListEmptyComponent={
         <View style={styles.emptyState}>
@@ -145,6 +155,11 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 40 },
   emptyContainer: { flex: 1, justifyContent: 'center', paddingHorizontal: 32 },
   subtitle: { color: Colors.textMuted, fontSize: 13, marginBottom: 12, marginTop: 4 },
+  errorBox: {
+    backgroundColor: '#2d0a0a', borderRadius: 12, padding: 16,
+    marginBottom: 16, marginTop: 4, borderWidth: 1, borderColor: '#5c1a1a'
+  },
+  errorText: { color: '#ff6b6b', textAlign: 'center' },
 
   card: {
     flexDirection: 'row',

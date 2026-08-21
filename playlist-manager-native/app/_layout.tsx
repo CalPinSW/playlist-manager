@@ -5,7 +5,23 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
-import { getStoredTokens, isTokenExpired, getValidAccessToken } from '../lib/auth';
+import * as Sentry from '@sentry/react-native';
+import { getStoredTokens, isTokenExpired, getValidAccessToken, ReauthRequiredError } from '../lib/auth';
+
+// Guard against re-init: Metro Fast Refresh re-executes this module's
+// top-level code on every save while iterating on this file, which would
+// otherwise spin up a new client/transport on top of the existing one.
+if (!Sentry.getClient()) {
+  Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    // EXPO_PUBLIC_SENTRY_ENVIRONMENT is set per EAS build profile (see
+    // eas.json) so preview builds don't get tagged as production — __DEV__
+    // alone can't tell a preview build from a production one, both are
+    // release-mode.
+    environment: process.env.EXPO_PUBLIC_SENTRY_ENVIRONMENT ?? (__DEV__ ? 'development' : 'production'),
+    tracesSampleRate: 0.2
+  });
+}
 
 /**
  * Root layout. Handles auth gate:
@@ -16,7 +32,7 @@ import { getStoredTokens, isTokenExpired, getValidAccessToken } from '../lib/aut
  * The auth check runs once on mount. Token refresh is handled by getValidAccessToken
  * on every API call, so the app doesn't need to re-check here after the initial gate.
  */
-export default function RootLayout() {
+function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [authChecked, setAuthChecked] = useState(false);
@@ -34,17 +50,31 @@ export default function RootLayout() {
 
         if (!stored?.accessToken) {
           if (!inAuthGroup) router.replace('/(auth)/login');
-        } else if (isTokenExpired(stored.expiresAt)) {
-          // Try silent refresh — if it throws, go to login.
+          return;
+        }
+
+        if (isTokenExpired(stored.expiresAt)) {
+          // Try silent refresh. Only bounce to login if Auth0 actually
+          // rejected the refresh token — a transient failure (e.g. no
+          // network yet at cold start) shouldn't log the user out, and
+          // shouldn't be treated as a valid session either; the tab
+          // screens will retry the refresh on their own API calls.
           try {
             await getValidAccessToken();
-            if (inAuthGroup) router.replace('/(tabs)');
-          } catch {
-            if (!inAuthGroup) router.replace('/(auth)/login');
+          } catch (err) {
+            if (err instanceof ReauthRequiredError && !inAuthGroup) {
+              router.replace('/(auth)/login');
+            }
+            return;
           }
-        } else {
-          if (inAuthGroup) router.replace('/(tabs)');
         }
+
+        if (inAuthGroup) router.replace('/(tabs)');
+      } catch (err) {
+        // Unexpected failure (e.g. a SecureStore/Keychain read error) —
+        // report it instead of crashing via an unhandled rejection, and
+        // leave navigation as-is rather than bouncing the user mid-failure.
+        Sentry.captureException(err);
       } finally {
         setAuthChecked(true);
       }
@@ -81,3 +111,5 @@ export default function RootLayout() {
     </>
   );
 }
+
+export default Sentry.wrap(RootLayout);

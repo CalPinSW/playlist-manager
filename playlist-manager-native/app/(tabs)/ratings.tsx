@@ -27,6 +27,7 @@ export default function RatingsScreen() {
   const [albums, setAlbums] = useState<RatedAlbum[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
 
   const handleAuthError = useCallback(async () => {
@@ -36,11 +37,13 @@ export default function RatingsScreen() {
 
   const loadRatings = useCallback(async (opts: { showRefreshing?: boolean } = {}) => {
     if (opts.showRefreshing) setRefreshing(true);
+    setError(null);
     try {
       const data = await fetchRatings();
       setAlbums(data);
     } catch (err) {
       if (err instanceof AuthError) { await handleAuthError(); return; }
+      setError('Could not load ratings. Pull to retry.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -82,7 +85,14 @@ export default function RatingsScreen() {
           />
         }
         ListHeaderComponent={
-          <Text style={styles.heading}>Ratings</Text>
+          <>
+            <Text style={styles.heading}>Ratings</Text>
+            {error && (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+          </>
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
@@ -165,6 +175,11 @@ const styles = StyleSheet.create({
     fontSize: 28, fontWeight: '800', color: Colors.text,
     letterSpacing: -0.5, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12
   },
+  errorBox: {
+    backgroundColor: '#2d0a0a', borderRadius: 12, padding: 16,
+    marginHorizontal: 20, marginBottom: 16, borderWidth: 1, borderColor: '#5c1a1a'
+  },
+  errorText: { color: '#ff6b6b', textAlign: 'center' },
 
   row: {
     flexDirection: 'row', alignItems: 'center',

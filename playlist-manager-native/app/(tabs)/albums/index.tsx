@@ -31,6 +31,7 @@ export default function AlbumsIndexScreen() {
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<TextInput>(null);
@@ -43,6 +44,7 @@ export default function AlbumsIndexScreen() {
 
   const loadPlaylists = useCallback(async (opts: { showRefreshing?: boolean } = {}) => {
     if (opts.showRefreshing) setRefreshing(true);
+    setError(null);
 
     // Render cached playlists immediately on first load.
     if (!opts.showRefreshing) {
@@ -60,6 +62,7 @@ export default function AlbumsIndexScreen() {
       await cachePlaylists(data).catch(() => null);
     } catch (err) {
       if (err instanceof AuthError) { await handleAuthError(); return; }
+      setError('Could not load playlists. Pull to retry.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -88,6 +91,7 @@ export default function AlbumsIndexScreen() {
       return;
     }
     setSearching(true);
+    setError(null);
     try {
       const [albums, lists] = await Promise.all([
         searchAlbums(q, 20),
@@ -97,6 +101,7 @@ export default function AlbumsIndexScreen() {
       setSearchPlaylistResults(lists);
     } catch (err) {
       if (err instanceof AuthError) { await handleAuthError(); return; }
+      setError('Search failed. Try again.');
     } finally {
       setSearching(false);
     }
@@ -164,6 +169,12 @@ export default function AlbumsIndexScreen() {
           )}
         </View>
       </View>
+
+      {error && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
 
       {/* Content */}
       {searchActive ? (
@@ -338,6 +349,11 @@ const styles = StyleSheet.create({
   centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
 
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
+  errorBox: {
+    backgroundColor: '#2d0a0a', borderRadius: 12, padding: 16,
+    marginHorizontal: 20, marginBottom: 16, borderWidth: 1, borderColor: '#5c1a1a'
+  },
+  errorText: { color: '#ff6b6b', textAlign: 'center' },
   heading: { fontSize: 28, fontWeight: '800', color: Colors.text, marginBottom: 14, letterSpacing: -0.5 },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   searchBar: {

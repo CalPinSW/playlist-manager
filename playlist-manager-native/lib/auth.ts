@@ -94,42 +94,97 @@ export function isTokenExpired(expiresAt: number | null): boolean {
   return Date.now() > expiresAt - 60_000;
 }
 
-// ── Silent refresh ────────────────────────────────────────────────────────────
-export async function refreshAccessToken(refreshToken: string): Promise<string> {
-  const response = await fetch(`https://${AUTH0_DOMAIN}/oauth/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      grant_type: 'refresh_token',
-      client_id: AUTH0_CLIENT_ID,
-      refresh_token: refreshToken,
-      ...(AUTH0_AUDIENCE ? { audience: AUTH0_AUDIENCE } : {})
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Token refresh failed: ${response.statusText}`);
+/**
+ * Thrown only when Auth0 has definitively rejected the refresh token (expired,
+ * revoked, or rotated out from under us) — i.e. the user actually needs to log
+ * in again. Transient errors (network failure, Auth0 outage) throw a plain
+ * Error instead, so callers don't wipe a perfectly good session over a blip.
+ */
+export class ReauthRequiredError extends Error {
+  constructor(message = 'Re-authentication required') {
+    super(message);
+    this.name = 'ReauthRequiredError';
   }
+}
 
-  const tokens = await response.json();
-  await saveTokens(tokens);
-  return tokens.access_token;
+// ── Silent refresh ────────────────────────────────────────────────────────────
+// Auth0 rotates the refresh token on every use, so two concurrent refreshes
+// with the same stored token can race — the second is rejected as reused,
+// which used to be misread as "session dead". Sharing one in-flight promise
+// makes every concurrent caller (screens mounting/polling in parallel) await
+// the same refresh instead of each spending the refresh token themselves.
+let refreshPromise: Promise<string> | null = null;
+
+export async function refreshAccessToken(refreshToken: string): Promise<string> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const response = await fetch(`https://${AUTH0_DOMAIN}/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'refresh_token',
+        client_id: AUTH0_CLIENT_ID,
+        refresh_token: refreshToken,
+        ...(AUTH0_AUDIENCE ? { audience: AUTH0_AUDIENCE } : {})
+      })
+    });
+
+    if (!response.ok) {
+      // Auth0 responds 400/401 when the refresh token itself is invalid,
+      // expired, or was rejected as already-rotated — the one case that
+      // genuinely requires the user to log in again. A 429 (rate limited)
+      // or 5xx (Auth0-side outage) means the token was never evaluated at
+      // all and must be treated as transient, not a rejection.
+      if (response.status === 400 || response.status === 401) {
+        throw new ReauthRequiredError(`Token refresh rejected: ${response.status} ${response.statusText}`);
+      }
+      throw new Error(`Token refresh failed: ${response.status} ${response.statusText}`);
+    }
+
+    const tokens = await response.json();
+    await saveTokens(tokens);
+    return tokens.access_token;
+  })();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
 }
 
 /**
  * Returns a valid access token. Silently refreshes if expired.
- * Throws if no tokens are stored (user must log in).
+ * Throws ReauthRequiredError if the user must log in again; throws a plain
+ * Error for transient failures (network, Auth0 outage) that callers should
+ * treat as retryable rather than as a reason to clear the session.
  */
 export async function getValidAccessToken(): Promise<string> {
   const stored = await getStoredTokens();
-  if (!stored?.accessToken) throw new Error('Not authenticated');
+  if (!stored?.accessToken) throw new ReauthRequiredError('Not authenticated');
 
   if (!isTokenExpired(stored.expiresAt)) {
     return stored.accessToken;
   }
 
-  if (!stored.refreshToken) throw new Error('No refresh token — re-login required');
-  return refreshAccessToken(stored.refreshToken);
+  if (!stored.refreshToken) throw new ReauthRequiredError('No refresh token — re-login required');
+
+  try {
+    return await refreshAccessToken(stored.refreshToken);
+  } catch (err) {
+    if (!(err instanceof ReauthRequiredError)) throw err;
+
+    // Our refreshToken read above may have been stale: a concurrent refresh
+    // (deduped via refreshPromise) can rotate the token and write fresh ones
+    // after we read but before Auth0 rejects our now-stale copy. Check
+    // storage once more before treating this as a genuine rejection.
+    const latest = await getStoredTokens();
+    if (latest?.accessToken && !isTokenExpired(latest.expiresAt)) {
+      return latest.accessToken;
+    }
+    throw err;
+  }
 }
 
 // ── Auth request config (used by useAuthRequest hook) ─────────────────────────
