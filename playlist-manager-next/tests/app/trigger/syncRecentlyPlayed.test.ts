@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // vi.hoisted ensures these objects are initialised before vi.mock factories run.
-const { mockPrisma, mockGetRecentlyPlayedTracks } = vi.hoisted(() => {
+const { mockPrisma, mockGetRecentlyPlayedTracks, makeMockTask } = vi.hoisted(() => {
   const mockGetRecentlyPlayedTracks = vi.fn();
   const mockPrisma = {
     user: { findMany: vi.fn() },
@@ -11,23 +11,27 @@ const { mockPrisma, mockGetRecentlyPlayedTracks } = vi.hoisted(() => {
     track: { findMany: vi.fn() },
     listening_progress: { findUnique: vi.fn(), upsert: vi.fn() }
   };
-  return { mockPrisma, mockGetRecentlyPlayedTracks };
+  const makeMockTask = (config: { id?: string; run: (payload: unknown, ctx: unknown) => Promise<void> }) => ({
+    // Expose run for testing (not part of real v4 API, but needed for unit tests)
+    run: config.run,
+    id: config.id || 'test-task',
+    trigger: vi.fn(),
+    triggerAndWait: vi.fn()
+  });
+  return { mockPrisma, mockGetRecentlyPlayedTracks, makeMockTask };
 });
 
 vi.mock('../../../lib/prisma', () => ({ default: mockPrisma }));
 
-// Mock the Trigger.dev SDK: capture the run function from schedules.task()
-// so tests can invoke it directly without needing a real Trigger.dev runtime.
+// Mock the Trigger.dev SDK: capture the run function from schedules.task()/
+// task() so tests can invoke it directly without needing a real Trigger.dev
+// runtime. syncRecentlyPlayed.ts imports syncPlaylistTask from
+// ./syncPlaylist, which is defined via the plain task() export (not
+// schedules.task()) — both need mocking or that import throws.
 vi.mock('@trigger.dev/sdk', () => ({
-  schedules: {
-    task: (config: { id?: string; run: (payload: unknown, ctx: unknown) => Promise<void> }) => ({
-      // Expose run for testing (not part of real v4 API, but needed for unit tests)
-      run: config.run,
-      id: config.id || 'test-task',
-      trigger: vi.fn(),
-      triggerAndWait: vi.fn()
-    })
-  }
+  schedules: { task: makeMockTask },
+  task: makeMockTask,
+  logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn() }
 }));
 
 vi.mock('@spotify/web-api-ts-sdk', () => ({
@@ -81,6 +85,10 @@ const makeRecentItem = (trackId: string, playedAt: string) => ({
 describe('syncRecentlyPlayedTask', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // syncForUser throws (swallowed by the per-user try/catch in run(), so
+    // failures here show up as silently-unmet assertions, not a visible
+    // error) if this isn't set — matches the real deployed environment.
+    process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID = 'test-client-id';
     mockPrisma.user.findMany.mockResolvedValue([makeUser()]);
     mockPrisma.access_token.findUnique.mockResolvedValue({
       access_token: 'tok',
