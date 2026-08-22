@@ -29,12 +29,27 @@ const AUTH0_AUDIENCE = process.env.EXPO_PUBLIC_AUTH0_AUDIENCE ?? '';
 
 const REDIRECT_URI = AuthSession.makeRedirectUri({ scheme: 'playlistmanager', path: 'callback' });
 
-const STORE_KEYS = {
+// Tokens live under one key, written in a single call, so an app kill
+// mid-save can never strand a partially-updated set — e.g. a new access
+// token paired with the old, already-rotated (and now Auth0-invalidated)
+// refresh token, which would silently brick the next refresh attempt.
+const STORE_KEY = 'auth0_tokens';
+
+// Pre-consolidation keys, kept only so getStoredTokens can migrate anyone
+// who still has tokens saved under the old per-field scheme.
+const LEGACY_STORE_KEYS = {
   accessToken: 'auth0_access_token',
   refreshToken: 'auth0_refresh_token',
   expiresAt: 'auth0_expires_at',
   idToken: 'auth0_id_token',
 } as const;
+
+interface StoredTokenSet {
+  accessToken: string;
+  refreshToken: string | null;
+  expiresAt: number | null;
+  idToken: string | null;
+}
 
 // ── Discovery ────────────────────────────────────────────────────────────────
 export const discovery: AuthSession.DiscoveryDocument = {
@@ -51,17 +66,59 @@ export async function saveTokens(tokens: {
   id_token?: string;
 }): Promise<void> {
   const expiresAt = Date.now() + tokens.expires_in * 1000;
-  await SecureStore.setItemAsync(STORE_KEYS.accessToken, tokens.access_token);
-  await SecureStore.setItemAsync(STORE_KEYS.expiresAt, String(expiresAt));
-  if (tokens.refresh_token) {
-    await SecureStore.setItemAsync(STORE_KEYS.refreshToken, tokens.refresh_token);
-  }
-  if (tokens.id_token) {
-    await SecureStore.setItemAsync(STORE_KEYS.idToken, tokens.id_token);
-  }
+
+  // Auth0 doesn't always echo back a refresh_token (e.g. a plain access-token
+  // refresh with rotation off) — preserve whatever we already had rather than
+  // wiping it. Reading first is safe: the risky moment is the write below,
+  // and consolidating that into a single call is the whole point of this.
+  const existing = await getStoredTokenSet();
+  const next: StoredTokenSet = {
+    accessToken: tokens.access_token,
+    refreshToken: tokens.refresh_token ?? existing?.refreshToken ?? null,
+    expiresAt,
+    idToken: tokens.id_token ?? existing?.idToken ?? null
+  };
+
+  await SecureStore.setItemAsync(STORE_KEY, JSON.stringify(next));
+
   // Mirror the Vercel JWT to the App Group Keychain so the widget's
   // SetRatingIntent can make authenticated API calls without opening the app.
   writeAuthToken(tokens.access_token).catch(() => null);
+}
+
+async function getStoredTokenSet(): Promise<StoredTokenSet | null> {
+  const raw = await SecureStore.getItemAsync(STORE_KEY);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as StoredTokenSet;
+      if (parsed.accessToken) return parsed;
+    } catch {
+      // Fall through to legacy lookup / treat as logged out.
+    }
+  }
+
+  // One-time migration for tokens saved under the old per-field keys, so
+  // upgrading doesn't force an extra re-login on top of the one that
+  // prompted this fix.
+  const [accessToken, refreshToken, expiresAtStr, idToken] = await Promise.all([
+    SecureStore.getItemAsync(LEGACY_STORE_KEYS.accessToken),
+    SecureStore.getItemAsync(LEGACY_STORE_KEYS.refreshToken),
+    SecureStore.getItemAsync(LEGACY_STORE_KEYS.expiresAt),
+    SecureStore.getItemAsync(LEGACY_STORE_KEYS.idToken)
+  ]);
+  if (!accessToken) return null;
+
+  const migrated: StoredTokenSet = {
+    accessToken,
+    refreshToken,
+    expiresAt: expiresAtStr ? parseInt(expiresAtStr, 10) : null,
+    idToken
+  };
+  await SecureStore.setItemAsync(STORE_KEY, JSON.stringify(migrated));
+  await Promise.all(
+    Object.values(LEGACY_STORE_KEYS).map(key => SecureStore.deleteItemAsync(key).catch(() => null))
+  );
+  return migrated;
 }
 
 export async function getStoredTokens(): Promise<{
@@ -69,22 +126,20 @@ export async function getStoredTokens(): Promise<{
   refreshToken: string | null;
   expiresAt: number | null;
 } | null> {
-  const accessToken = await SecureStore.getItemAsync(STORE_KEYS.accessToken);
-  const refreshToken = await SecureStore.getItemAsync(STORE_KEYS.refreshToken);
-  const expiresAtStr = await SecureStore.getItemAsync(STORE_KEYS.expiresAt);
-
-  if (!accessToken) return null;
+  const stored = await getStoredTokenSet();
+  if (!stored) return null;
 
   return {
-    accessToken,
-    refreshToken,
-    expiresAt: expiresAtStr ? parseInt(expiresAtStr, 10) : null
+    accessToken: stored.accessToken,
+    refreshToken: stored.refreshToken,
+    expiresAt: stored.expiresAt
   };
 }
 
 export async function clearTokens(): Promise<void> {
+  await SecureStore.deleteItemAsync(STORE_KEY).catch(() => null);
   await Promise.all(
-    Object.values(STORE_KEYS).map(key => SecureStore.deleteItemAsync(key).catch(() => null))
+    Object.values(LEGACY_STORE_KEYS).map(key => SecureStore.deleteItemAsync(key).catch(() => null))
   );
 }
 
