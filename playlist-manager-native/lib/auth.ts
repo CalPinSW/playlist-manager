@@ -18,6 +18,7 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as SecureStore from 'expo-secure-store';
+import * as Sentry from '@sentry/react-native';
 import { writeAuthToken } from '../modules/widget-bridge';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -186,19 +187,30 @@ export async function refreshAccessToken(refreshToken: string): Promise<string> 
     });
 
     if (!response.ok) {
-      // Auth0 responds 400/401 when the refresh token itself is invalid,
-      // expired, or was rejected as already-rotated — the one case that
-      // genuinely requires the user to log in again. A 429 (rate limited)
-      // or 5xx (Auth0-side outage) means the token was never evaluated at
-      // all and must be treated as transient, not a rejection.
-      if (response.status === 400 || response.status === 401) {
-        throw new ReauthRequiredError(`Token refresh rejected: ${response.status} ${response.statusText}`);
+      // Auth0's response body carries the actual reason (error/error_description
+      // — e.g. "invalid_grant: The refresh token was already used" vs "Unknown
+      // or invalid refresh token" vs an inactivity/absolute expiry message).
+      // Without this, a forced logout is indistinguishable from any other in
+      // Sentry — this is the one place with enough context to tell them apart.
+      const body: { error?: string; error_description?: string } | null = await response.json().catch(() => null);
+      const reason = body?.error_description ?? body?.error ?? response.statusText;
+      const definitive = response.status === 400 || response.status === 401;
+
+      Sentry.captureMessage(`Auth0 refresh token request failed (${response.status})`, {
+        level: definitive ? 'warning' : 'error',
+        tags: { auth_refresh_status: String(response.status), auth0_error: body?.error ?? 'unknown' },
+        extra: { status: response.status, error_description: body?.error_description }
+      });
+
+      if (definitive) {
+        throw new ReauthRequiredError(`Token refresh rejected: ${response.status} ${reason}`);
       }
-      throw new Error(`Token refresh failed: ${response.status} ${response.statusText}`);
+      throw new Error(`Token refresh failed: ${response.status} ${reason}`);
     }
 
     const tokens = await response.json();
     await saveTokens(tokens);
+    Sentry.addBreadcrumb({ category: 'auth', message: 'Refreshed access token', level: 'info' });
     return tokens.access_token;
   })();
 
@@ -217,13 +229,25 @@ export async function refreshAccessToken(refreshToken: string): Promise<string> 
  */
 export async function getValidAccessToken(): Promise<string> {
   const stored = await getStoredTokens();
-  if (!stored?.accessToken) throw new ReauthRequiredError('Not authenticated');
+  if (!stored?.accessToken) {
+    // Distinct from the network-side failures captured in refreshAccessToken:
+    // this means SecureStore had nothing at all — never logged in, tokens
+    // cleared, or (if this ever recurs) something wiping the Keychain entry
+    // outside of clearTokens().
+    Sentry.captureMessage('getValidAccessToken: no stored access token', { level: 'warning' });
+    throw new ReauthRequiredError('Not authenticated');
+  }
 
   if (!isTokenExpired(stored.expiresAt)) {
     return stored.accessToken;
   }
 
-  if (!stored.refreshToken) throw new ReauthRequiredError('No refresh token — re-login required');
+  if (!stored.refreshToken) {
+    Sentry.captureMessage('getValidAccessToken: access token expired with no refresh token stored', {
+      level: 'warning'
+    });
+    throw new ReauthRequiredError('No refresh token — re-login required');
+  }
 
   try {
     return await refreshAccessToken(stored.refreshToken);

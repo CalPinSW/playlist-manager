@@ -26,7 +26,13 @@ jest.mock('expo-auth-session', () => ({
 jest.mock('expo-web-browser', () => ({
   maybeCompleteAuthSession: jest.fn(),
 }));
+jest.mock('@sentry/react-native', () => ({
+  captureMessage: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  captureException: jest.fn(),
+}));
 
+import * as Sentry from '@sentry/react-native';
 import {
   isTokenExpired,
   saveTokens,
@@ -35,6 +41,8 @@ import {
   getValidAccessToken,
   ReauthRequiredError,
 } from './auth';
+
+const mockedCaptureMessage = Sentry.captureMessage as jest.Mock;
 
 function jsonResponse(status: number, body: unknown): Response {
   return {
@@ -48,6 +56,7 @@ function jsonResponse(status: number, body: unknown): Response {
 beforeEach(() => {
   mockTokenStore = new Map();
   jest.restoreAllMocks();
+  jest.clearAllMocks();
 });
 
 describe('isTokenExpired', () => {
@@ -119,6 +128,22 @@ describe('refreshAccessToken', () => {
     global.fetch = jest.fn().mockResolvedValue(jsonResponse(401, { error: 'invalid_grant' }));
 
     await expect(refreshAccessToken('stale-token')).rejects.toBeInstanceOf(ReauthRequiredError);
+  });
+
+  it('reports the Auth0 error_description to Sentry on rejection', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      jsonResponse(401, { error: 'invalid_grant', error_description: 'The refresh token was already used' })
+    );
+
+    await expect(refreshAccessToken('stale-token')).rejects.toBeInstanceOf(ReauthRequiredError);
+
+    expect(mockedCaptureMessage).toHaveBeenCalledWith(
+      expect.stringContaining('401'),
+      expect.objectContaining({
+        tags: expect.objectContaining({ auth0_error: 'invalid_grant' }),
+        extra: expect.objectContaining({ error_description: 'The refresh token was already used' })
+      })
+    );
   });
 
   it('throws ReauthRequiredError when Auth0 rejects the token (400)', async () => {
