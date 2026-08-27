@@ -229,11 +229,15 @@ model listening_progress {
 // Stores the cursor for the syncRecentlyPlayed Trigger.dev task.
 // One row per user — updated after each successful sync run.
 model sync_log {
-  id             Int       @id @default(autoincrement())
-  user_id        String    @unique @db.VarChar(255)
-  last_played_at DateTime? // cursor: passed as `after` param to recently_played on next run
-  last_run_at    DateTime  @default(now())
-  user           user      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                         Int       @id @default(autoincrement())
+  user_id                    String    @unique @db.VarChar(255)
+  last_played_at             DateTime? // cursor: passed as `after` param to recently_played on next run
+  last_run_at                DateTime  @default(now())
+  // Throttle for on-open playlist discovery (see app/api/sync-history/handler.ts):
+  // /api/sync-history kicks a background playlist refresh at most once per
+  // PLAYLIST_DISCOVERY_THROTTLE_HOURS. The weekly cron is the backstop.
+  last_playlist_discovery_at DateTime?
+  user                       user      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 // Album ratings. Stored as 1-10 integers; displayed as 0.5-5.0 half stars (value ÷ 2).
