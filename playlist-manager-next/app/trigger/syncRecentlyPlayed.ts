@@ -4,6 +4,14 @@ import prisma from '../../lib/prisma';
 import { refreshSpotifyAccessToken } from '../api/spotify/utilities/refreshSpotifyAccessToken';
 import { NEW_ALBUMS_REGEX } from '../utils/playlistFilters';
 import { syncPlaylistTask } from './syncPlaylist';
+import { addPlaylistToDb } from '../api/playlists/[playlistId]/refresh/handler';
+
+/**
+ * Cap on how many unknown played-from playlists we'll look up per run (see
+ * discoverPlayedPlaylists). Bounds the wasted Spotify calls when a user listens
+ * to playlists we don't track (editorial mixes, friends' playlists, …).
+ */
+const MAX_DISCOVERY_LOOKUPS = 5;
 
 /**
  * syncRecentlyPlayed — runs every 15 minutes via Trigger.dev scheduler.
@@ -79,6 +87,10 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
   const activePlaylistIds = playlists.filter(p => NEW_ALBUMS_REGEX.test(p.name)).map(p => p.id);
 
   if (activePlaylistIds.length === 0) {
+    // No New Albums playlists in the DB yet — nothing to attribute progress to.
+    // The mid-sync discovery below needs at least one to get past this point;
+    // a user with zero tracked playlists relies on the on-open / weekly
+    // discovery in `refreshSpotifyPlaylists` to seed the first one.
     console.log('No New Albums playlists found, skipping', { userId: user.id });
     return;
   }
@@ -102,6 +114,14 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
   }
 
   console.log('Recently-played items fetched', { userId: user.id, count: items.length });
+
+  // ── Step 2.5: Discover newly-created playlists the user is already playing ───
+  // A play from a brand-new "New Albums DD/MM/YY" playlist created since the last
+  // discovery run won't match anything below — the playlist isn't in the DB yet.
+  // Spot those from the play context and add them now, so this same run records
+  // progress for them instead of losing the plays when the cursor advances.
+  const discoveredPlaylistIds = await discoverPlayedPlaylists(spotifySdk, user.id, items, playlists);
+  activePlaylistIds.push(...discoveredPlaylistIds);
 
   // ── Step 3: Batch-resolve track → album → playlist (single Prisma query) ────
   const trackIds = [...new Set(items.map(item => item.track?.id).filter((id): id is string => typeof id === 'string'))];
@@ -247,6 +267,56 @@ export async function syncForUser(user: { id: string; access_token: { refresh_to
   // items[0] is the most recent (Spotify returns newest first).
   const mostRecentPlayedAt = new Date(items[0].played_at);
   await updateSyncLog(user.id, mostRecentPlayedAt);
+}
+
+/**
+ * Look at where the user played tracks from. Any playlist context we don't
+ * already have in the DB, whose name matches NEW_ALBUMS_REGEX, is a
+ * just-created discovery playlist — add it (albums + tracks) so the caller can
+ * record progress for it on this same run. Returns the ids actually added.
+ *
+ * Bounded to MAX_DISCOVERY_LOOKUPS Spotify lookups per call; failures are logged
+ * and skipped (the on-open + weekly discovery remain the backstop).
+ */
+export async function discoverPlayedPlaylists(
+  spotifySdk: SpotifyApi,
+  userId: string,
+  items: Array<{ context?: { type?: string | null; uri?: string | null } | null }>,
+  knownPlaylists: { id: string }[]
+): Promise<string[]> {
+  const knownIds = new Set(knownPlaylists.map(p => p.id));
+
+  const unknownPlayedPlaylistIds = [
+    ...new Set(
+      items
+        .filter(item => item.context?.type === 'playlist')
+        .map(item => item.context?.uri?.split(':')[2])
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    )
+  ]
+    .filter(id => !knownIds.has(id))
+    .slice(0, MAX_DISCOVERY_LOOKUPS);
+
+  if (unknownPlayedPlaylistIds.length === 0) return [];
+
+  const added: string[] = [];
+  for (const playlistId of unknownPlayedPlaylistIds) {
+    try {
+      const spotifyPlaylist = await spotifySdk.playlists.getPlaylist(playlistId);
+      if (!NEW_ALBUMS_REGEX.test(spotifyPlaylist.name)) continue;
+
+      await addPlaylistToDb(spotifySdk, userId, spotifyPlaylist);
+      added.push(playlistId);
+      console.log('Discovered played-from playlist mid-sync', {
+        userId,
+        playlistId,
+        name: spotifyPlaylist.name
+      });
+    } catch (err) {
+      console.warn('Failed to add played-from playlist', { userId, playlistId, error: String(err) });
+    }
+  }
+  return added;
 }
 
 async function updateSyncLog(userId: string, lastPlayedAt: Date | null) {

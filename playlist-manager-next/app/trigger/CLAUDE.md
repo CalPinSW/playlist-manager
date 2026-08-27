@@ -30,14 +30,21 @@ Per user, `syncForUser`:
 2. Finds the user's playlists whose name matches `NEW_ALBUMS_REGEX` (`app/utils/playlistFilters.ts`).
 3. `GET /me/player/recently-played` (limit 50), using `sync_log.last_played_at` as the
    `after` cursor. If >50 tracks played since last run, the overflow is lost (accepted).
-4. Resolves track → album → playlist in **one** Prisma query against data already synced
+4. `discoverPlayedPlaylists`: inspects the `context` of each play. Any playlist the user
+   played from that isn't in the DB yet and whose name matches `NEW_ALBUMS_REGEX` is
+   `addPlaylistToDb`'d right here, so a play from a just-created playlist records progress
+   on this same run instead of being lost when the cursor advances. Bounded to
+   `MAX_DISCOVERY_LOOKUPS` (5) Spotify lookups per run; failures are logged and skipped.
+   (A user with zero tracked playlists still returns early at step 2 and relies on the
+   on-open / weekly `refreshSpotifyPlaylists` to seed the first one.)
+5. Resolves track → album → playlist in **one** Prisma query against data already synced
    into Postgres — no extra Spotify calls, no N+1.
-5. Groups by `(album, playlist)`, keeping the highest track index seen, and upserts
+6. Groups by `(album, playlist)`, keeping the highest track index seen, and upserts
    `listening_progress` — **advance-only, never regresses `last_track_index`**
    (`source: 'recently_played'`).
-6. For each playlist that gained activity, fires `sync-playlist` (it self-throttles, so
+7. For each playlist that gained activity, fires `sync-playlist` (it self-throttles, so
    firing every run is safe).
-7. Advances the `sync_log` cursor to the newest `played_at`.
+8. Advances the `sync_log` cursor to the newest `played_at`.
 
 `maxDuration: 120`.
 

@@ -1,25 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // vi.hoisted ensures these objects are initialised before vi.mock factories run.
-const { mockPrisma, mockGetRecentlyPlayedTracks, makeMockTask } = vi.hoisted(() => {
-  const mockGetRecentlyPlayedTracks = vi.fn();
-  const mockPrisma = {
-    user: { findMany: vi.fn() },
-    access_token: { findUnique: vi.fn() },
-    playlist: { findMany: vi.fn() },
-    sync_log: { findUnique: vi.fn(), upsert: vi.fn() },
-    track: { findMany: vi.fn() },
-    listening_progress: { findUnique: vi.fn(), upsert: vi.fn() }
-  };
-  const makeMockTask = (config: { id?: string; run: (payload: unknown, ctx: unknown) => Promise<void> }) => ({
-    // Expose run for testing (not part of real v4 API, but needed for unit tests)
-    run: config.run,
-    id: config.id || 'test-task',
-    trigger: vi.fn(),
-    triggerAndWait: vi.fn()
-  });
-  return { mockPrisma, mockGetRecentlyPlayedTracks, makeMockTask };
-});
+const { mockPrisma, mockGetRecentlyPlayedTracks, mockGetPlaylist, mockAddPlaylistToDb, makeMockTask } = vi.hoisted(
+  () => {
+    const mockGetRecentlyPlayedTracks = vi.fn();
+    const mockGetPlaylist = vi.fn();
+    const mockAddPlaylistToDb = vi.fn().mockResolvedValue(undefined);
+    const mockPrisma = {
+      user: { findMany: vi.fn() },
+      access_token: { findUnique: vi.fn() },
+      playlist: { findMany: vi.fn() },
+      sync_log: { findUnique: vi.fn(), upsert: vi.fn() },
+      track: { findMany: vi.fn() },
+      listening_progress: { findUnique: vi.fn(), upsert: vi.fn() }
+    };
+    const makeMockTask = (config: { id?: string; run: (payload: unknown, ctx: unknown) => Promise<void> }) => ({
+      // Expose run for testing (not part of real v4 API, but needed for unit tests)
+      run: config.run,
+      id: config.id || 'test-task',
+      trigger: vi.fn(),
+      triggerAndWait: vi.fn()
+    });
+    return { mockPrisma, mockGetRecentlyPlayedTracks, mockGetPlaylist, mockAddPlaylistToDb, makeMockTask };
+  }
+);
 
 vi.mock('../../../lib/prisma', () => ({ default: mockPrisma }));
 
@@ -37,13 +41,18 @@ vi.mock('@trigger.dev/sdk', () => ({
 vi.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: vi.fn(() => ({
-      player: { getRecentlyPlayedTracks: mockGetRecentlyPlayedTracks }
+      player: { getRecentlyPlayedTracks: mockGetRecentlyPlayedTracks },
+      playlists: { getPlaylist: mockGetPlaylist }
     }))
   }
 }));
 
 vi.mock('../../../app/api/spotify/utilities/refreshSpotifyAccessToken', () => ({
   refreshSpotifyAccessToken: vi.fn().mockResolvedValue(undefined)
+}));
+
+vi.mock('../../../app/api/playlists/[playlistId]/refresh/handler', () => ({
+  addPlaylistToDb: mockAddPlaylistToDb
 }));
 
 import { syncRecentlyPlayedTask } from '../../../app/trigger/syncRecentlyPlayed';
@@ -76,9 +85,10 @@ const makeTrack = (id: string, albumId: string, trackNumber: number, totalTracks
   }
 });
 
-const makeRecentItem = (trackId: string, playedAt: string) => ({
+const makeRecentItem = (trackId: string, playedAt: string, contextPlaylistId?: string) => ({
   track: { id: trackId },
-  played_at: playedAt
+  played_at: playedAt,
+  context: contextPlaylistId ? { type: 'playlist', uri: `spotify:playlist:${contextPlaylistId}` } : null
 });
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -100,6 +110,8 @@ describe('syncRecentlyPlayedTask', () => {
     mockPrisma.sync_log.upsert.mockResolvedValue({});
     mockPrisma.listening_progress.findUnique.mockResolvedValue(null);
     mockPrisma.listening_progress.upsert.mockResolvedValue({});
+    mockPrisma.track.findMany.mockResolvedValue([]);
+    mockAddPlaylistToDb.mockResolvedValue(undefined);
   });
 
   it('does nothing when recently_played returns no items', async () => {
@@ -225,5 +237,89 @@ describe('syncRecentlyPlayedTask', () => {
     await expect(testTask.run(undefined as never, undefined as never)).resolves.not.toThrow();
 
     expect(mockGetRecentlyPlayedTracks).not.toHaveBeenCalled();
+  });
+
+  describe('discovering played-from playlists mid-sync', () => {
+    it('adds an unknown New Albums playlist from the play context and records its progress this run', async () => {
+      mockPrisma.playlist.findMany.mockResolvedValue([makePlaylist('pl-known', 'New Albums 01/01/26')]);
+      mockGetRecentlyPlayedTracks.mockResolvedValue({
+        items: [makeRecentItem('track-9', '2026-08-20T10:00:00Z', 'pl-new')]
+      });
+      mockGetPlaylist.mockResolvedValue({ id: 'pl-new', name: 'New Albums 20/08/26' });
+      mockPrisma.track.findMany.mockResolvedValue([makeTrack('track-9', 'album-9', 4, 10, 'pl-new')]);
+
+      await testTask.run(undefined as never, undefined as never);
+
+      expect(mockGetPlaylist).toHaveBeenCalledWith('pl-new');
+      expect(mockAddPlaylistToDb).toHaveBeenCalledWith(expect.anything(), 'user-1', {
+        id: 'pl-new',
+        name: 'New Albums 20/08/26'
+      });
+      expect(mockPrisma.listening_progress.upsert).toHaveBeenCalledOnce();
+      expect(mockPrisma.listening_progress.upsert.mock.calls[0][0].create.playlist_id).toBe('pl-new');
+    });
+
+    it('ignores an unknown played-from playlist whose name is not the New Albums format', async () => {
+      mockPrisma.playlist.findMany.mockResolvedValue([makePlaylist('pl-known', 'New Albums 01/01/26')]);
+      mockGetRecentlyPlayedTracks.mockResolvedValue({
+        items: [makeRecentItem('track-9', '2026-08-20T10:00:00Z', 'pl-editorial')]
+      });
+      mockGetPlaylist.mockResolvedValue({ id: 'pl-editorial', name: 'Discover Weekly' });
+
+      await testTask.run(undefined as never, undefined as never);
+
+      expect(mockAddPlaylistToDb).not.toHaveBeenCalled();
+    });
+
+    it('does not look up playlists already in the DB', async () => {
+      mockPrisma.playlist.findMany.mockResolvedValue([makePlaylist('pl-1', 'New Albums 04/04/26')]);
+      mockGetRecentlyPlayedTracks.mockResolvedValue({
+        items: [makeRecentItem('track-1', '2026-04-04T10:00:00Z', 'pl-1')]
+      });
+      mockPrisma.track.findMany.mockResolvedValue([makeTrack('track-1', 'album-1', 2, 12, 'pl-1')]);
+
+      await testTask.run(undefined as never, undefined as never);
+
+      expect(mockGetPlaylist).not.toHaveBeenCalled();
+    });
+
+    it('ignores plays with no playlist context', async () => {
+      mockPrisma.playlist.findMany.mockResolvedValue([makePlaylist('pl-1', 'New Albums 04/04/26')]);
+      mockGetRecentlyPlayedTracks.mockResolvedValue({
+        items: [makeRecentItem('track-1', '2026-04-04T10:00:00Z')]
+      });
+      mockPrisma.track.findMany.mockResolvedValue([makeTrack('track-1', 'album-1', 2, 12, 'pl-1')]);
+
+      await testTask.run(undefined as never, undefined as never);
+
+      expect(mockGetPlaylist).not.toHaveBeenCalled();
+    });
+
+    it('continues (and still advances the cursor) when a context lookup fails', async () => {
+      mockPrisma.playlist.findMany.mockResolvedValue([makePlaylist('pl-known', 'New Albums 01/01/26')]);
+      mockGetRecentlyPlayedTracks.mockResolvedValue({
+        items: [makeRecentItem('track-1', '2026-04-04T10:00:00Z', 'pl-broken')]
+      });
+      mockGetPlaylist.mockRejectedValue(new Error('Spotify 404'));
+
+      await expect(testTask.run(undefined as never, undefined as never)).resolves.not.toThrow();
+
+      expect(mockAddPlaylistToDb).not.toHaveBeenCalled();
+      expect(mockPrisma.sync_log.upsert).toHaveBeenCalled();
+    });
+
+    it('looks up at most MAX_DISCOVERY_LOOKUPS unknown played-from playlists per run', async () => {
+      mockPrisma.playlist.findMany.mockResolvedValue([makePlaylist('pl-known', 'New Albums 01/01/26')]);
+      mockGetRecentlyPlayedTracks.mockResolvedValue({
+        items: Array.from({ length: 8 }, (_, i) =>
+          makeRecentItem(`track-${i}`, `2026-08-20T10:0${i}:00Z`, `pl-unknown-${i}`)
+        )
+      });
+      mockGetPlaylist.mockResolvedValue({ id: 'x', name: 'Not Matching' });
+
+      await testTask.run(undefined as never, undefined as never);
+
+      expect(mockGetPlaylist).toHaveBeenCalledTimes(5);
+    });
   });
 });
