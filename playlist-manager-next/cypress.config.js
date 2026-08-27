@@ -14,7 +14,6 @@ module.exports = defineConfig({
   },
   e2e: {
     setupNodeEvents(on, config) {},
-    experimentalSessionAndOrigin: true,
     baseUrl: 'http://localhost:3000'
   }
 });
