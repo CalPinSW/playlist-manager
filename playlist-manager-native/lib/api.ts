@@ -6,7 +6,7 @@
  */
 
 import { getValidAccessToken, ReauthRequiredError } from './auth';
-import { API_ENDPOINTS, albumUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl, resumePlaybackUrl } from '../constants/api';
+import { API_ENDPOINTS, albumUrl, albumInfoUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl, resumePlaybackUrl } from '../constants/api';
 
 export class AuthError extends Error {
   constructor(message = 'Not authenticated') {
@@ -262,6 +262,31 @@ export async function fetchAlbumDetail(albumId: string): Promise<AlbumDetail> {
     const body = await res.text().catch(() => '');
     console.error('[api] fetchAlbumDetail failed:', res.status, body);
     throw new Error(`fetchAlbumDetail failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface AlbumInfo {
+  albumId: string;
+  type: string | null;
+  summary: string | null;
+  summaryHtml: string | null;
+  fetchedAt: string | null;
+  /** True when nothing is cached yet — enrichment was just triggered in the background. */
+  pending: boolean;
+}
+
+/**
+ * GET /api/albums/[albumId]/info — MusicBrainz/Wikipedia enrichment (type, summary).
+ * May return `pending: true` with no summary on first view of an album — the server
+ * triggers a background fetch and the data will be there on a later visit.
+ */
+export async function fetchAlbumInfo(albumId: string): Promise<AlbumInfo> {
+  const res = await authedFetch(albumInfoUrl(albumId));
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[api] fetchAlbumInfo failed:', res.status, body);
+    throw new Error(`fetchAlbumInfo failed: ${res.status}`);
   }
   return res.json();
 }

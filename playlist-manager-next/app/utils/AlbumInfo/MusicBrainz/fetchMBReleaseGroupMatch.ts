@@ -1,7 +1,10 @@
 import { IReleaseGroupMatch } from 'musicbrainz-api';
 import mbApi from '../../../../lib/musicbrainz';
 
-const fetchMBReleaseGroupMatch = async (albumName: string, firstArtistName: string): Promise<IReleaseGroupMatch> => {
+const fetchMBReleaseGroupMatch = async (
+  albumName: string,
+  firstArtistName: string
+): Promise<IReleaseGroupMatch | null> => {
   const artist = firstArtistName;
   const title = albumName;
   const query = `query=artist:"${artist}" AND release:"${title}"`;
@@ -9,7 +12,7 @@ const fetchMBReleaseGroupMatch = async (albumName: string, firstArtistName: stri
   const sorted = results['release-groups'].sort((a, b) => {
     return b.count - a.count;
   });
-  return sorted[0];
+  return sorted[0] ?? null;
 };
 
 ////// Old results selection:

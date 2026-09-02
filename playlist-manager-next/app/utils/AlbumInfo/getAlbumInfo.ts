@@ -20,16 +20,16 @@ export const getAlbumInfo = async (
       if (releaseGroup['genres']) {
         albumInfo.genres.push(...releaseGroup['genres']);
       }
-    }
 
-    const wikiRelation = releaseGroup['relations'].find(rel => rel.type === 'wikidata');
-    if (wikiRelation) {
-      const wikidata = await fetchWikipediaAlbumInfo(
-        wikiRelation.url.resource.replace('https://www.wikidata.org/wiki/', '')
-      );
-      if (wikidata) {
-        albumInfo.summary = wikidata.extract;
-        albumInfo.summary_html = wikidata.extract_html;
+      const wikiRelation = releaseGroup['relations']?.find(rel => rel.type === 'wikidata');
+      if (wikiRelation) {
+        const wikidata = await fetchWikipediaAlbumInfo(
+          wikiRelation.url.resource.replace('https://www.wikidata.org/wiki/', '')
+        );
+        if (wikidata) {
+          albumInfo.summary = wikidata.extract;
+          albumInfo.summary_html = wikidata.extract_html;
+        }
       }
     }
     return albumInfo;
