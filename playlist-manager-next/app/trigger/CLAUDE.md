@@ -112,5 +112,9 @@ The same `refreshSpotifyPlaylists` is also:
 - Reuse the shared handlers in `app/api/**/handler.ts` rather than reimplementing Spotify
   sync logic, and reuse `NEW_ALBUMS_REGEX` / `ALL_ALBUMS_REGEX` from
   `app/utils/playlistFilters.ts`.
-- Deploy with `npm run trigger:deploy` (`npx trigger.dev@latest deploy`). Declarative
-  schedules attach on deploy — no dashboard cron setup needed.
+- Deploy is automated: the `deploy` job in `.github/workflows/web-ci.yml` runs
+  `npm run trigger:deploy` (`npx trigger.dev@latest deploy`) on every push to `main`,
+  after `prisma migrate deploy` and after the lint/typecheck/unit-tests/e2e checks pass.
+  Declarative schedules attach on deploy — no dashboard cron setup needed. Run
+  `npm run trigger:deploy` manually only for out-of-band deploys (e.g. testing a task
+  from a branch).

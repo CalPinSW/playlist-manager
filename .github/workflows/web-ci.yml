@@ -104,3 +104,29 @@ jobs:
             playlist-manager-next/cypress/screenshots
             playlist-manager-next/cypress/videos
           retention-days: 5
+
+  # Applies pending Prisma migrations and deploys Trigger.dev tasks to production.
+  # Runs only on push to main (never on PRs), after the checks above pass. The two
+  # steps are sequential in one job so a failed migration blocks the Trigger.dev
+  # deploy — tasks in this repo query columns the migration would have added.
+  deploy:
+    name: Deploy migrations + background jobs
+    needs: [lint, typecheck, unit-tests, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: playlist-manager-next/package-lock.json
+      - run: npm ci
+      - name: Apply database migrations
+        run: npm run prisma:migrate:deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Deploy Trigger.dev tasks
+        run: npm run trigger:deploy
+        env:
+          TRIGGER_ACCESS_TOKEN: ${{ secrets.TRIGGER_ACCESS_TOKEN }}
