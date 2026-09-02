@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchAlbumInfo, AlbumInfo, AuthError } from '../../../lib/api';
 import { Colors } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
@@ -13,6 +14,7 @@ export default function AlbumInfoScreen() {
     imageUrl?: string;
   }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [info, setInfo] = useState<AlbumInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function AlbumInfoScreen() {
   useEffect(() => { load(); }, [load]);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: 60 + insets.bottom }]}>
       <View style={styles.header}>
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={styles.art} accessibilityLabel={name} />
