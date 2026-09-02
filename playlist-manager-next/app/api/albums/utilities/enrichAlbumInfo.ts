@@ -1,6 +1,7 @@
 import prisma from '../../../../lib/prisma';
 import fetchMBReleaseGroup from '../../../utils/AlbumInfo/MusicBrainz/fetchMBReleaseGroup';
 import { fetchWikipediaAlbumInfo } from '../../../utils/AlbumInfo/Wikibase/fetchWikipediaData';
+import { fetchLastFmAlbumInfo } from '../../../utils/AlbumInfo/LastFm/fetchLastFmAlbumInfo';
 import { linkAlbumGenres } from './linkAlbumGenres';
 
 // If album_info is older than this, the info route re-triggers enrichment.
@@ -59,6 +60,25 @@ export async function enrichAlbumInfo(albumId: string): Promise<void> {
     }
   }
 
+  // Last.fm doesn't depend on a MusicBrainz match, so this runs regardless of whether
+  // releaseGroup was found — it's also the summary fallback when Wikipedia has none.
+  let lastfmListeners: number | null = null;
+  let lastfmPlaycount: number | null = null;
+  try {
+    const lastfm = await fetchLastFmAlbumInfo(album.name, firstArtistName);
+    if (lastfm) {
+      lastfmListeners = lastfm.listeners;
+      lastfmPlaycount = lastfm.playcount;
+      if (!summary && lastfm.summary) {
+        summary = lastfm.summary;
+        summaryHtml = lastfm.summaryHtml;
+        summarySource = 'lastfm';
+      }
+    }
+  } catch (error) {
+    console.error(`[enrichAlbumInfo] Last.fm lookup failed for album ${albumId}`, error);
+  }
+
   // Always upsert (even with nothing found) so fetched_at gates retries — otherwise an
   // album with no MusicBrainz match would be re-looked-up on every single request.
   await prisma.album_info.upsert({
@@ -69,6 +89,8 @@ export async function enrichAlbumInfo(albumId: string): Promise<void> {
       summary,
       summary_html: summaryHtml,
       summary_source: summarySource,
+      lastfm_listeners: lastfmListeners,
+      lastfm_playcount: lastfmPlaycount,
       fetched_at: new Date()
     },
     create: {
@@ -77,7 +99,9 @@ export async function enrichAlbumInfo(albumId: string): Promise<void> {
       mb_type: releaseGroup?.['primary-type'] ?? null,
       summary,
       summary_html: summaryHtml,
-      summary_source: summarySource
+      summary_source: summarySource,
+      lastfm_listeners: lastfmListeners,
+      lastfm_playcount: lastfmPlaycount
     }
   });
 }

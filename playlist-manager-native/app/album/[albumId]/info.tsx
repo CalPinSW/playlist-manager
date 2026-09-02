@@ -63,6 +63,15 @@ export default function AlbumInfoScreen() {
             </View>
           )}
 
+          {(info?.listeners || info?.playcount) && (
+            <Text style={styles.stats}>
+              {[
+                info.listeners ? `${formatCount(info.listeners)} listeners` : null,
+                info.playcount ? `${formatCount(info.playcount)} plays` : null
+              ].filter(Boolean).join(' · ')}
+            </Text>
+          )}
+
           {info?.summary ? (
             <Text style={styles.summary}>{info.summary}</Text>
           ) : (
@@ -79,6 +88,12 @@ export default function AlbumInfoScreen() {
 }
 
 const ART_SIZE = 88;
+
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+  return String(n);
+}
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.surfaceDark },
@@ -100,6 +115,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 4, marginBottom: 16
   },
   chipText: { color: Colors.textMuted, fontSize: 11, fontWeight: '500' },
+
+  stats: { color: Colors.textMuted, fontSize: 13, fontWeight: '500', marginBottom: 16 },
 
   summary: { color: Colors.text, fontSize: 15, lineHeight: 22 },
   message: { color: Colors.textMuted, fontSize: 14, lineHeight: 20, marginTop: 8 }

@@ -6,9 +6,10 @@ import { enrichAlbumInfoTask } from '../../../../trigger/enrichAlbumInfo';
 import { ALBUM_INFO_STALE_DAYS } from '../../utilities/enrichAlbumInfo';
 
 /**
- * GET /api/albums/[albumId]/info — cached MusicBrainz/Wikipedia enrichment for an album
- * (type, summary). Genres from these sources are already in the main album response
- * (GET /api/albums/[albumId]) via the shared genre/albumgenrerelationship tables.
+ * GET /api/albums/[albumId]/info — cached MusicBrainz/Wikipedia/Last.fm enrichment for an
+ * album (type, summary, Last.fm listener/playcount stats). Genres from these sources are
+ * already in the main album response (GET /api/albums/[albumId]) via the shared
+ * genre/albumgenrerelationship tables.
  *
  * Always returns whatever is cached (possibly nothing yet, `pending: true`). If the cache
  * is missing or older than ALBUM_INFO_STALE_DAYS, it fires enrichAlbumInfoTask after the
@@ -53,6 +54,8 @@ const getAlbumInfoHandler = async (request: NextRequest, { params }: { params: P
         type: info?.mb_type ?? null,
         summary: info?.summary ?? null,
         summaryHtml: info?.summary_html ?? null,
+        listeners: info?.lastfm_listeners ?? null,
+        playcount: info?.lastfm_playcount ?? null,
         fetchedAt: info?.fetched_at ?? null,
         pending: !info
       },

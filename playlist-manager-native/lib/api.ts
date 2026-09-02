@@ -271,15 +271,18 @@ export interface AlbumInfo {
   type: string | null;
   summary: string | null;
   summaryHtml: string | null;
+  /** Last.fm listener/play counts — null if Last.fm has no match or isn't configured. */
+  listeners: number | null;
+  playcount: number | null;
   fetchedAt: string | null;
   /** True when nothing is cached yet — enrichment was just triggered in the background. */
   pending: boolean;
 }
 
 /**
- * GET /api/albums/[albumId]/info — MusicBrainz/Wikipedia enrichment (type, summary).
- * May return `pending: true` with no summary on first view of an album — the server
- * triggers a background fetch and the data will be there on a later visit.
+ * GET /api/albums/[albumId]/info — MusicBrainz/Wikipedia/Last.fm enrichment (type,
+ * summary, Last.fm stats). May return `pending: true` with no summary on first view of an
+ * album — the server triggers a background fetch and the data will be there on a later visit.
  */
 export async function fetchAlbumInfo(albumId: string): Promise<AlbumInfo> {
   const res = await authedFetch(albumInfoUrl(albumId));
