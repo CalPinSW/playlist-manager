@@ -9,13 +9,14 @@
 import fetchMBReleaseGroup from '../app/utils/AlbumInfo/MusicBrainz/fetchMBReleaseGroup';
 import fetchMBReleaseGroupMatch from '../app/utils/AlbumInfo/MusicBrainz/fetchMBReleaseGroupMatch';
 import { fetchLastFmAlbumInfo } from '../app/utils/AlbumInfo/LastFm/fetchLastFmAlbumInfo';
-import wikipedia from 'wikipedia';
 
-// Inlined rather than importing the real fetchWikipediaAlbumInfo: that module pulls in
-// wikibase-sdk, which tsx's CJS-interop resolver chokes on (ERR_PACKAGE_PATH_NOT_EXPORTED)
-// even though Trigger.dev's real bundler resolves it fine — a diagnostic-script-only
-// tooling issue, unrelated to what we're actually testing here. Same request shape as
-// wikidataSdk.getEntities({ ids, languages: 'en', props: ['sitelinks', 'sitelinks/urls'] }).
+// The previous run confirmed MusicBrainz -> Wikidata -> enwiki title resolution all work.
+// The failure is the final step: the `wikipedia` npm package 403s because it sends a
+// non-standard "Api-User-Agent" header instead of the real "User-Agent" header Wikimedia's
+// edge actually checks (https://meta.wikimedia.org/wiki/User-Agent_policy). Testing the fix
+// here: call the REST summary endpoint directly with a real, compliant User-Agent.
+const WIKIPEDIA_USER_AGENT = 'PlaylistManagerBot/0.1 (https://github.com/CalPinSW/playlist-manager; calumpinder@gmail.com)';
+
 async function fetchWikidataSitelinksAndSummary(wikidataId: string) {
   const params = new URLSearchParams({
     action: 'wbgetentities',
@@ -26,13 +27,18 @@ async function fetchWikidataSitelinksAndSummary(wikidataId: string) {
   });
   const url = `https://www.wikidata.org/w/api.php?${params.toString()}`;
   console.log('wikidata API url:', url);
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: { 'User-Agent': WIKIPEDIA_USER_AGENT } });
   const data = await res.json();
   console.log('wikidata entity keys:', Object.keys(data?.entities ?? {}));
   const wikipediaTitle = data?.entities?.[wikidataId]?.sitelinks?.enwiki?.title;
   console.log('enwiki sitelink title:', wikipediaTitle ?? null);
   if (!wikipediaTitle) return null;
-  return wikipedia.summary(wikipediaTitle);
+
+  const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikipediaTitle.replace(/ /g, '_'))}`;
+  console.log('wikipedia REST summary url:', summaryUrl);
+  const summaryRes = await fetch(summaryUrl, { headers: { 'User-Agent': WIKIPEDIA_USER_AGENT } });
+  console.log('wikipedia REST summary status:', summaryRes.status);
+  return summaryRes.json();
 }
 
 const cases: { artist: string; album: string }[] = [
