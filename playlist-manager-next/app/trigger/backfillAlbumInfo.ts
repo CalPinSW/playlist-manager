@@ -6,10 +6,12 @@ import { enrichAlbumInfoTask } from './enrichAlbumInfo';
 const BATCH_SIZE = 1000;
 
 /**
- * backfillAlbumInfoTask — one-off backfill for albums that predate the enrich-album-info
- * pipeline: anything with no album_info row yet, or with zero genres linked (the bug this
- * pipeline fixes). Not scheduled — trigger manually once from the Trigger.dev dashboard
- * (or `npx trigger.dev@latest trigger backfill-album-info`) after deploying.
+ * backfillAlbumInfoTask — one-off backfill for albums missing enrichment data: no
+ * album_info row yet, zero genres linked (the genre-population bug this pipeline fixes),
+ * or no summary (e.g. affected by the Wikipedia User-Agent bug, now fixed — an album_info
+ * row with genres but a null summary still needs re-enrichment). Not scheduled — trigger
+ * manually once from the Trigger.dev dashboard (or
+ * `npx trigger.dev@latest trigger backfill-album-info`) after deploying.
  *
  * Safe to batch-trigger every match at once: enrich-album-info has
  * queue.concurrencyLimit: 1, so Trigger.dev serializes the actual MusicBrainz calls
@@ -21,7 +23,7 @@ export const backfillAlbumInfoTask = task({
   run: async () => {
     const albums = await prisma.album.findMany({
       where: {
-        OR: [{ album_info: null }, { albumgenrerelationship: { none: {} } }]
+        OR: [{ album_info: null }, { albumgenrerelationship: { none: {} } }, { album_info: { summary: null } }]
       },
       select: { id: true }
     });
