@@ -54,7 +54,7 @@ export default function AlbumInfoScreen() {
       {loading ? (
         <ActivityIndicator size="large" color={Colors.primary} style={styles.spinner} />
       ) : loadError ? (
-        <Text style={styles.message}>Couldn't load album info. Please try again later.</Text>
+        <Text style={styles.message}>Could not load album info. Please try again later.</Text>
       ) : (
         <>
           {info?.type && (
