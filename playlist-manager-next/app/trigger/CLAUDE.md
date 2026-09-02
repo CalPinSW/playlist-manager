@@ -5,7 +5,7 @@ Config lives in `playlist-manager-next/trigger.config.ts`; tasks are auto-discov
 from `dirs: ['./app/trigger']`. See the Trigger.dev v4 API rules in the repo-root
 `CLAUDE.md` — always `task` / `schemaTask` / `schedules.task`, never `client.defineJob`.
 
-## The four tasks
+## The six tasks
 
 | id | file | kind | trigger | purpose |
 |----|------|------|---------|---------|
@@ -13,6 +13,8 @@ from `dirs: ['./app/trigger']`. See the Trigger.dev v4 API rules in the repo-roo
 | `sync-playlist` | `syncPlaylist.ts` | `task` | fired by `sync-recently-played` | Re-fetch one playlist's albums from Spotify when new listening activity is seen |
 | `update-users-playlist-data-scheduled` | `updateUsersPlaylistDataScheduled.ts` | `schedules.task` | cron `0 0 * * 6` (00:00 Sat UTC) | Fan out `update-playlist-data` over every user |
 | `update-playlist-data` | `updatePlaylistData.ts` | `task` | fired by the weekly scheduled task | Discover/refresh all of one user's "…Albums…" playlists |
+| `enrich-album-info` | `enrichAlbumInfo.ts` | `task` | fired by `GET /api/albums/[albumId]/info` (and `backfill-album-info`) | Fetch MusicBrainz genres/type + Wikipedia summary for one album, persist to `album_info` + `genre`/`albumgenrerelationship`. `queue.concurrencyLimit: 1` — MusicBrainz's ~1 req/sec limit is only enforced in-process by `musicbrainz-api`, so this caps actual concurrent runs across the whole environment instead |
+| `backfill-album-info` | `backfillAlbumInfo.ts` | `task` | manual (dashboard/CLI), one-off | Find every album with no `album_info` row or zero linked genres and batch-trigger `enrich-album-info` for each |
 
 Cron expressions are **UTC**.
 

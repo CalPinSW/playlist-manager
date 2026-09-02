@@ -156,6 +156,13 @@ export default function AlbumDetailScreen() {
     Linking.openURL(album.uri).catch(() => Alert.alert('Spotify not installed', 'Could not open Spotify.'));
   }, [album]);
 
+  const navigateToInfo = useCallback(() => {
+    if (!album) return;
+    const artistNames = album.artists.map(a => a.name).join(', ');
+    const params = new URLSearchParams({ name: album.name, artist: artistNames, imageUrl: album.imageUrl });
+    router.push(`/album/${album.id}/info?${params.toString()}`);
+  }, [album, router]);
+
   const navigateToSibling = useCallback((targetAlbumId: string) => {
     // Replace rather than push so the back stack doesn't grow with each album.
     router.replace(`/album/${targetAlbumId}?playlistId=${playlistId}`);
@@ -233,6 +240,10 @@ export default function AlbumDetailScreen() {
       <View style={styles.actions}>
         <TouchableOpacity style={styles.btnSpotify} onPress={openInSpotify} activeOpacity={0.8}>
           <Text style={styles.btnSpotifyText}>▶  Open in Spotify</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.btnInfo} onPress={navigateToInfo} activeOpacity={0.8}>
+          <Text style={styles.btnInfoText}>ℹ️  Album Info</Text>
         </TouchableOpacity>
 
         {bestAlbumsPlaylist && (
@@ -552,6 +563,12 @@ const styles = StyleSheet.create({
   actions: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 10 },
   btnSpotify: { backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   btnSpotifyText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  btnInfo: {
+    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)', borderRadius: 14,
+    paddingVertical: 14, alignItems: 'center'
+  },
+  btnInfoText: { color: Colors.text, fontSize: 14, fontWeight: '600' },
   btnPromote: {
     backgroundColor: 'rgba(120,166,60,0.15)', borderWidth: 1,
     borderColor: 'rgba(120,166,60,0.4)', borderRadius: 14,

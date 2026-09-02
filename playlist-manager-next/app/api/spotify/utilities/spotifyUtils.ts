@@ -1,6 +1,7 @@
 import { SimplifiedAlbum, SimplifiedArtist, SimplifiedTrack, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import prisma from '../../../../lib/prisma';
 import getAllAlbumTracks from './spotify/getAllAlbumTracks';
+import { linkAlbumGenres } from '../../albums/utilities/linkAlbumGenres';
 
 // Create or update an artist in the database
 export async function createOrUpdateArtist(artist: SimplifiedArtist) {
@@ -58,12 +59,41 @@ export async function createTrackOrNone(track: SimplifiedTrack, album: Simplifie
   return dbTrack;
 }
 
+// Spotify's SimplifiedAlbum.genres is deprecated and effectively always empty, so genres
+// come from the full Artist objects instead (Spotify still populates Artist.genres).
+// Bounded to the problem case: run for every newly-discovered album, and as a one-time
+// backfill for existing albums that have no genres linked yet — not on every sync, so
+// this doesn't add a Spotify call per album on every playlist refresh.
+async function linkArtistGenres(spotifySdk: SpotifyApi, albumId: string, artistIds: string[]) {
+  if (artistIds.length === 0) return;
+  try {
+    // Spotify caps artists.get at 50 ids; an album's artist list never gets close to that.
+    const artists = await spotifySdk.artists.get(artistIds.slice(0, 50));
+    const genreNames = artists.flatMap(artist => artist.genres ?? []);
+    if (genreNames.length > 0) {
+      await linkAlbumGenres(albumId, genreNames);
+    }
+  } catch (error) {
+    console.error(`[linkArtistGenres] Spotify artist genre fetch failed for album ${albumId}`, error);
+  }
+}
+
 // Create or get an album, link artists and genres, and create tracks
 export async function getOrCreateAlbum(spotifySdk: SpotifyApi, album: SimplifiedAlbum, ignoreTracks = false) {
-  let dbAlbum = await prisma.album.findUnique({ where: { id: album.id } });
-  if (dbAlbum) return dbAlbum;
+  const existingAlbum = await prisma.album.findUnique({ where: { id: album.id } });
+  if (existingAlbum) {
+    const existingGenreCount = await prisma.albumgenrerelationship.count({ where: { album_id: existingAlbum.id } });
+    if (existingGenreCount === 0) {
+      await linkArtistGenres(
+        spotifySdk,
+        existingAlbum.id,
+        (album.artists ?? []).map(artist => artist.id)
+      );
+    }
+    return existingAlbum;
+  }
 
-  dbAlbum = await prisma.album.create({
+  const dbAlbum = await prisma.album.create({
     data: {
       id: album.id,
       album_type: album.album_type,
@@ -78,8 +108,10 @@ export async function getOrCreateAlbum(spotifySdk: SpotifyApi, album: Simplified
   });
 
   // Link artists
+  const artistIds: string[] = [];
   for (const artist of album.artists ?? []) {
     const dbArtist = await createOrUpdateArtist(artist);
+    artistIds.push(dbArtist.id);
     await prisma.albumartistrelationship.upsert({
       where: {
         album_id_artist_id: {
@@ -95,27 +127,9 @@ export async function getOrCreateAlbum(spotifySdk: SpotifyApi, album: Simplified
     });
   }
 
-  // Link genres
-  for (const genreName of album.genres ?? []) {
-    const dbGenre = await prisma.genre.upsert({
-      where: { name: genreName },
-      update: {},
-      create: { name: genreName }
-    });
-    await prisma.albumgenrerelationship.upsert({
-      where: {
-        album_id_genre_id: {
-          album_id: dbAlbum.id,
-          genre_id: dbGenre.id
-        }
-      },
-      update: {},
-      create: {
-        album_id: dbAlbum.id,
-        genre_id: dbGenre.id
-      }
-    });
-  }
+  // Link genres: Spotify's (rarely populated) album-level genres, plus artist genres.
+  await linkAlbumGenres(dbAlbum.id, album.genres ?? []);
+  await linkArtistGenres(spotifySdk, dbAlbum.id, artistIds);
 
   // Create tracks
   if (!ignoreTracks) {

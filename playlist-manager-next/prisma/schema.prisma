@@ -36,6 +36,22 @@ model album {
   tracks                         track[]
   listening_progress             listening_progress[]
   album_rating                   album_rating[]
+  album_info                     album_info?
+}
+
+// Cached third-party enrichment data (MusicBrainz + Wikipedia) for an album.
+// One row per album, refreshed by the enrich-album-info Trigger.dev task.
+// Genres discovered from these sources are linked into genre/albumgenrerelationship
+// (not stored here), so the existing genre-chip UI reads them without changes.
+model album_info {
+  album_id             String   @id @db.VarChar(255)
+  mb_release_group_id  String?  @db.VarChar(255)
+  mb_type              String?  @db.VarChar(255)
+  summary              String?  @db.Text
+  summary_html         String?  @db.Text
+  summary_source       String?  @db.VarChar(50) // 'wikipedia'
+  fetched_at           DateTime @default(now())
+  album                album    @relation(fields: [album_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model album_notes {
