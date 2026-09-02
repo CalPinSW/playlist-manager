@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/colors';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -10,6 +11,13 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
  * Portrait lock is set in app.json (orientation: 'portrait').
  */
 export default function TabLayout() {
+  // react-navigation only adds the bottom safe-area inset to the tab bar's
+  // height/padding automatically when tabBarStyle has no explicit height —
+  // since we set a fixed height for a consistent look, we have to add
+  // insets.bottom ourselves or the tab bar sits under the home indicator /
+  // Android gesture bar (app.json has android.edgeToEdgeEnabled: true).
+  const insets = useSafeAreaInsets();
+
   const makeIcon = (active: IoniconName, inactive: IoniconName) => {
     function TabIcon({ focused, color }: { focused: boolean; color: string }) {
       return <Ionicons name={focused ? active : inactive} size={24} color={color} />;
@@ -28,8 +36,8 @@ export default function TabLayout() {
           backgroundColor: Colors.tabBackground,
           borderTopColor: Colors.border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
         },
         tabBarLabelStyle: {

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchAlbumDetail, fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Colors } from '../../constants/colors';
@@ -37,6 +38,7 @@ function extractPeriodKey(name: string): string {
 export default function AlbumDetailScreen() {
   const { albumId, playlistId } = useLocalSearchParams<{ albumId: string; playlistId?: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [album, setAlbum] = useState<AlbumDetail | null>(null);
   const [bestAlbumsPlaylist, setBestAlbumsPlaylist] = useState<PlaylistSummary | null>(null);
@@ -183,7 +185,7 @@ export default function AlbumDetailScreen() {
   const releaseYear = album.releaseDate ? new Date(album.releaseDate).getFullYear() : null;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: 60 + insets.bottom }]}>
 
       {/* ── Playlist strip ──────────────────────────────────────────────────── */}
       {playlistAlbums.length > 0 && (

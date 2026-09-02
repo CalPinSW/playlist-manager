@@ -107,6 +107,16 @@ function RootLayout() {
             headerBackTitle: 'Back'
           }}
         />
+        <Stack.Screen
+          name="album/[albumId]/info"
+          options={{
+            headerShown: true,
+            headerStyle: { backgroundColor: '#0f0a1e' },
+            headerTintColor: '#843dff',
+            headerTitle: 'Album Info',
+            headerBackTitle: 'Back'
+          }}
+        />
       </Stack>
     </>
   );
