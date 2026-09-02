@@ -81,7 +81,9 @@ async function main() {
           const wikidataId = resource.replace('https://www.wikidata.org/wiki/', '');
           console.log('extracted wikidataId:', wikidataId);
           const wikidata = await fetchWikidataSitelinksAndSummary(wikidataId);
-          console.log('summary result:', JSON.stringify(wikidata, null, 2)?.slice(0, 500));
+          console.log('summary extract (plain text):', wikidata?.extract ?? null);
+          console.log('summary extract_html present?', !!wikidata?.extract_html);
+          console.log('description:', wikidata?.description ?? null);
         } catch (err) {
           console.error('wikipedia fetch FAILED:', err);
         }
