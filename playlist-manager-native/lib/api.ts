@@ -340,13 +340,15 @@ export async function setRating(albumId: string, rating: number): Promise<void> 
 }
 
 /**
- * POST /api/playback/resume — start Spotify playback from a specific album + track.
+ * POST /api/playback/resume — start Spotify playback from a specific album + track,
+ * in the context of the given playlist so playback continues into the playlist's
+ * next album when this one finishes.
  * Throws an error with `code: 'no_active_device'` if no Spotify device is open.
  */
-export async function resumePlayback(albumId: string, trackIndex: number): Promise<void> {
+export async function resumePlayback(albumId: string, trackIndex: number, playlistId: string): Promise<void> {
   const res = await authedFetch(resumePlaybackUrl, {
     method: 'POST',
-    body: JSON.stringify({ albumId, trackIndex })
+    body: JSON.stringify({ albumId, trackIndex, playlistId })
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

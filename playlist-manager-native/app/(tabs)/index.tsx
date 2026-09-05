@@ -254,7 +254,7 @@ function PlaylistSection({
     if (!latestAlbum || resuming) return;
     setResuming(true);
     try {
-      await resumePlayback(latestAlbum.albumId, latestAlbum.lastTrackIndex);
+      await resumePlayback(latestAlbum.albumId, latestAlbum.lastTrackIndex, group.playlistId);
     } catch (err: any) {
       if (err?.code === 'no_active_device') {
         Alert.alert(
@@ -268,7 +268,7 @@ function PlaylistSection({
     } finally {
       setResuming(false);
     }
-  }, [latestAlbum, resuming]);
+  }, [latestAlbum, resuming, group.playlistId]);
 
   // Percentage of the whole playlist listened — weight each album's progress
   // against the full playlist size, not just the albums that have been started.
