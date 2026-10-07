@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fetchProgress, fetchNowPlaying, syncHistory, resumePlayback, ProgressEntry, NowPlaying, AuthError } from '../../lib/api';
+import { fetchProgress, fetchNowPlaying, syncHistory, resumePlayback, ProgressEntry, NowPlaying, AuthError, SpotifyReauthError } from '../../lib/api';
+import { promptSpotifyReconnect } from '../../lib/spotifyReconnect';
 import { getCachedProgress, cacheProgress } from '../../lib/db';
 import { Colors } from '../../constants/colors';
 import { useRouter } from 'expo-router';
@@ -74,11 +75,12 @@ export default function NowScreen() {
     }
 
     try {
-      const syncResult = await syncHistory().catch((err) => {
-        console.warn('[sync] syncHistory failed:', err?.message ?? err);
-        return null;
+      await syncHistory().catch((err) => {
+        console.warn('[sync] syncHistory failed — progress may be stale:', err?.message ?? err);
+        if (err instanceof SpotifyReauthError) {
+          promptSpotifyReconnect(() => loadData({ showRefreshing: true }));
+        }
       });
-      if (!syncResult) console.warn('[sync] Sync returned null — progress may be stale.');
       const data = await fetchProgress();
       setProgress(data);
       await cacheProgress(data).catch(() => null);

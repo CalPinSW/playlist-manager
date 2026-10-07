@@ -22,6 +22,7 @@ export const API_ENDPOINTS = {
   playlists: `${API_BASE_URL}/api/playlists`,
   albums: `${API_BASE_URL}/api/albums`,
   user: `${API_BASE_URL}/api/user`,
+  spotifyConnectUrl: `${API_BASE_URL}/api/spotify/connect-url`,
 } as const;
 
 export const playlistAlbumsUrl = (playlistId: string) =>

@@ -17,7 +17,10 @@ vi.mock('../../../../../lib/prisma', () => ({
   }
 }));
 
-import { refreshSpotifyAccessToken } from '../../../../../app/api/spotify/utilities/refreshSpotifyAccessToken';
+import {
+  refreshSpotifyAccessToken,
+  SpotifyReauthRequiredError
+} from '../../../../../app/api/spotify/utilities/refreshSpotifyAccessToken';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const makeUser = () => ({
@@ -103,6 +106,31 @@ describe('refreshSpotifyAccessToken', () => {
 
     await expect(refreshSpotifyAccessToken(makeUser() as never)).rejects.toThrow('Spotify token refresh failed');
     expect(mockTransaction).not.toHaveBeenCalled();
+  });
+
+  it("includes Spotify's OAuth error in the thrown message", async () => {
+    mockFindUnique.mockResolvedValue({ refresh_token: 'old-refresh' });
+    stubFetch({ error: 'invalid_grant', error_description: 'Refresh token revoked' }, false);
+
+    await expect(refreshSpotifyAccessToken(makeUser() as never)).rejects.toThrow(
+      'invalid_grant: Refresh token revoked'
+    );
+  });
+
+  it('throws SpotifyReauthRequiredError on invalid_grant', async () => {
+    mockFindUnique.mockResolvedValue({ refresh_token: 'old-refresh' });
+    stubFetch({ error: 'invalid_grant', error_description: 'Refresh token revoked' }, false);
+
+    await expect(refreshSpotifyAccessToken(makeUser() as never)).rejects.toBeInstanceOf(SpotifyReauthRequiredError);
+  });
+
+  it('throws a plain Error for other OAuth errors', async () => {
+    mockFindUnique.mockResolvedValue({ refresh_token: 'old-refresh' });
+    stubFetch({ error: 'invalid_client' }, false);
+
+    const err = await refreshSpotifyAccessToken(makeUser() as never).catch(e => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(SpotifyReauthRequiredError);
   });
 
   it('does not write to DB when the Spotify fetch throws (original token preserved)', async () => {
