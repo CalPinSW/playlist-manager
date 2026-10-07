@@ -5,6 +5,8 @@
  * Throws AuthError if the token is missing/expired and can't be refreshed.
  */
 
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import { getValidAccessToken, ReauthRequiredError } from './auth';
 import { API_ENDPOINTS, albumUrl, albumInfoUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl, resumePlaybackUrl } from '../constants/api';
 
@@ -54,6 +56,18 @@ async function authedFetch(url: string, options: RequestInit = {}): Promise<Resp
   }
 
   return response;
+}
+
+/**
+ * The backend's stored Spotify refresh token was rejected by Spotify (revoked or
+ * expired). The Auth0 session is fine — the user just needs to reconnect Spotify
+ * via connectSpotify().
+ */
+export class SpotifyReauthError extends Error {
+  constructor(message = 'Spotify needs reconnecting') {
+    super(message);
+    this.name = 'SpotifyReauthError';
+  }
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -188,8 +202,46 @@ export async function syncHistory(): Promise<void> {
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     console.error('[api] syncHistory failed:', res.status, body);
+    if (parseErrorCode(body) === 'spotify_reauth_required') throw new SpotifyReauthError();
     throw new Error(`syncHistory failed: ${res.status} ${res.statusText}`);
   }
+}
+
+function parseErrorCode(body: string): string | undefined {
+  try {
+    return JSON.parse(body)?.code;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Where the backend's Spotify callback redirects to; closes the auth browser sheet. */
+const SPOTIFY_CONNECT_RETURN_URL = 'playlistmanager://spotify-connected';
+
+/**
+ * Runs Spotify's authorize flow in a system browser sheet so the backend can
+ * store a fresh Spotify refresh token for this user.
+ *
+ * The backend builds the authorize URL (with a signed state identifying the
+ * user) and handles the code exchange itself, since it holds the client secret.
+ * Resolves true when connected, false if the user cancelled; throws on failure.
+ */
+export async function connectSpotify(): Promise<boolean> {
+  const res = await authedFetch(API_ENDPOINTS.spotifyConnectUrl);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[api] spotify connect-url failed:', res.status, body);
+    throw new Error(`connectSpotify failed: ${res.status}`);
+  }
+  const { url } = (await res.json()) as { url: string };
+
+  const result = await WebBrowser.openAuthSessionAsync(url, SPOTIFY_CONNECT_RETURN_URL);
+  if (result.type !== 'success') return false;
+
+  const error = Linking.parse(result.url).queryParams?.error;
+  if (error === 'access_denied') return false;
+  if (error) throw new Error(`Spotify connect failed: ${error}`);
+  return true;
 }
 
 /**

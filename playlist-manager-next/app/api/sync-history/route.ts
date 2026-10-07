@@ -10,7 +10,9 @@ const syncHistoryHandler = async (req: NextRequest) => {
     const message = error instanceof Error ? error.message : String(error);
     console.error('[sync-history] Error:', message);
     const status = error instanceof Error && 'status' in error ? (error as { status: number }).status : 500;
-    return NextResponse.json({ error: message }, { status });
+    // `code` lets the app tell "Spotify needs reconnecting" (spotify_reauth_required) apart from a transient failure.
+    const code = error instanceof Error && 'code' in error ? (error as { code: string }).code : undefined;
+    return NextResponse.json({ error: message, code }, { status });
   }
 };
 

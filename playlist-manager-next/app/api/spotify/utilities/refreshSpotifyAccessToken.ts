@@ -2,6 +2,21 @@ import prisma from '../../../../lib/prisma';
 import { user } from '../../../../generated/prisma';
 
 /**
+ * Spotify rejected the stored refresh token outright (`invalid_grant`) — it was
+ * revoked or has expired, so retrying won't help. The user has to go through
+ * Spotify's authorize flow again (Settings → Reconnect Spotify in the app).
+ */
+export class SpotifyReauthRequiredError extends Error {
+  readonly status = 409;
+  readonly code = 'spotify_reauth_required';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'SpotifyReauthRequiredError';
+  }
+}
+
+/**
  * Refreshes the Spotify access token for a given user.
  *
  * The fetch and DB write are wrapped in a Prisma interactive transaction so that
@@ -48,7 +63,18 @@ export const refreshSpotifyAccessToken = async (user: user) => {
   });
 
   if (!response.ok) {
-    throw new Error(`Spotify token refresh failed: ${response.statusText}`);
+    // Spotify's OAuth error body (`error` / `error_description`, e.g.
+    // "invalid_grant: Refresh token revoked") is the only way to tell a revoked
+    // token apart from a bad client config — statusText alone is just "Bad Request".
+    const errorBody = await response.json().catch(() => null);
+    const detail = errorBody?.error
+      ? ` (${errorBody.error}${errorBody.error_description ? `: ${errorBody.error_description}` : ''})`
+      : '';
+    const message = `Spotify token refresh failed for user ${user.id}: ${response.statusText}${detail}`;
+    if (errorBody?.error === 'invalid_grant') {
+      throw new SpotifyReauthRequiredError(message);
+    }
+    throw new Error(message);
   }
 
   const tokenResponse = await response.json();
