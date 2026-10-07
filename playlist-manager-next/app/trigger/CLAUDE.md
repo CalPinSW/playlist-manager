@@ -94,8 +94,14 @@ The same `refreshSpotifyPlaylists` is also:
     new env var (e.g. `NEXT_PUBLIC_SPOTIFY_CLIENT_ID`, DB URL, Auth0) in **Vercel**, not
     just `.env.local`, or the deployed worker won't see it.
   - `prismaExtension({ mode: 'legacy', clientGenerator: 'client', version: '6.9.0', schema: 'prisma/schema.prisma' })`
-    — regenerates the Prisma client (output `generated/prisma`, imported via `lib/prisma`)
-    in the worker build.
+    — copies the schema into the worker image and runs `prisma generate` there so the
+    engine binaries match the deploy platform. **It does NOT refresh the DMMF the worker
+    actually runs against**: `lib/prisma` imports the client from the custom output path
+    `generated/prisma`, which esbuild inlines into the worker bundle from your **local**
+    `generated/prisma` at deploy time. So a schema change that isn't reflected in your
+    local generated client ships a stale client (e.g. `Unknown argument` errors on a new
+    model). Always run `npm run prisma:generate` (or `npm run build`) **before**
+    `npm run trigger:deploy` after any schema change.
 - `.trigger/` is the local build cache (gitignored).
 
 ## Conventions when adding / editing a task
