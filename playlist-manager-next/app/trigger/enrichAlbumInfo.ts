@@ -5,8 +5,9 @@ import { enrichAlbumInfo } from '../api/albums/utilities/enrichAlbumInfo';
  * enrichAlbumInfoTask — fetches MusicBrainz genres/type and a Wikipedia summary for one
  * album and persists them (album_info, plus genre/albumgenrerelationship).
  *
- * Fired async (fire-and-forget) by GET /api/albums/[albumId]/info whenever an album's
- * cached info is missing or stale, and by the one-off backfill for existing albums.
+ * Queued (via app/api/albums/utilities/triggerAlbumEnrichment.ts, deduped per album) by
+ * GET /api/albums/[albumId]/info whenever an album's cached info is missing or stale, by
+ * the hourly enrich-missing-album-info sweep, and by the one-off backfill.
  * MusicBrainz enforces a ~1 req/sec rate limit, which is exactly why this runs as a
  * background task rather than inline in the request path.
  */

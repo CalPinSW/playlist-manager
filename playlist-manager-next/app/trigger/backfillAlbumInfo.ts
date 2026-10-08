@@ -1,9 +1,6 @@
 import { task, logger } from '@trigger.dev/sdk';
 import prisma from '../../lib/prisma';
-import { enrichAlbumInfoTask } from './enrichAlbumInfo';
-
-// Trigger.dev enforces a max of 1000 items per batchTrigger call.
-const BATCH_SIZE = 1000;
+import { triggerAlbumEnrichmentBatch } from '../api/albums/utilities/triggerAlbumEnrichment';
 
 /**
  * backfillAlbumInfoTask — one-off backfill for albums that predate the enrich-album-info
@@ -28,10 +25,7 @@ export const backfillAlbumInfoTask = task({
 
     logger.log('backfill-album-info: albums needing enrichment', { count: albums.length });
 
-    for (let i = 0; i < albums.length; i += BATCH_SIZE) {
-      const chunk = albums.slice(i, i + BATCH_SIZE);
-      await enrichAlbumInfoTask.batchTrigger(chunk.map(album => ({ payload: { albumId: album.id } })));
-    }
+    await triggerAlbumEnrichmentBatch(albums.map(album => album.id));
 
     return { triggered: albums.length };
   }
