@@ -23,7 +23,16 @@ export async function enrichAlbumInfo(albumId: string): Promise<void> {
   if (!album) return;
 
   const firstArtistName = album.albumartistrelationship[0]?.artist.name;
-  if (!firstArtistName) return;
+  if (!firstArtistName) {
+    // Nothing to look up by, but still record the attempt — otherwise the
+    // enrich-missing-album-info sweep would re-queue this album forever.
+    await prisma.album_info.upsert({
+      where: { album_id: albumId },
+      update: { fetched_at: new Date() },
+      create: { album_id: albumId }
+    });
+    return;
+  }
 
   let releaseGroup: Awaited<ReturnType<typeof fetchMBReleaseGroup>> = null;
   try {

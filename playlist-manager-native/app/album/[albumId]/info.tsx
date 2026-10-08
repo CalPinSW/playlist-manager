@@ -1,10 +1,16 @@
-import { View, Text, ScrollView, Image, StyleSheet, ActivityIndicator } from 'react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { View, Text, ScrollView, Image, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchAlbumInfo, AlbumInfo, AuthError } from '../../../lib/api';
 import { Colors } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
+
+// While the server is enriching an album in the background, re-fetch on this interval
+// so the info appears on-screen instead of needing a revisit. A run usually takes a few
+// seconds; stop after ~1 min (queue backlog) and fall back to pull-to-refresh.
+const POLL_INTERVAL_MS = 4000;
+const MAX_POLLS = 15;
 
 export default function AlbumInfoScreen() {
   const { albumId, name, artist, imageUrl } = useLocalSearchParams<{
@@ -19,6 +25,9 @@ export default function AlbumInfoScreen() {
   const [info, setInfo] = useState<AlbumInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pollsLeft, setPollsLeft] = useState(MAX_POLLS);
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleAuthError = useCallback(async () => {
     await clearTokens();
@@ -29,6 +38,7 @@ export default function AlbumInfoScreen() {
     try {
       const data = await fetchAlbumInfo(albumId);
       setInfo(data);
+      setLoadError(false);
     } catch (err) {
       if (err instanceof AuthError) { await handleAuthError(); return; }
       setLoadError(true);
@@ -39,8 +49,31 @@ export default function AlbumInfoScreen() {
 
   useEffect(() => { load(); }, [load]);
 
+  const waitingForEnrichment = !!info?.pending && info.enrichmentQueued;
+  const polling = waitingForEnrichment && pollsLeft > 0 && !loadError;
+
+  useEffect(() => {
+    if (!polling) return;
+    pollTimer.current = setTimeout(() => {
+      setPollsLeft(n => n - 1);
+      load();
+    }, POLL_INTERVAL_MS);
+    return () => { if (pollTimer.current) clearTimeout(pollTimer.current); };
+  }, [polling, info, load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setPollsLeft(MAX_POLLS);
+    await load();
+    setRefreshing(false);
+  }, [load]);
+
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: 60 + insets.bottom }]}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={[styles.content, { paddingBottom: 60 + insets.bottom }]}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+    >
       <View style={styles.header}>
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={styles.art} accessibilityLabel={name} />
@@ -76,11 +109,18 @@ export default function AlbumInfoScreen() {
 
           {info?.summary ? (
             <Text style={styles.summary}>{info.summary}</Text>
+          ) : polling ? (
+            <View style={styles.pendingRow}>
+              <ActivityIndicator size="small" color={Colors.textMuted} />
+              <Text style={[styles.message, styles.pendingText]}>Fetching more info about this album…</Text>
+            </View>
           ) : (
             <Text style={styles.message}>
-              {info?.pending
-                ? "We're fetching more info about this album — check back in a bit."
-                : 'No extra info found for this album.'}
+              {waitingForEnrichment
+                ? "Still fetching info for this album — pull down to refresh in a minute."
+                : info?.pending
+                  ? "Couldn't fetch info for this album right now — pull down to try again."
+                  : 'No extra info found for this album.'}
             </Text>
           )}
         </>
@@ -121,5 +161,7 @@ const styles = StyleSheet.create({
   stats: { color: Colors.textMuted, fontSize: 13, fontWeight: '500', marginBottom: 16 },
 
   summary: { color: Colors.text, fontSize: 15, lineHeight: 22 },
-  message: { color: Colors.textMuted, fontSize: 14, lineHeight: 20, marginTop: 8 }
+  message: { color: Colors.textMuted, fontSize: 14, lineHeight: 20, marginTop: 8 },
+  pendingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  pendingText: { marginTop: 0 }
 });

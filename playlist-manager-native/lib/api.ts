@@ -327,14 +327,19 @@ export interface AlbumInfo {
   listeners: number | null;
   playcount: number | null;
   fetchedAt: string | null;
-  /** True when nothing is cached yet — enrichment was just triggered in the background. */
+  /** True when nothing is cached for this album yet. */
   pending: boolean;
+  /**
+   * True when a background enrichment run is queued as of this response — poll while
+   * `pending && enrichmentQueued`. `pending` without it means queuing failed server-side.
+   */
+  enrichmentQueued: boolean;
 }
 
 /**
  * GET /api/albums/[albumId]/info — MusicBrainz/Wikipedia/Last.fm enrichment (type,
  * summary, Last.fm stats). May return `pending: true` with no summary on first view of an
- * album — the server triggers a background fetch and the data will be there on a later visit.
+ * album — the server queues a background fetch, so re-fetch shortly to pick up the result.
  */
 export async function fetchAlbumInfo(albumId: string): Promise<AlbumInfo> {
   const res = await authedFetch(albumInfoUrl(albumId));
