@@ -273,7 +273,12 @@ export const authRequestConfig: AuthSession.AuthRequestConfig = {
   scopes: ['openid', 'profile', 'email', 'offline_access'],
   responseType: AuthSession.ResponseType.Code,
   extraParams: {
-    ...(AUTH0_AUDIENCE ? { audience: AUTH0_AUDIENCE } : {})
+    ...(AUTH0_AUDIENCE ? { audience: AUTH0_AUDIENCE } : {}),
+    // Always show Auth0's login screen. Sign out only clears our SecureStore
+    // tokens, not Auth0's session cookie (shared with Safari), so without this
+    // signing back in silently reuses the last account and never offers the
+    // choice of Google vs username/password.
+    prompt: 'login'
   },
   usePKCE: true,
 };
