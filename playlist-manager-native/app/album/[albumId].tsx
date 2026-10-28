@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  Animated,
+  Easing,
   useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent
@@ -25,6 +27,12 @@ import { getAlbumDetail, peekAlbumDetail, prefetchAlbumDetail, updateCachedAlbum
 
 const BEST_ALBUMS_PATTERN = /best albums/i;
 const NEW_ALBUMS_PATTERN  = /new albums/i;
+
+// Long strip jumps fake a page swipe: the current page slides out this
+// fraction of the screen width while fading, then the target slides in.
+const JUMP_SLIDE_FRACTION = 0.3;
+const JUMP_OUT_MS = 120;
+const JUMP_IN_MS = 200;
 
 // How many albums either side of the current one to fetch ahead of a swipe.
 const PREFETCH_RADIUS = 2;
@@ -61,6 +69,8 @@ export default function AlbumDetailScreen() {
 
   const pagerRef = useRef<FlatList<{ id: string; summary?: PlaylistAlbum }>>(null);
   const stripRef = useRef<FlatList<PlaylistAlbum>>(null);
+  const jumpSlide = useRef(new Animated.Value(0)).current;
+  const jumpOpacity = useRef(new Animated.Value(1)).current;
 
   const handleAuthError = useCallback(async () => {
     await clearTokens();
@@ -122,13 +132,35 @@ export default function AlbumDetailScreen() {
     if (!albums) return;
     const target = albums.findIndex(a => a.id === targetAlbumId);
     if (target < 0) return;
-    // Only animate to an adjacent page: animating a long jump scrolls through
-    // (and mounts, and fetches) every album in between.
-    const animated = Math.abs(target - index) <= 1;
+    if (target === index) return;
     setIndex(target);
-    if (!animated) prefetchAlbumDetail(albums[target].id);
-    pagerRef.current?.scrollToIndex({ index: target, animated });
-  }, [albums, index]);
+
+    // Adjacent pages: a real animated scroll is already a swipe.
+    if (Math.abs(target - index) === 1) {
+      pagerRef.current?.scrollToIndex({ index: target, animated: true });
+      return;
+    }
+
+    // Longer jumps: animating the FlatList would scroll through (and mount,
+    // and fetch) every album in between, so instead slide the current page out
+    // towards the jump direction, snap to the target, and slide it in from
+    // the other side — reads as a swipe matching the playlist order.
+    prefetchAlbumDetail(albums[target].id);
+    const offset = width * JUMP_SLIDE_FRACTION * (target > index ? 1 : -1);
+    jumpSlide.stopAnimation();
+    jumpOpacity.stopAnimation();
+    Animated.parallel([
+      Animated.timing(jumpSlide, { toValue: -offset, duration: JUMP_OUT_MS, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      Animated.timing(jumpOpacity, { toValue: 0, duration: JUMP_OUT_MS, useNativeDriver: true }),
+    ]).start(() => {
+      pagerRef.current?.scrollToIndex({ index: target, animated: false });
+      jumpSlide.setValue(offset);
+      Animated.parallel([
+        Animated.timing(jumpSlide, { toValue: 0, duration: JUMP_IN_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(jumpOpacity, { toValue: 1, duration: JUMP_IN_MS, useNativeDriver: true }),
+      ]).start();
+    });
+  }, [albums, index, width, jumpSlide, jumpOpacity]);
 
   const onPlaylistName = useCallback((name: string) => {
     setPlaylistName(prev => prev || name);
@@ -163,34 +195,36 @@ export default function AlbumDetailScreen() {
       )}
 
       {/* ── Pager ────────────────────────────────────────────────────────────── */}
-      <FlatList
-        ref={pagerRef}
-        style={styles.pager}
-        data={pages}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={item => item.id}
-        initialScrollIndex={index}
-        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
-        onMomentumScrollEnd={onPagerScrollEnd}
-        // Mount the neighbours too so a swipe lands on an already-loaded page.
-        windowSize={3}
-        initialNumToRender={1}
-        maxToRenderPerBatch={1}
-        renderItem={({ item }) => (
-          <View style={{ width }}>
-            <AlbumPage
-              albumId={item.id}
-              summary={item.summary}
-              playlistId={playlistId}
-              bestAlbumsPlaylists={bestAlbumsPlaylists}
-              onAuthError={handleAuthError}
-              onPlaylistName={onPlaylistName}
-            />
-          </View>
-        )}
-      />
+      <Animated.View style={[styles.pager, { opacity: jumpOpacity, transform: [{ translateX: jumpSlide }] }]}>
+        <FlatList
+          ref={pagerRef}
+          style={styles.pager}
+          data={pages}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={item => item.id}
+          initialScrollIndex={index}
+          getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
+          onMomentumScrollEnd={onPagerScrollEnd}
+          // Mount the neighbours too so a swipe lands on an already-loaded page.
+          windowSize={3}
+          initialNumToRender={1}
+          maxToRenderPerBatch={1}
+          renderItem={({ item }) => (
+            <View style={{ width }}>
+              <AlbumPage
+                albumId={item.id}
+                summary={item.summary}
+                playlistId={playlistId}
+                bestAlbumsPlaylists={bestAlbumsPlaylists}
+                onAuthError={handleAuthError}
+                onPlaylistName={onPlaylistName}
+              />
+            </View>
+          )}
+        />
+      </Animated.View>
     </View>
   );
 }
