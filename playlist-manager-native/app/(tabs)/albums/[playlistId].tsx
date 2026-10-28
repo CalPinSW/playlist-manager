@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { fetchPlaylistAlbums, AuthError, PlaylistAlbum } from '../../../lib/api';
-import { ProgressBar } from '../../../components/ProgressBar';
+import { SegmentedProgress, trackSegments } from '../../../components/SegmentedProgress';
 import { Colors, Fonts } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
 
@@ -135,7 +135,7 @@ function AlbumCard({ album, onPress }: { album: PlaylistAlbum; onPress: () => vo
         <Text style={styles.artistName} numberOfLines={1}>{artistNames}</Text>
         {prog ? (
           <>
-            <ProgressBar percent={pct} compact />
+            <SegmentedProgress segments={trackSegments(prog.lastTrackIndex + 1, prog.totalTracks)} compact />
             <Text style={styles.stats}>
               {prog.lastTrackIndex + 1}/{prog.totalTracks} tracks · {pct}%
             </Text>

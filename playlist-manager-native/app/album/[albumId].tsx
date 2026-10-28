@@ -5,7 +5,8 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
-  Pressable,
+  GestureResponderEvent,
+  LayoutChangeEvent,
   StyleSheet,
   ActivityIndicator,
   Linking,
@@ -19,8 +20,9 @@ import {
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
-import { ProgressBar } from '../../components/ProgressBar';
+import { SegmentedProgress, trackSegments } from '../../components/SegmentedProgress';
 import { Colors, Fonts } from '../../constants/colors';
 import { clearTokens } from '../../lib/auth';
 import { getAlbumDetail, peekAlbumDetail, prefetchAlbumDetail, updateCachedAlbum } from '../../lib/albumCache';
@@ -427,7 +429,10 @@ function AlbumPage({
             <Text style={styles.progressLabel}>Track {currentTrackIndex + 1} of {album.totalTracks}</Text>
             <Text style={styles.progressPct}>{pct}%</Text>
           </View>
-          <ProgressBar percent={pct} />
+          <SegmentedProgress
+            segments={trackSegments(currentTrackIndex + 1, album.totalTracks)}
+            accessibilityLabel={`Track ${currentTrackIndex + 1} of ${album.totalTracks}`}
+          />
         </View>
       )}
 
@@ -603,21 +608,26 @@ const stripStyles = StyleSheet.create({
 
 // ── Star rating ────────────────────────────────────────────────────────────────
 
-const STAR_SIZE = 26;
+const STAR_SIZE = 34;
 
-function StarGlyph({ fill, faded }: { fill: 'empty' | 'half' | 'full'; faded?: boolean }) {
+function StarGlyph({ fill }: { fill: 'empty' | 'half' | 'full' }) {
+  const name = fill === 'full' ? 'star' : fill === 'half' ? 'star-half' : 'star-outline';
   return (
-    <View style={styles.starGlyph} pointerEvents="none">
-      <Text style={[styles.star, styles.starEmpty, faded && styles.starPending]}>☆</Text>
-      {fill !== 'empty' && (
-        <View style={[styles.starClip, fill === 'half' ? { width: STAR_SIZE / 2 } : { width: STAR_SIZE }]}>
-          <Text style={[styles.star, styles.starFilled, faded && styles.starPending]}>★</Text>
-        </View>
-      )}
-    </View>
+    <Ionicons
+      name={name}
+      size={STAR_SIZE}
+      color={fill === 'empty' ? Colors.textFaint : Colors.rating}
+    />
   );
 }
 
+/**
+ * Rating selector (stored 1–10, shown as 0.5–5 stars). The whole star row is
+ * one touch target: tap or drag anywhere along it and the position snaps to
+ * the nearest half star, so half ratings don't need a precise tap on half a
+ * glyph. The value previews live while the finger is down and commits on
+ * release.
+ */
 function StarRating({
   rating,
   pending,
@@ -627,44 +637,65 @@ function StarRating({
   pending: boolean;
   onRate: (newRating: number) => void;
 }) {
-  const [pressedRating, setPressedRating] = useState<number | null>(null);
-  const displayValue = (pressedRating ?? rating ?? 0) / 2;
+  const [scrubRating, setScrubRating] = useState<number | null>(null);
+  const widthRef = useRef(0);
+  const shown = scrubRating ?? rating;
+  const displayValue = (shown ?? 0) / 2;
 
-  const labelText = pressedRating !== null
-    ? `${(pressedRating / 2).toFixed(1)} / 5`
-    : rating !== null
-      ? `${(rating / 2).toFixed(1)} / 5`
-      : 'Tap to rate';
+  const ratingAt = (x: number) =>
+    Math.min(10, Math.max(1, Math.ceil((x / Math.max(1, widthRef.current)) * 10)));
+
+  const onLayout = (e: LayoutChangeEvent) => { widthRef.current = e.nativeEvent.layout.width; };
+  const onTouch = (e: GestureResponderEvent) => setScrubRating(ratingAt(e.nativeEvent.locationX));
+  const onRelease = (e: GestureResponderEvent) => {
+    const next = ratingAt(e.nativeEvent.locationX);
+    setScrubRating(null);
+    if (next !== rating) onRate(next);
+  };
 
   return (
-    <View style={styles.ratingRow}>
-      {[1, 2, 3, 4, 5].map(star => {
-        const filled = displayValue >= star;
-        const half = !filled && displayValue >= star - 0.5;
-        const fill: 'full' | 'half' | 'empty' = filled ? 'full' : half ? 'half' : 'empty';
-        const leftVal = (star - 1) * 2 + 1;
-        const rightVal = star * 2;
-        return (
-          <View key={star} style={styles.starWrap}>
-            <Pressable
-              style={[styles.starHalf, styles.starHalfLeft]}
-              onPressIn={() => setPressedRating(leftVal)}
-              onPressOut={() => setPressedRating(null)}
-              onPress={() => { if (leftVal !== rating) onRate(leftVal); }}
-              disabled={pending}
-            />
-            <Pressable
-              style={[styles.starHalf, styles.starHalfRight]}
-              onPressIn={() => setPressedRating(rightVal)}
-              onPressOut={() => setPressedRating(null)}
-              onPress={() => { if (rightVal !== rating) onRate(rightVal); }}
-              disabled={pending}
-            />
-            <StarGlyph fill={fill} faded={pending} />
-          </View>
-        );
-      })}
-      <Text style={[styles.ratingLabel, pending && styles.starPending]}>{labelText}</Text>
+    <View style={styles.ratingBlock}>
+      <View
+        style={[styles.ratingRow, pending && styles.starPending]}
+        onLayout={onLayout}
+        onStartShouldSetResponder={() => !pending}
+        onMoveShouldSetResponder={() => !pending}
+        // Keep the touch while scrubbing sideways instead of handing it to
+        // the album pager / vertical ScrollView.
+        onResponderTerminationRequest={() => false}
+        onResponderGrant={onTouch}
+        onResponderMove={onTouch}
+        onResponderRelease={onRelease}
+        onResponderTerminate={() => setScrubRating(null)}
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel="Rating"
+        accessibilityValue={{ text: shown ? `${(shown / 2).toFixed(1)} out of 5 stars` : 'Not rated' }}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={e => {
+          const current = rating ?? 0;
+          const next = e.nativeEvent.actionName === 'increment' ? Math.min(10, current + 1) : Math.max(1, current - 1);
+          if (next !== rating) onRate(next);
+        }}
+      >
+        {/* Children ignore touches so locationX is always relative to the row */}
+        <View style={styles.starsInner} pointerEvents="none">
+          {[1, 2, 3, 4, 5].map(star => {
+            const fill = displayValue >= star ? 'full' : displayValue >= star - 0.5 ? 'half' : 'empty';
+            return <StarGlyph key={star} fill={fill} />;
+          })}
+        </View>
+      </View>
+      <View style={styles.ratingValueWrap} pointerEvents="none">
+        {shown ? (
+          <Text style={[styles.ratingValue, scrubRating !== null && styles.ratingValueScrub]}>
+            {(shown / 2).toFixed(1)}
+            <Text style={styles.ratingOutOf}> / 5</Text>
+          </Text>
+        ) : (
+          <Text style={styles.ratingHint}>Tap or slide{'\n'}to rate</Text>
+        )}
+      </View>
     </View>
   );
 }
@@ -739,22 +770,19 @@ const styles = StyleSheet.create({
   },
   chipText: { color: Colors.textMuted, fontSize: 11, fontWeight: '500' },
 
-  ratingRow: {
+  ratingBlock: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 10,
-    gap: 2, marginBottom: 4
+    paddingHorizontal: 20, paddingVertical: 8, marginBottom: 8, gap: 16
   },
-  starWrap: { width: STAR_SIZE, height: STAR_SIZE, position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  starHalf: { position: 'absolute', top: 0, bottom: 0, width: '50%' },
-  starHalfLeft: { left: 0 },
-  starHalfRight: { right: 0 },
-  starGlyph: { width: STAR_SIZE, height: STAR_SIZE, position: 'relative' },
-  starClip: { position: 'absolute', top: 0, left: 0, height: STAR_SIZE, overflow: 'hidden' },
-  star: { fontSize: STAR_SIZE, lineHeight: STAR_SIZE },
-  starFilled: { color: Colors.rating },
-  starEmpty: { color: Colors.textFaint },
+  // Generous vertical padding so the touch strip is easy to hit
+  ratingRow: { flex: 1, paddingVertical: 8 },
+  starsInner: { flexDirection: 'row', justifyContent: 'space-between' },
   starPending: { opacity: 0.5 },
-  ratingLabel: { color: Colors.textMuted, fontSize: 13, marginLeft: 10 },
+  ratingValueWrap: { width: 64, alignItems: 'flex-end' },
+  ratingValue: { color: Colors.text, fontSize: 24, fontFamily: Fonts.display, fontVariant: ['tabular-nums'] },
+  ratingValueScrub: { color: Colors.rating },
+  ratingOutOf: { color: Colors.textMuted, fontSize: 13 },
+  ratingHint: { color: Colors.textMuted, fontSize: 11, textAlign: 'right', lineHeight: 15 },
 
   progressSection: { paddingHorizontal: 20, marginBottom: 4 },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },

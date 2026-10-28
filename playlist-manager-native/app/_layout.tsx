@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
 import { Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import { Colors } from '../constants/colors';
@@ -47,10 +47,10 @@ function RootLayout() {
   const segments = useSegments();
   const [authChecked, setAuthChecked] = useState(false);
 
-  // Pre-load Ionicons (and the Fraunces display face) before the tab bar renders so Font.loadAsync
+  // Pre-load the icon fonts (and the Fraunces display face) before the tab bar renders so Font.loadAsync
   // is never called lazily in a production build (where an unhandled rejection
   // would crash the app via Hermes' strict promise-rejection handling).
-  const [fontsLoaded] = useFonts({ ...Ionicons.font, Fraunces_500Medium, Fraunces_600SemiBold });
+  const [fontsLoaded] = useFonts({ ...Ionicons.font, ...Feather.font, Fraunces_500Medium, Fraunces_600SemiBold });
 
   useEffect(() => {
     async function checkAuth() {

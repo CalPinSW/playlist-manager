@@ -19,8 +19,10 @@ import { promptSpotifyReconnect } from '../../lib/spotifyReconnect';
 import { getCachedProgress, cacheProgress } from '../../lib/db';
 import { Colors, Fonts } from '../../constants/colors';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { clearTokens } from '../../lib/auth';
 import { writeNowPlaying } from '../../modules/widget-bridge';
+import { SegmentedProgress, albumSegments, trackSegments } from '../../components/SegmentedProgress';
 
 const POLL_INTERVAL_MS = 10_000;
 
@@ -312,34 +314,40 @@ function PlaylistSection({
   return (
     <View ref={sectionRef} style={[styles.section, !isFirst && styles.sectionGap]}>
       {/* Playlist header */}
-      <TouchableOpacity style={styles.playlistHeader} onPress={onPlaylistPress} activeOpacity={0.75}>
-        {/* 2×2 art mosaic */}
-        <View style={styles.mosaic}>
-          {[0, 1, 2, 3].map(i =>
-            coverImages[i]
-              ? <Image key={i} source={{ uri: coverImages[i] }} style={styles.mosaicCell} />
-              : <View key={i} style={[styles.mosaicCell, styles.mosaicEmpty]} />
-          )}
-        </View>
-
-        {/* Playlist info */}
-        <View style={styles.playlistInfo}>
-          <Text style={styles.playlistName} numberOfLines={1}>{group.playlistName}</Text>
-          <Text style={styles.playlistMeta}>
-            {safeTotal} album{safeTotal !== 1 ? 's' : ''}
-            {doneCount > 0 ? `  ·  ${doneCount} done` : ''}
-          </Text>
-          <View style={styles.playlistProgressRow}>
-            <View style={styles.playlistProgressTrack}>
-              <View style={[styles.playlistProgressFill, { width: `${playlistPct}%` }]} />
-            </View>
-            <Text style={styles.playlistProgressPct}>{playlistPct}%</Text>
+      <TouchableOpacity
+        style={styles.playlistHeader}
+        onPress={onPlaylistPress}
+        activeOpacity={0.75}
+        accessibilityRole="button"
+        accessibilityLabel={`${group.playlistName}, ${doneCount} of ${safeTotal} albums finished. View all albums`}
+      >
+        <View style={styles.playlistHeaderRow}>
+          {/* 2×2 art mosaic */}
+          <View style={styles.mosaic}>
+            {[0, 1, 2, 3].map(i =>
+              coverImages[i]
+                ? <Image key={i} source={{ uri: coverImages[i] }} style={styles.mosaicCell} />
+                : <View key={i} style={[styles.mosaicCell, styles.mosaicEmpty]} />
+            )}
           </View>
+
+          {/* Playlist info — the whole header opens the playlist */}
+          <View style={styles.playlistInfo}>
+            <Text style={styles.playlistName} numberOfLines={1}>{group.playlistName}</Text>
+            <Text style={styles.playlistMeta}>
+              {doneCount} of {safeTotal} finished{'  ·  '}{playlistPct}%
+            </Text>
+          </View>
+
+          <Ionicons name="chevron-forward" size={18} color={Colors.textFaint} />
         </View>
 
-        <View style={styles.viewAllBtn}>
-          <Text style={styles.viewAllText}>View all</Text>
-          <Text style={styles.viewAllChevron}>›</Text>
+        {/* One segment per album in the playlist */}
+        <View style={styles.playlistBar}>
+          <SegmentedProgress
+            segments={albumSegments(group.albums.map(a => a.progressPercent), safeTotal)}
+            accessibilityLabel={`Playlist ${playlistPct}% listened`}
+          />
         </View>
       </TouchableOpacity>
 
@@ -468,8 +476,11 @@ function AlbumCard({
         {liveTrackName && (
           <Text style={styles.albumCardTrack} numberOfLines={1}>♪ {liveTrackName}</Text>
         )}
-        <View style={styles.albumCardProgressTrack}>
-          <View style={[styles.albumCardProgressFill, { width: `${entry.progressPercent}%` }]} />
+        <View style={styles.albumCardBar}>
+          <SegmentedProgress
+            segments={trackSegments(entry.lastTrackIndex + 1, entry.totalTracks)}
+            compact
+          />
         </View>
         <Text style={styles.albumCardProgressText}>
           {entry.progressPercent}%{'  ·  '}{entry.lastTrackIndex + 1}/{entry.totalTracks}
@@ -513,10 +524,15 @@ const styles = StyleSheet.create({
   sectionGap: { marginTop: 20 },
 
   playlistHeader: {
+    padding: 14,
+  },
+  playlistHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
     gap: 12,
+  },
+  playlistBar: {
+    marginTop: 14,
   },
 
   // 2×2 mosaic
@@ -550,46 +566,10 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   playlistMeta: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    letterSpacing: 0.1,
-  },
-  playlistProgressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
-  },
-  playlistProgressTrack: {
-    flex: 1,
-    height: 4,
-    backgroundColor: Colors.track,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  playlistProgressFill: {
-    height: '100%',
-    backgroundColor: Colors.accent,
-    borderRadius: 2,
-  },
-  playlistProgressPct: {
-    fontSize: 11,
+    fontSize: 12,
     fontVariant: ['tabular-nums'],
     color: Colors.textMuted,
-    flexShrink: 0,
-    minWidth: 32,
-    textAlign: 'right',
   },
-
-  viewAllBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    flexShrink: 0,
-  },
-  viewAllText: { fontSize: 12, color: Colors.text, fontWeight: '600' },
-  viewAllChevron: { fontSize: 18, color: Colors.textMuted, lineHeight: 20 },
-
   // ── Resume button ───────────────────────────────────────────────────────────
 
   resumeBtn: {
@@ -734,20 +714,10 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: 5,
   },
-  albumCardProgressTrack: {
-    height: 3,
-    backgroundColor: Colors.track,
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  albumCardProgressFill: {
-    height: '100%',
-    backgroundColor: Colors.accent,
-    borderRadius: 2,
-  },
+  albumCardBar: { marginBottom: 6 },
   albumCardProgressText: {
     fontSize: 10,
+    fontVariant: ['tabular-nums'],
     color: Colors.textMuted,
   },
 
