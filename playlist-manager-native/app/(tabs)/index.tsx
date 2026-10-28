@@ -10,6 +10,7 @@ import {
   Alert,
   AppState,
   AppStateStatus,
+  LayoutAnimation,
 } from 'react-native';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -287,18 +288,25 @@ function PlaylistSection({
   const hiddenCount = group.albums.length - COLLAPSED_COUNT;
   const hasMore = group.albums.length > COLLAPSED_COUNT;
 
+  const handleExpand = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(true);
+  }, []);
+
   const handleCollapse = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(false);
-    // After layout settles, scroll so the section top sits at the top of the visible area.
+    // After layout settles, if the section top has scrolled above the visible
+    // area (e.g. collapsing from the bottom footer), bring it back into view.
     setTimeout(() => {
       sectionRef.current?.measure((_fx, _fy, _w, _h, _px, pageY) => {
         // pageY is the section's current top in screen coordinates.
         // insets.top is the safe-area boundary (below the notch/status bar).
-        // targetY puts the section top exactly at the top of the content area.
+        if (pageY >= insets.top) return;
         const targetY = scrollYRef.current + pageY - insets.top;
         scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY), animated: true });
       });
-    }, 50);
+    }, 300);
   }, [scrollViewRef, scrollYRef, insets.top]);
 
   return (
@@ -350,8 +358,33 @@ function PlaylistSection({
         </TouchableOpacity>
       )}
 
+      {/* In-progress bar with expand / collapse toggle */}
+      {hasMore && (
+        <View style={styles.gridBar}>
+          <Text style={styles.gridBarLabel}>
+            {group.albums.length} in progress
+          </Text>
+          <TouchableOpacity
+            style={styles.expandPill}
+            onPress={expanded ? handleCollapse : handleExpand}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityState={{ expanded }}
+            accessibilityLabel={expanded ? 'Show fewer albums' : `Show ${hiddenCount} more albums`}
+          >
+            <Text style={styles.expandBtnText}>
+              {expanded ? 'Show less' : `Show ${hiddenCount} more`}
+            </Text>
+            <Text style={[styles.expandBtnChevron, expanded && styles.expandBtnChevronUp]}>
+              ›
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Album card grid */}
-      <View style={styles.albumGrid}>
+      <View style={[styles.albumGrid, !hasMore && styles.albumGridDivider]}>
         {visibleAlbums.map(entry => {
           const resolved = applyLive(entry);
           const isLive = entry.albumId === liveAlbumId;
@@ -368,19 +401,18 @@ function PlaylistSection({
         })}
       </View>
 
-      {/* Expand / collapse footer */}
-      {hasMore && (
+      {/* Collapse footer — only when expanded, so a long list can be closed
+          from either end without scrolling back up */}
+      {hasMore && expanded && (
         <TouchableOpacity
           style={styles.expandBtn}
-          onPress={expanded ? handleCollapse : () => setExpanded(true)}
+          onPress={handleCollapse}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Show fewer albums"
         >
-          <Text style={styles.expandBtnText}>
-            {expanded ? 'Show less' : `Show ${hiddenCount} more`}
-          </Text>
-          <Text style={[styles.expandBtnChevron, expanded && styles.expandBtnChevronUp]}>
-            ›
-          </Text>
+          <Text style={styles.expandBtnText}>Show less</Text>
+          <Text style={[styles.expandBtnChevron, styles.expandBtnChevronUp]}>›</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -589,8 +621,39 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     padding: 8,
     gap: 8,
+  },
+  albumGridDivider: {
     borderTopWidth: 1,
     borderTopColor: Colors.border,
+  },
+  gridBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 2,
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  gridBarLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  expandPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: Colors.surfaceDark,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   albumCardWrap: {
     width: '47%',
