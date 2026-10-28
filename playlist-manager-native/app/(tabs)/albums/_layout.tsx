@@ -12,6 +12,7 @@ export default function AlbumsLayout() {
         headerShown: true,
         headerStyle: { backgroundColor: Colors.bg },
         headerTintColor: Colors.accent,
+        headerTitleStyle: { color: Colors.text, fontWeight: '600', fontSize: 16 },
         headerTitle: '',
         headerBackTitle: 'Back',
         contentStyle: { backgroundColor: Colors.bg }

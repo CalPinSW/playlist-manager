@@ -20,7 +20,7 @@ import {
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
 import { SegmentedProgress, trackSegments } from '../../components/SegmentedProgress';
 import { Colors, Fonts } from '../../constants/colors';
@@ -439,17 +439,20 @@ function AlbumPage({
       {/* ── Actions ──────────────────────────────────────────────────────────── */}
       <View style={styles.actions}>
         <TouchableOpacity style={styles.btnSpotify} onPress={openInSpotify} activeOpacity={0.8}>
-          <Text style={styles.btnSpotifyText}>▶  Open in Spotify</Text>
+          <Feather name="play" size={16} color={Colors.onAccent} />
+          <Text style={styles.btnSpotifyText}>Open in Spotify</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.btnInfo} onPress={navigateToInfo} activeOpacity={0.8}>
-          <Text style={styles.btnInfoText}>ℹ️  Album Info</Text>
+          <Feather name="info" size={16} color={Colors.text} />
+          <Text style={styles.btnInfoText}>Album info</Text>
         </TouchableOpacity>
 
         {bestAlbumsPlaylist && (
           promoted ? (
             <View style={styles.btnPromotedDone}>
-              <Text style={styles.btnPromotedDoneText}>✓  In Best Albums</Text>
+              <Feather name="check" size={16} color={Colors.successTextMuted} />
+              <Text style={styles.btnPromotedDoneText}>In Best Albums</Text>
             </View>
           ) : (
             <TouchableOpacity
@@ -458,8 +461,11 @@ function AlbumPage({
               activeOpacity={0.8}
               disabled={promoting}
             >
-              <Text style={styles.btnPromoteText}>
-                {promoting ? 'Adding…' : `★  Add to ${bestAlbumsPlaylist.name}`}
+              {promoting
+                ? <ActivityIndicator size="small" color={Colors.successText} />
+                : <Feather name="plus" size={16} color={Colors.successText} />}
+              <Text style={styles.btnPromoteText} numberOfLines={1}>
+                {promoting ? 'Adding…' : `Add to ${bestAlbumsPlaylist.name}`}
               </Text>
             </TouchableOpacity>
           )
@@ -645,12 +651,39 @@ function StarRating({
   const ratingAt = (x: number) =>
     Math.min(10, Math.max(1, Math.ceil((x / Math.max(1, widthRef.current)) * 10)));
 
+  // A touch starts 'pending' and only becomes a rating gesture once it's
+  // clearly a tap or a sideways drag. A mostly-vertical move is a scroll that
+  // happened to start on the stars: cancel it and let the ScrollView take
+  // over, rather than committing whatever star the finger landed on.
+  const gesture = useRef<{ x: number; y: number; mode: 'pending' | 'scrub' | 'cancelled' }>(
+    { x: 0, y: 0, mode: 'pending' }
+  );
+
   const onLayout = (e: LayoutChangeEvent) => { widthRef.current = e.nativeEvent.layout.width; };
-  const onTouch = (e: GestureResponderEvent) => setScrubRating(ratingAt(e.nativeEvent.locationX));
+  const onGrant = (e: GestureResponderEvent) => {
+    gesture.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY, mode: 'pending' };
+  };
+  const onMove = (e: GestureResponderEvent) => {
+    const g = gesture.current;
+    if (g.mode === 'cancelled') return;
+    const dx = Math.abs(e.nativeEvent.pageX - g.x);
+    const dy = Math.abs(e.nativeEvent.pageY - g.y);
+    if (g.mode === 'pending') {
+      if (dy > 8 && dy > dx) { g.mode = 'cancelled'; setScrubRating(null); return; }
+      if (dx > 6) g.mode = 'scrub';
+    }
+    if (g.mode === 'scrub') setScrubRating(ratingAt(e.nativeEvent.locationX));
+  };
   const onRelease = (e: GestureResponderEvent) => {
-    const next = ratingAt(e.nativeEvent.locationX);
+    const cancelled = gesture.current.mode === 'cancelled';
     setScrubRating(null);
+    if (cancelled) return;
+    const next = ratingAt(e.nativeEvent.locationX);
     if (next !== rating) onRate(next);
+  };
+  const onCancel = () => {
+    gesture.current.mode = 'cancelled';
+    setScrubRating(null);
   };
 
   return (
@@ -659,14 +692,13 @@ function StarRating({
         style={[styles.ratingRow, pending && styles.starPending]}
         onLayout={onLayout}
         onStartShouldSetResponder={() => !pending}
-        onMoveShouldSetResponder={() => !pending}
-        // Keep the touch while scrubbing sideways instead of handing it to
-        // the album pager / vertical ScrollView.
-        onResponderTerminationRequest={() => false}
-        onResponderGrant={onTouch}
-        onResponderMove={onTouch}
+        // Hand the touch to the ScrollView / album pager unless it's already
+        // a confirmed sideways scrub.
+        onResponderTerminationRequest={() => gesture.current.mode !== 'scrub'}
+        onResponderGrant={onGrant}
+        onResponderMove={onMove}
         onResponderRelease={onRelease}
-        onResponderTerminate={() => setScrubRating(null)}
+        onResponderTerminate={onCancel}
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel="Rating"
@@ -713,16 +745,18 @@ function TrackList({ tracks, currentTrackIndex }: { tracks: AlbumTrack[]; curren
         return (
           <View key={track.id}>
             <View style={[styles.trackRow, isCurrent && styles.trackRowCurrent, listened && !isCurrent && styles.trackRowListened]}>
-              <Text style={[styles.trackNum, isCurrent && styles.trackNumCurrent]}>
-                {isCurrent ? '♪' : track.trackNumber}
-              </Text>
+              <View style={styles.trackNumWrap}>
+                {isCurrent
+                  ? <Feather name="play" size={13} color={Colors.accent} />
+                  : <Text style={styles.trackNum}>{track.trackNumber}</Text>}
+              </View>
               <View style={styles.trackInfo}>
                 <Text style={[styles.trackName, isCurrent && styles.trackNameCurrent]} numberOfLines={1}>
                   {track.name}
                 </Text>
                 <Text style={styles.trackDuration}>{mins}:{secs}</Text>
               </View>
-              {listened && !isCurrent && <Text style={styles.listenedTick}>✓</Text>}
+              {listened && !isCurrent && <Feather name="check" size={16} color={Colors.success} />}
             </View>
             {isCurrent && <View style={styles.currentDivider} />}
           </View>
@@ -742,6 +776,13 @@ function Chip({ label }: { label: string }) {
 }
 
 // ── Styles ─────────────────────────────────────────────────────────────────────
+function actionBase() {
+  return {
+    height: 50, borderRadius: 12, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8
+  } as const;
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.bg },
   content: { paddingBottom: 60 },
@@ -790,25 +831,15 @@ const styles = StyleSheet.create({
   progressPct: { color: Colors.accent, fontSize: 13, fontWeight: '600', fontVariant: ['tabular-nums'] },
 
   actions: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 10 },
-  btnSpotify: { backgroundColor: Colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  // All actions share one shape: 50pt tall, icon + label centred
+  btnSpotify: { ...actionBase(), backgroundColor: Colors.accent },
   btnSpotifyText: { color: Colors.onAccent, fontSize: 15, fontWeight: '700' },
-  btnInfo: {
-    backgroundColor: Colors.fill, borderWidth: 1,
-    borderColor: Colors.hairline, borderRadius: 14,
-    paddingVertical: 14, alignItems: 'center'
-  },
-  btnInfoText: { color: Colors.text, fontSize: 14, fontWeight: '600' },
-  btnPromote: {
-    backgroundColor: Colors.successSoft, borderWidth: 1,
-    borderColor: Colors.successBorder, borderRadius: 14,
-    paddingVertical: 16, alignItems: 'center'
-  },
+  btnInfo: { ...actionBase(), backgroundColor: Colors.fill, borderWidth: 1, borderColor: Colors.hairline },
+  btnInfoText: { color: Colors.text, fontSize: 15, fontWeight: '600' },
+  btnPromote: { ...actionBase(), backgroundColor: Colors.successSoft, borderWidth: 1, borderColor: Colors.successBorder },
   btnPromoteDisabled: { opacity: 0.6 },
-  btnPromoteText: { color: Colors.successText, fontSize: 15, fontWeight: '700' },
-  btnPromotedDone: {
-    borderRadius: 14, paddingVertical: 16, alignItems: 'center',
-    backgroundColor: Colors.successSoft, borderWidth: 1, borderColor: Colors.successBorder
-  },
+  btnPromoteText: { color: Colors.successText, fontSize: 15, fontWeight: '600', flexShrink: 1 },
+  btnPromotedDone: { ...actionBase(), borderWidth: 1, borderColor: Colors.successBorder },
   btnPromotedDoneText: { color: Colors.successTextMuted, fontSize: 15, fontWeight: '600' },
 
   playlistTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingBottom: 16 },
@@ -829,13 +860,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, marginHorizontal: -10
   },
   trackRowListened: { opacity: 0.45 },
-  trackNum: { width: 22, textAlign: 'center', color: Colors.textMuted, fontSize: 13, flexShrink: 0 },
-  trackNumCurrent: { color: Colors.accent, fontSize: 18 },
+  trackNumWrap: { width: 22, alignItems: 'center', flexShrink: 0 },
+  trackNum: { color: Colors.textMuted, fontSize: 13, fontVariant: ['tabular-nums'] },
   trackInfo: { flex: 1 },
   trackName: { color: Colors.text, fontSize: 15, fontWeight: '500' },
   trackNameCurrent: { color: Colors.accent, fontWeight: '600' },
   trackDuration: { color: Colors.textMuted, fontSize: 12, marginTop: 2 },
-  listenedTick: { color: Colors.success, fontSize: 16 },
   currentDivider: { height: 1, backgroundColor: Colors.accentBorder, marginVertical: 2 },
   bottomSpacer: { height: 40 }
 });

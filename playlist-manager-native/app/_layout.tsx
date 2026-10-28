@@ -113,6 +113,7 @@ function RootLayout() {
             headerShown: true,
             headerStyle: { backgroundColor: Colors.bg },
             headerTintColor: Colors.accent,
+            headerTitleStyle: { color: Colors.text, fontWeight: '600', fontSize: 16 },
             headerTitle: '',
             headerBackTitle: 'Back'
           }}
@@ -123,7 +124,8 @@ function RootLayout() {
             headerShown: true,
             headerStyle: { backgroundColor: Colors.bg },
             headerTintColor: Colors.accent,
-            headerTitle: 'Album Info',
+            headerTitleStyle: { color: Colors.text, fontWeight: '600', fontSize: 16 },
+            headerTitle: 'Album info',
             headerBackTitle: 'Back'
           }}
         />

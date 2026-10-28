@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { fetchPlaylistAlbums, AuthError, PlaylistAlbum } from '../../../lib/api';
 import { SegmentedProgress, trackSegments } from '../../../components/SegmentedProgress';
+import { Feather } from '@expo/vector-icons';
 import { Colors, Fonts } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
 
@@ -126,7 +127,7 @@ function AlbumCard({ album, onPress }: { album: PlaylistAlbum; onPress: () => vo
         )}
         {completed && (
           <View style={styles.completedBadge}>
-            <Text style={styles.completedTick}>✓</Text>
+            <Feather name="check" size={11} color={Colors.onSuccess} />
           </View>
         )}
       </View>
@@ -144,7 +145,7 @@ function AlbumCard({ album, onPress }: { album: PlaylistAlbum; onPress: () => vo
           <Text style={styles.unstarted}>Not started</Text>
         )}
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <Feather name="chevron-right" size={18} color={Colors.textFaint} />
     </TouchableOpacity>
   );
 }
@@ -178,9 +179,10 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     backgroundColor: Colors.success,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: Colors.bg
   },
-  completedTick: { color: Colors.onSuccess, fontSize: 10, fontWeight: '700' },
 
   info: { flex: 1 },
   albumName: { color: Colors.text, fontSize: 15, fontWeight: '600', lineHeight: 20 },
@@ -188,7 +190,6 @@ const styles = StyleSheet.create({
   stats: { color: Colors.textMuted, fontSize: 11, marginTop: 4 },
   unstarted: { color: Colors.textFaint, fontSize: 12, marginTop: 4, fontStyle: 'italic' },
 
-  chevron: { color: Colors.textFaint, fontSize: 20 },
   divider: { height: 1, backgroundColor: Colors.divider },
 
   emptyState: { alignItems: 'center', paddingVertical: 48 },

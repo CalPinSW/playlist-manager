@@ -19,7 +19,7 @@ import { promptSpotifyReconnect } from '../../lib/spotifyReconnect';
 import { getCachedProgress, cacheProgress } from '../../lib/db';
 import { Colors, Fonts } from '../../constants/colors';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { clearTokens } from '../../lib/auth';
 import { writeNowPlaying } from '../../modules/widget-bridge';
 import { SegmentedProgress, albumSegments, trackSegments } from '../../components/SegmentedProgress';
@@ -339,7 +339,7 @@ function PlaylistSection({
             </Text>
           </View>
 
-          <Ionicons name="chevron-forward" size={18} color={Colors.textFaint} />
+          <Feather name="chevron-right" size={18} color={Colors.textFaint} />
         </View>
 
         {/* One segment per album in the playlist */}
@@ -361,7 +361,10 @@ function PlaylistSection({
         >
           {resuming
             ? <ActivityIndicator size="small" color={Colors.accent} />
-            : <Text style={styles.resumeBtnText}>▶  Resume</Text>
+            : <>
+                <Feather name="play" size={13} color={Colors.accent} />
+                <Text style={styles.resumeBtnText}>Resume</Text>
+              </>
           }
         </TouchableOpacity>
       )}
@@ -384,9 +387,7 @@ function PlaylistSection({
             <Text style={styles.expandBtnText}>
               {expanded ? 'Show less' : `Show ${hiddenCount} more`}
             </Text>
-            <Text style={[styles.expandBtnChevron, expanded && styles.expandBtnChevronUp]}>
-              ›
-            </Text>
+            <Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textMuted} />
           </TouchableOpacity>
         </View>
       )}
@@ -420,7 +421,7 @@ function PlaylistSection({
           accessibilityLabel="Show fewer albums"
         >
           <Text style={styles.expandBtnText}>Show less</Text>
-          <Text style={[styles.expandBtnChevron, styles.expandBtnChevronUp]}>›</Text>
+          <Feather name="chevron-up" size={14} color={Colors.textMuted} />
         </TouchableOpacity>
       )}
     </View>
@@ -464,7 +465,7 @@ function AlbumCard({
         )}
         {done && (
           <View style={styles.doneBadge}>
-            <Text style={styles.doneTick}>✓</Text>
+            <Feather name="check" size={11} color={Colors.onSuccess} />
           </View>
         )}
       </View>
@@ -474,7 +475,10 @@ function AlbumCard({
         <Text style={styles.albumCardName} numberOfLines={2}>{entry.albumName}</Text>
         <Text style={styles.albumCardArtist} numberOfLines={1}>{artistLine}</Text>
         {liveTrackName && (
-          <Text style={styles.albumCardTrack} numberOfLines={1}>♪ {liveTrackName}</Text>
+          <View style={styles.albumCardTrackRow}>
+            <Feather name="music" size={10} color={Colors.accent} />
+            <Text style={styles.albumCardTrack} numberOfLines={1}>{liveTrackName}</Text>
+          </View>
         )}
         <View style={styles.albumCardBar}>
           <SegmentedProgress
@@ -584,6 +588,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.accentBorder,
     minHeight: 36,
+    gap: 8,
   },
   resumeBtnDisabled: {
     opacity: 0.5,
@@ -691,7 +696,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: Colors.surface,
   },
-  doneTick: { color: Colors.onSuccess, fontSize: 10, fontWeight: '800' },
 
   albumCardBody: {
     padding: 8,
@@ -708,11 +712,12 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginBottom: 7,
   },
+  albumCardTrackRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 5 },
   albumCardTrack: {
+    flex: 1,
     fontSize: 10,
     color: Colors.textMuted,
     fontStyle: 'italic',
-    marginBottom: 5,
   },
   albumCardBar: { marginBottom: 6 },
   albumCardProgressText: {
@@ -735,15 +740,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: Colors.text,
-  },
-  expandBtnChevron: {
-    fontSize: 16,
-    color: Colors.textMuted,
-    lineHeight: 18,
-    transform: [{ rotate: '90deg' }],
-  },
-  expandBtnChevronUp: {
-    transform: [{ rotate: '-90deg' }],
   },
 
   // Error

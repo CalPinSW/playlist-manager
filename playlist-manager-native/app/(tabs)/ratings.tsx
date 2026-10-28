@@ -16,7 +16,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { fetchRatings, AuthError, RatedAlbum } from '../../lib/api';
 import { Colors, Fonts } from '../../constants/colors';
 import { clearTokens } from '../../lib/auth';
@@ -244,7 +244,7 @@ export default function RatingsScreen() {
 
                 <View style={styles.controlsRow}>
                   <TouchableOpacity style={styles.filtersButton} onPress={() => setFilterModalVisible(true)}>
-                    <Ionicons name="options-outline" size={16} color={Colors.text} />
+                    <Feather name="sliders" size={15} color={Colors.text} />
                     <Text style={styles.filtersButtonText}>Filters & sort</Text>
                     {activeFilterCount > 0 && (
                       <View style={styles.filterBadge}>
@@ -270,7 +270,7 @@ export default function RatingsScreen() {
         ListEmptyComponent={
           albums.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="star" size={40} color={Colors.rating} style={styles.emptyIcon} />
+              <Feather name="star" size={36} color={Colors.rating} style={styles.emptyIcon} />
               <Text style={styles.emptyTitle}>No ratings yet</Text>
               <Text style={styles.emptySubtitle}>
                 Open any album and tap the stars to rate it.
@@ -278,7 +278,7 @@ export default function RatingsScreen() {
             </View>
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="filter-outline" size={40} color={Colors.textMuted} style={styles.emptyIcon} />
+              <Feather name="filter" size={36} color={Colors.textMuted} style={styles.emptyIcon} />
               <Text style={styles.emptyTitle}>No albums match</Text>
               <Text style={styles.emptySubtitle}>
                 Try adjusting or clearing your filters.
@@ -376,7 +376,7 @@ function RatedAlbumRow({ album, onPress }: { album: RatedAlbum; onPress: () => v
         <StarRow rating={album.rating} />
       </View>
 
-      <Ionicons name="chevron-forward" size={18} color={Colors.textFaint} />
+      <Feather name="chevron-right" size={18} color={Colors.textFaint} />
     </TouchableOpacity>
   );
 }
@@ -415,12 +415,19 @@ function FilterModal({
   onClearAll: () => void;
 }) {
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      // pageSheet sits below the status bar on iOS (the safe-area insets
+      // don't reach inside a full-screen Modal) and can be swiped down.
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <SafeAreaView style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Filters & sort</Text>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="close" size={24} color={Colors.text} />
+            <Feather name="x" size={22} color={Colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -435,11 +442,7 @@ function FilterModal({
                 activeOpacity={0.7}
               >
                 <Text style={styles.optionLabel}>{opt.label}</Text>
-                <Ionicons
-                  name={sortBy === opt.value ? 'radio-button-on' : 'radio-button-off'}
-                  size={20}
-                  color={sortBy === opt.value ? Colors.accent : Colors.textFaint}
-                />
+                {sortBy === opt.value && <Feather name="check" size={18} color={Colors.accent} />}
               </TouchableOpacity>
             ))}
           </View>
@@ -449,13 +452,14 @@ function FilterModal({
             {MIN_RATING_OPTIONS.map(value => (
               <TouchableOpacity
                 key={value}
-                style={[styles.chip, minRating === value && styles.chipActive]}
+                style={[styles.chip, styles.chipWithIcon, minRating === value && styles.chipActive]}
                 onPress={() => onChangeMinRating(value)}
                 activeOpacity={0.75}
               >
                 <Text style={[styles.chipText, minRating === value && styles.chipTextActive]}>
-                  {value === 0 ? 'Any' : `${(value / 2).toFixed(1)}+ ★`}
+                  {value === 0 ? 'Any' : `${(value / 2).toFixed(1)}+`}
                 </Text>
+                {value !== 0 && <Ionicons name="star" size={11} color={Colors.rating} />}
               </TouchableOpacity>
             ))}
           </View>
@@ -590,7 +594,8 @@ const styles = StyleSheet.create({
 
   emptyContainer: { flex: 1 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80 },
-  emptyIcon: { opacity: 0.4, marginBottom: 16 },
+  emptyIcon: { opacity: 0.6, marginBottom: 16 },
+  chipWithIcon: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   emptyTitle: { fontSize: 20, fontFamily: Fonts.display, color: Colors.text, marginBottom: 8 },
   emptySubtitle: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22, paddingHorizontal: 32 },
   clearFiltersButton: {
@@ -615,7 +620,7 @@ const styles = StyleSheet.create({
   optionList: { marginBottom: 24 },
   optionRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: Colors.hairline
+    paddingVertical: 11, minHeight: 44, borderBottomWidth: 1, borderBottomColor: Colors.hairline
   },
   optionLabel: { color: Colors.text, fontSize: 15 },
   artistSearchInput: {

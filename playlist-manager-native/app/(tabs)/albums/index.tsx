@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { AppState, AppStateStatus } from 'react-native';
 import { fetchPlaylists, searchAlbums, syncHistory, AuthError, PlaylistSummary, PlaylistAlbum } from '../../../lib/api';
 import { getCachedPlaylists, cachePlaylists } from '../../../lib/db';
+import { Feather } from '@expo/vector-icons';
 import { Colors, Fonts } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
 
@@ -147,11 +148,11 @@ export default function AlbumsIndexScreen() {
         {!searchActive && <Text style={styles.heading}>Albums</Text>}
         <View style={styles.searchRow}>
           <View style={[styles.searchBar, searchActive && styles.searchBarFocused]}>
-            <Text style={styles.searchIcon}>🔍</Text>
+            <Feather name="search" size={16} color={searchActive ? Colors.accent : Colors.textMuted} />
             <TextInput
               ref={inputRef}
               style={styles.searchInput}
-              placeholder="Search playlists & albums…"
+              placeholder="Search playlists and albums"
               placeholderTextColor={Colors.textMuted}
               value={searchQuery}
               onChangeText={onChangeText}
@@ -234,13 +235,15 @@ function PlaylistRow({
   return (
     <TouchableOpacity style={styles.playlistRow} onPress={onPress} activeOpacity={0.7}>
       <View style={[styles.playlistThumb, isNew ? styles.thumbNew : styles.thumbBest]}>
-        <Text style={styles.thumbIcon}>{isNew ? '♫' : '★'}</Text>
+        <Feather name={isNew ? 'disc' : 'award'} size={20} color={Colors.text} />
       </View>
       <View style={styles.playlistText}>
         <Text style={styles.playlistName} numberOfLines={1}>{playlist.name}</Text>
-        <Text style={styles.playlistMeta} numberOfLines={1}>{playlist.description || ' '}</Text>
+        {!!playlist.description && (
+          <Text style={styles.playlistMeta} numberOfLines={1}>{playlist.description}</Text>
+        )}
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <Feather name="chevron-right" size={18} color={Colors.textFaint} />
     </TouchableOpacity>
   );
 }
@@ -263,7 +266,7 @@ function SearchResults({
   if (noResults) {
     return (
       <View style={styles.noResults}>
-        <Text style={styles.noResultsIcon}>🔍</Text>
+        <Feather name="search" size={32} color={Colors.textFaint} style={styles.noResultsIcon} />
         <Text style={styles.noResultsTitle}>No results for &quot;{query}&quot;</Text>
         <Text style={styles.noResultsSub}>Try searching by album name, artist, or playlist date</Text>
       </View>
@@ -338,7 +341,7 @@ function AlbumRow({ album, onPress }: { album: PlaylistAlbum; onPress: () => voi
         <Text style={styles.albumName} numberOfLines={1}>{album.name}</Text>
         <Text style={styles.albumArtist} numberOfLines={1}>{artistNames}</Text>
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <Feather name="chevron-right" size={18} color={Colors.textFaint} />
     </TouchableOpacity>
   );
 }
@@ -372,7 +375,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.accentBorder,
     backgroundColor: Colors.accentSoft
   },
-  searchIcon: { fontSize: 16 },
   searchInput: { flex: 1, color: Colors.text, fontSize: 16 },
   cancelBtn: { color: Colors.accent, fontSize: 15, fontWeight: '600' },
 
@@ -384,11 +386,9 @@ const styles = StyleSheet.create({
   },
   thumbNew: { backgroundColor: Colors.thumbNew },
   thumbBest: { backgroundColor: Colors.thumbBest },
-  thumbIcon: { fontSize: 20 },
   playlistText: { flex: 1, minWidth: 0 },
   playlistName: { color: Colors.text, fontSize: 15, fontWeight: '600' },
   playlistMeta: { color: Colors.textMuted, fontSize: 12, marginTop: 2 },
-  chevron: { color: Colors.textFaint, fontSize: 20 },
 
   // Album row (search results)
   albumRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 10, gap: 12 },
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   emptySubtitle: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22 },
 
   noResults: { flex: 1, alignItems: 'center', paddingTop: 64, paddingHorizontal: 32 },
-  noResultsIcon: { fontSize: 36, marginBottom: 12, opacity: 0.4 },
+  noResultsIcon: { marginBottom: 14 },
   noResultsTitle: { color: Colors.text, fontSize: 19, fontFamily: Fonts.display, marginBottom: 6 },
   noResultsSub: { color: Colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 22 }
 });

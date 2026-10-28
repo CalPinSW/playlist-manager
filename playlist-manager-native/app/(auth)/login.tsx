@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthRequest } from 'expo-auth-session';
 import { useEffect, useState } from 'react';
@@ -59,6 +59,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <Image source={require('../../assets/icon.png')} style={styles.logo} accessibilityIgnoresInvertColors />
       <Text style={styles.title}>Playlist{'\n'}Manager</Text>
       <Text style={styles.subtitle}>Your personal listening OS</Text>
 
@@ -87,6 +88,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 32
   },
+  logo: { width: 96, height: 96, borderRadius: 22, marginBottom: 28 },
   title: {
     fontSize: 48,
     fontFamily: Fonts.display,
