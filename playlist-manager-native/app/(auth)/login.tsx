@@ -1,10 +1,10 @@
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthRequest } from 'expo-auth-session';
 import { useEffect, useState } from 'react';
 import { discovery, authRequestConfig, exchangeCodeForTokens } from '../../lib/auth';
 import { syncHistory } from '../../lib/api';
-import { Colors } from '../../constants/colors';
+import { Colors, Fonts } from '../../constants/colors';
 
 /**
  * Login screen — Auth0 PKCE flow.
@@ -59,6 +59,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <Image source={require('../../assets/icon.png')} style={styles.logo} accessibilityIgnoresInvertColors />
       <Text style={styles.title}>Playlist{'\n'}Manager</Text>
       <Text style={styles.subtitle}>Your personal listening OS</Text>
 
@@ -70,7 +71,7 @@ export default function LoginScreen() {
         accessibilityRole="button"
       >
         {loading ? (
-          <ActivityIndicator color={Colors.text} />
+          <ActivityIndicator color={Colors.onAccent} />
         ) : (
           <Text style={styles.buttonText}>Sign in</Text>
         )}
@@ -82,14 +83,15 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.surfaceDark,
+    backgroundColor: Colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32
   },
+  logo: { width: 96, height: 96, borderRadius: 22, marginBottom: 28 },
   title: {
     fontSize: 48,
-    fontWeight: '700',
+    fontFamily: Fonts.display,
     color: Colors.text,
     textAlign: 'center',
     lineHeight: 54,
@@ -101,7 +103,7 @@ const styles = StyleSheet.create({
     marginBottom: 48
   },
   button: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     paddingVertical: 16,
     paddingHorizontal: 48,
     borderRadius: 12,
@@ -112,7 +114,7 @@ const styles = StyleSheet.create({
     opacity: 0.5
   },
   buttonText: {
-    color: Colors.text,
+    color: Colors.onAccent,
     fontSize: 18,
     fontWeight: '600'
   }

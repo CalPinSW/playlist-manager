@@ -1,13 +1,16 @@
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/colors';
 
-type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+type FeatherName = React.ComponentProps<typeof Feather>['name'];
 
 /**
- * Tab bar layout — 4 tabs with Ionicons.
- * Filled icons = active, outline = inactive.
+ * Tab bar layout — 4 tabs with thin-stroke Feather icons.
+ * Active tab = accent icon + a short accent bar above it (echoing the
+ * segmented progress bars); inactive = muted. Feather has no filled
+ * variants, so state is carried by colour and the bar, not icon swaps.
  * Portrait lock is set in app.json (orientation: 'portrait').
  */
 export default function TabLayout() {
@@ -18,11 +21,16 @@ export default function TabLayout() {
   // Android gesture bar (app.json has android.edgeToEdgeEnabled: true).
   const insets = useSafeAreaInsets();
 
-  const makeIcon = (active: IoniconName, inactive: IoniconName) => {
+  const makeIcon = (name: FeatherName) => {
     function TabIcon({ focused, color }: { focused: boolean; color: string }) {
-      return <Ionicons name={focused ? active : inactive} size={24} color={color} />;
+      return (
+        <View style={styles.iconWrap}>
+          <View style={[styles.indicator, focused && styles.indicatorActive]} />
+          <Feather name={name} size={21} color={color} />
+        </View>
+      );
     }
-    TabIcon.displayName = `TabIcon(${active})`;
+    TabIcon.displayName = `TabIcon(${name})`;
     return TabIcon;
   };
 
@@ -30,29 +38,31 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.tabActive,
-        tabBarInactiveTintColor: Colors.tabInactive,
+        tabBarActiveTintColor: Colors.accent,
+        tabBarInactiveTintColor: Colors.textFaint,
         tabBarStyle: {
-          backgroundColor: Colors.tabBackground,
-          borderTopColor: Colors.border,
-          borderTopWidth: 1,
-          height: 60 + insets.bottom,
+          backgroundColor: Colors.bg,
+          borderTopColor: Colors.divider,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          height: 62 + insets.bottom,
           paddingBottom: 8 + insets.bottom,
-          paddingTop: 6,
+          paddingTop: 0,
         },
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: '600',
-          letterSpacing: 0.3,
+          fontWeight: '500',
+          letterSpacing: 0.6,
+          textTransform: 'uppercase',
+          marginTop: 2,
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Now Playing',
+          title: 'Now',
           tabBarAccessibilityLabel: 'Now Playing tab',
-          tabBarIcon: makeIcon('headset', 'headset-outline'),
+          tabBarIcon: makeIcon('disc'),
         }}
       />
       <Tabs.Screen
@@ -60,7 +70,7 @@ export default function TabLayout() {
         options={{
           title: 'Albums',
           tabBarAccessibilityLabel: 'Albums tab — browse playlists and albums',
-          tabBarIcon: makeIcon('albums', 'albums-outline'),
+          tabBarIcon: makeIcon('layers'),
         }}
       />
       <Tabs.Screen
@@ -68,7 +78,7 @@ export default function TabLayout() {
         options={{
           title: 'Ratings',
           tabBarAccessibilityLabel: 'Ratings tab — your rated albums',
-          tabBarIcon: makeIcon('star', 'star-outline'),
+          tabBarIcon: makeIcon('star'),
         }}
       />
       <Tabs.Screen
@@ -76,9 +86,21 @@ export default function TabLayout() {
         options={{
           title: 'Settings',
           tabBarAccessibilityLabel: 'Settings tab',
-          tabBarIcon: makeIcon('settings', 'settings-outline'),
+          tabBarIcon: makeIcon('sliders'),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconWrap: { alignItems: 'center' },
+  indicator: {
+    width: 18,
+    height: 3,
+    borderRadius: 1.5,
+    marginBottom: 7,
+    backgroundColor: 'transparent',
+  },
+  indicatorActive: { backgroundColor: Colors.accent },
+});

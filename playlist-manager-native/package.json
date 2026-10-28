@@ -15,6 +15,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@expo-google-fonts/fraunces": "^0.4.1",
     "@expo/vector-icons": "^15.1.1",
     "@sentry/react-native": "~7.2.0",
     "expo": "~54.0.33",

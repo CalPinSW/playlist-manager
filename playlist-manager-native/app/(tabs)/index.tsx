@@ -17,10 +17,12 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { fetchProgress, fetchNowPlaying, syncHistory, resumePlayback, ProgressEntry, NowPlaying, AuthError, SpotifyReauthError } from '../../lib/api';
 import { promptSpotifyReconnect } from '../../lib/spotifyReconnect';
 import { getCachedProgress, cacheProgress } from '../../lib/db';
-import { Colors } from '../../constants/colors';
+import { Colors, Fonts } from '../../constants/colors';
 import { useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { clearTokens } from '../../lib/auth';
 import { writeNowPlaying } from '../../modules/widget-bridge';
+import { SegmentedProgress, albumSegments, trackSegments } from '../../components/SegmentedProgress';
 
 const POLL_INTERVAL_MS = 10_000;
 
@@ -172,7 +174,7 @@ export default function NowScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </SafeAreaView>
     );
   }
@@ -188,7 +190,7 @@ export default function NowScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => loadData({ showRefreshing: true })}
-            tintColor={Colors.primary}
+            tintColor={Colors.accent}
           />
         }
       >
@@ -312,34 +314,40 @@ function PlaylistSection({
   return (
     <View ref={sectionRef} style={[styles.section, !isFirst && styles.sectionGap]}>
       {/* Playlist header */}
-      <TouchableOpacity style={styles.playlistHeader} onPress={onPlaylistPress} activeOpacity={0.75}>
-        {/* 2×2 art mosaic */}
-        <View style={styles.mosaic}>
-          {[0, 1, 2, 3].map(i =>
-            coverImages[i]
-              ? <Image key={i} source={{ uri: coverImages[i] }} style={styles.mosaicCell} />
-              : <View key={i} style={[styles.mosaicCell, styles.mosaicEmpty]} />
-          )}
-        </View>
-
-        {/* Playlist info */}
-        <View style={styles.playlistInfo}>
-          <Text style={styles.playlistName} numberOfLines={1}>{group.playlistName}</Text>
-          <Text style={styles.playlistMeta}>
-            {safeTotal} album{safeTotal !== 1 ? 's' : ''}
-            {doneCount > 0 ? `  ·  ${doneCount} done` : ''}
-          </Text>
-          <View style={styles.playlistProgressRow}>
-            <View style={styles.playlistProgressTrack}>
-              <View style={[styles.playlistProgressFill, { width: `${playlistPct}%` }]} />
-            </View>
-            <Text style={styles.playlistProgressPct}>{playlistPct}%</Text>
+      <TouchableOpacity
+        style={styles.playlistHeader}
+        onPress={onPlaylistPress}
+        activeOpacity={0.75}
+        accessibilityRole="button"
+        accessibilityLabel={`${group.playlistName}, ${doneCount} of ${safeTotal} albums finished. View all albums`}
+      >
+        <View style={styles.playlistHeaderRow}>
+          {/* 2×2 art mosaic */}
+          <View style={styles.mosaic}>
+            {[0, 1, 2, 3].map(i =>
+              coverImages[i]
+                ? <Image key={i} source={{ uri: coverImages[i] }} style={styles.mosaicCell} />
+                : <View key={i} style={[styles.mosaicCell, styles.mosaicEmpty]} />
+            )}
           </View>
+
+          {/* Playlist info — the whole header opens the playlist */}
+          <View style={styles.playlistInfo}>
+            <Text style={styles.playlistName} numberOfLines={1}>{group.playlistName}</Text>
+            <Text style={styles.playlistMeta}>
+              {doneCount} of {safeTotal} finished{'  ·  '}{playlistPct}%
+            </Text>
+          </View>
+
+          <Feather name="chevron-right" size={18} color={Colors.textFaint} />
         </View>
 
-        <View style={styles.viewAllBtn}>
-          <Text style={styles.viewAllText}>View all</Text>
-          <Text style={styles.viewAllChevron}>›</Text>
+        {/* One segment per album in the playlist */}
+        <View style={styles.playlistBar}>
+          <SegmentedProgress
+            segments={albumSegments(group.albums.map(a => a.progressPercent), safeTotal)}
+            accessibilityLabel={`Playlist ${playlistPct}% listened`}
+          />
         </View>
       </TouchableOpacity>
 
@@ -352,8 +360,11 @@ function PlaylistSection({
           disabled={resuming}
         >
           {resuming
-            ? <ActivityIndicator size="small" color={Colors.primary} />
-            : <Text style={styles.resumeBtnText}>▶  Resume</Text>
+            ? <ActivityIndicator size="small" color={Colors.accent} />
+            : <>
+                <Feather name="play" size={13} color={Colors.accent} />
+                <Text style={styles.resumeBtnText}>Resume</Text>
+              </>
           }
         </TouchableOpacity>
       )}
@@ -376,9 +387,7 @@ function PlaylistSection({
             <Text style={styles.expandBtnText}>
               {expanded ? 'Show less' : `Show ${hiddenCount} more`}
             </Text>
-            <Text style={[styles.expandBtnChevron, expanded && styles.expandBtnChevronUp]}>
-              ›
-            </Text>
+            <Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textMuted} />
           </TouchableOpacity>
         </View>
       )}
@@ -412,7 +421,7 @@ function PlaylistSection({
           accessibilityLabel="Show fewer albums"
         >
           <Text style={styles.expandBtnText}>Show less</Text>
-          <Text style={[styles.expandBtnChevron, styles.expandBtnChevronUp]}>›</Text>
+          <Feather name="chevron-up" size={14} color={Colors.textMuted} />
         </TouchableOpacity>
       )}
     </View>
@@ -456,7 +465,7 @@ function AlbumCard({
         )}
         {done && (
           <View style={styles.doneBadge}>
-            <Text style={styles.doneTick}>✓</Text>
+            <Feather name="check" size={11} color={Colors.onSuccess} />
           </View>
         )}
       </View>
@@ -466,10 +475,16 @@ function AlbumCard({
         <Text style={styles.albumCardName} numberOfLines={2}>{entry.albumName}</Text>
         <Text style={styles.albumCardArtist} numberOfLines={1}>{artistLine}</Text>
         {liveTrackName && (
-          <Text style={styles.albumCardTrack} numberOfLines={1}>♪ {liveTrackName}</Text>
+          <View style={styles.albumCardTrackRow}>
+            <Feather name="music" size={10} color={Colors.accent} />
+            <Text style={styles.albumCardTrack} numberOfLines={1}>{liveTrackName}</Text>
+          </View>
         )}
-        <View style={styles.albumCardProgressTrack}>
-          <View style={[styles.albumCardProgressFill, { width: `${entry.progressPercent}%` }]} />
+        <View style={styles.albumCardBar}>
+          <SegmentedProgress
+            segments={trackSegments(entry.lastTrackIndex + 1, entry.totalTracks)}
+            compact
+          />
         </View>
         <Text style={styles.albumCardProgressText}>
           {entry.progressPercent}%{'  ·  '}{entry.lastTrackIndex + 1}/{entry.totalTracks}
@@ -496,10 +511,10 @@ function EmptyState() {
 // ── Styles ─────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.surfaceDark },
-  centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  centered: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center', alignItems: 'center' },
   scroll: { padding: 20, paddingBottom: 48 },
-  heading: { fontSize: 28, fontWeight: '700', color: Colors.text, marginBottom: 24 },
+  heading: { fontSize: 30, fontFamily: Fonts.display, color: Colors.text, marginBottom: 24, letterSpacing: -0.3 },
 
   // ── Playlist section ────────────────────────────────────────────────────────
 
@@ -513,10 +528,15 @@ const styles = StyleSheet.create({
   sectionGap: { marginTop: 20 },
 
   playlistHeader: {
+    padding: 14,
+  },
+  playlistHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
     gap: 12,
+  },
+  playlistBar: {
+    marginTop: 14,
   },
 
   // 2×2 mosaic
@@ -544,51 +564,16 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   playlistName: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#c9a8ff',
-    letterSpacing: 0.1,
+    fontSize: 16,
+    fontFamily: Fonts.display,
+    color: Colors.text,
+    letterSpacing: -0.2,
   },
   playlistMeta: {
-    fontSize: 11,
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
     color: Colors.textMuted,
-    letterSpacing: 0.1,
   },
-  playlistProgressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
-  },
-  playlistProgressTrack: {
-    flex: 1,
-    height: 4,
-    backgroundColor: Colors.progressTrack,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  playlistProgressFill: {
-    height: '100%',
-    backgroundColor: Colors.primary,
-    borderRadius: 2,
-  },
-  playlistProgressPct: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    flexShrink: 0,
-    minWidth: 32,
-    textAlign: 'right',
-  },
-
-  viewAllBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    flexShrink: 0,
-  },
-  viewAllText: { fontSize: 12, color: Colors.primary, fontWeight: '600' },
-  viewAllChevron: { fontSize: 18, color: Colors.primary, lineHeight: 20 },
-
   // ── Resume button ───────────────────────────────────────────────────────────
 
   resumeBtn: {
@@ -599,10 +584,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginBottom: 4,
     borderRadius: 8,
-    backgroundColor: 'rgba(120,166,60,0.12)',
+    backgroundColor: Colors.accentSoft,
     borderWidth: 1,
-    borderColor: 'rgba(120,166,60,0.35)',
+    borderColor: Colors.accentBorder,
     minHeight: 36,
+    gap: 8,
   },
   resumeBtnDisabled: {
     opacity: 0.5,
@@ -610,7 +596,7 @@ const styles = StyleSheet.create({
   resumeBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#78a63c',
+    color: Colors.accent,
     letterSpacing: 0.3,
   },
 
@@ -651,7 +637,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: Colors.surfaceDark,
+    backgroundColor: Colors.bg,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -660,14 +646,14 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   albumCard: {
-    backgroundColor: Colors.surfaceDark,
+    backgroundColor: Colors.bg,
     borderRadius: 10,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.border,
   },
   albumCardLive: {
-    borderColor: '#78a63c',
+    borderColor: Colors.accent,
     borderWidth: 1.5,
   },
 
@@ -689,13 +675,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(0,0,0,0.72)',
+    backgroundColor: Colors.overlay,
     borderRadius: 6,
     paddingHorizontal: 5,
     paddingVertical: 2,
   },
-  liveDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#78a63c' },
-  liveText: { fontSize: 9, fontWeight: '800', color: '#78a63c', letterSpacing: 0.5 },
+  liveDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: Colors.accent },
+  liveText: { fontSize: 9, fontWeight: '800', color: Colors.accent, letterSpacing: 0.5 },
 
   doneBadge: {
     position: 'absolute',
@@ -704,13 +690,12 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#78a63c',
+    backgroundColor: Colors.success,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
     borderColor: Colors.surface,
   },
-  doneTick: { color: '#fff', fontSize: 10, fontWeight: '800' },
 
   albumCardBody: {
     padding: 8,
@@ -727,26 +712,17 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginBottom: 7,
   },
+  albumCardTrackRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 5 },
   albumCardTrack: {
+    flex: 1,
     fontSize: 10,
-    color: 'rgba(200,180,255,0.7)',
+    color: Colors.textMuted,
     fontStyle: 'italic',
-    marginBottom: 5,
   },
-  albumCardProgressTrack: {
-    height: 3,
-    backgroundColor: Colors.progressTrack,
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  albumCardProgressFill: {
-    height: '100%',
-    backgroundColor: Colors.progressFill,
-    borderRadius: 2,
-  },
+  albumCardBar: { marginBottom: 6 },
   albumCardProgressText: {
     fontSize: 10,
+    fontVariant: ['tabular-nums'],
     color: Colors.textMuted,
   },
 
@@ -763,24 +739,15 @@ const styles = StyleSheet.create({
   expandBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.primary,
-  },
-  expandBtnChevron: {
-    fontSize: 16,
-    color: Colors.primary,
-    lineHeight: 18,
-    transform: [{ rotate: '90deg' }],
-  },
-  expandBtnChevronUp: {
-    transform: [{ rotate: '-90deg' }],
+    color: Colors.text,
   },
 
   // Error
-  errorBox: { backgroundColor: '#2d0a0a', borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#5c1a1a' },
-  errorText: { color: '#ff6b6b', textAlign: 'center' },
+  errorBox: { backgroundColor: Colors.dangerBg, borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: Colors.dangerBorder },
+  errorText: { color: Colors.danger, textAlign: 'center' },
 
   // Empty
   emptyState: { alignItems: 'center', paddingVertical: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: Colors.text, marginBottom: 12 },
+  emptyTitle: { fontSize: 20, fontFamily: Fonts.display, color: Colors.text, marginBottom: 12 },
   emptySubtitle: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22 },
 });

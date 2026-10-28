@@ -5,7 +5,8 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
-  Pressable,
+  GestureResponderEvent,
+  LayoutChangeEvent,
   StyleSheet,
   ActivityIndicator,
   Linking,
@@ -19,9 +20,10 @@ import {
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
-import { ProgressBar } from '../../components/ProgressBar';
-import { Colors } from '../../constants/colors';
+import { SegmentedProgress, trackSegments } from '../../components/SegmentedProgress';
+import { Colors, Fonts } from '../../constants/colors';
 import { clearTokens } from '../../lib/auth';
 import { getAlbumDetail, peekAlbumDetail, prefetchAlbumDetail, updateCachedAlbum } from '../../lib/albumCache';
 
@@ -169,7 +171,7 @@ export default function AlbumDetailScreen() {
   if (albums === null) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </View>
     );
   }
@@ -377,7 +379,7 @@ function AlbumPage({
             <Text style={styles.artistName}>{summary.artists.map(a => a.name).join(', ')}</Text>
           </View>
         )}
-        <ActivityIndicator size="large" color={Colors.primary} style={styles.pageSpinner} />
+        <ActivityIndicator size="large" color={Colors.accent} style={styles.pageSpinner} />
       </View>
     );
   }
@@ -427,24 +429,30 @@ function AlbumPage({
             <Text style={styles.progressLabel}>Track {currentTrackIndex + 1} of {album.totalTracks}</Text>
             <Text style={styles.progressPct}>{pct}%</Text>
           </View>
-          <ProgressBar percent={pct} />
+          <SegmentedProgress
+            segments={trackSegments(currentTrackIndex + 1, album.totalTracks)}
+            accessibilityLabel={`Track ${currentTrackIndex + 1} of ${album.totalTracks}`}
+          />
         </View>
       )}
 
       {/* ── Actions ──────────────────────────────────────────────────────────── */}
       <View style={styles.actions}>
         <TouchableOpacity style={styles.btnSpotify} onPress={openInSpotify} activeOpacity={0.8}>
-          <Text style={styles.btnSpotifyText}>▶  Open in Spotify</Text>
+          <Feather name="play" size={16} color={Colors.onAccent} />
+          <Text style={styles.btnSpotifyText}>Open in Spotify</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.btnInfo} onPress={navigateToInfo} activeOpacity={0.8}>
-          <Text style={styles.btnInfoText}>ℹ️  Album Info</Text>
+          <Feather name="info" size={16} color={Colors.text} />
+          <Text style={styles.btnInfoText}>Album info</Text>
         </TouchableOpacity>
 
         {bestAlbumsPlaylist && (
           promoted ? (
             <View style={styles.btnPromotedDone}>
-              <Text style={styles.btnPromotedDoneText}>✓  In Best Albums</Text>
+              <Feather name="check" size={16} color={Colors.successTextMuted} />
+              <Text style={styles.btnPromotedDoneText}>In Best Albums</Text>
             </View>
           ) : (
             <TouchableOpacity
@@ -453,8 +461,11 @@ function AlbumPage({
               activeOpacity={0.8}
               disabled={promoting}
             >
-              <Text style={styles.btnPromoteText}>
-                {promoting ? 'Adding…' : `★  Add to ${bestAlbumsPlaylist.name}`}
+              {promoting
+                ? <ActivityIndicator size="small" color={Colors.successText} />
+                : <Feather name="plus" size={16} color={Colors.successText} />}
+              <Text style={styles.btnPromoteText} numberOfLines={1}>
+                {promoting ? 'Adding…' : `Add to ${bestAlbumsPlaylist.name}`}
               </Text>
             </TouchableOpacity>
           )
@@ -549,7 +560,7 @@ const stripStyles = StyleSheet.create({
   heading: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#c9a8ff',
+    color: Colors.textMuted,
     letterSpacing: 1,
     textTransform: 'uppercase',
     paddingHorizontal: 16,
@@ -569,9 +580,9 @@ const stripStyles = StyleSheet.create({
     position: 'relative',
   },
   thumbCurrent: {
-    borderColor: Colors.primary,
+    borderColor: Colors.accent,
     // Slight scale-up via padding trick — shadows the current album
-    shadowColor: Colors.primary,
+    shadowColor: Colors.accent,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 6,
@@ -583,7 +594,7 @@ const stripStyles = StyleSheet.create({
   },
   thumbCurrentOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(132,61,255,0.15)',
+    backgroundColor: Colors.accentSoft,
   },
   progressDot: {
     position: 'absolute',
@@ -592,32 +603,37 @@ const stripStyles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     borderWidth: 1,
     borderColor: Colors.surface,
   },
   progressDotDone: {
-    backgroundColor: '#78a63c',
+    backgroundColor: Colors.success,
   },
 });
 
 // ── Star rating ────────────────────────────────────────────────────────────────
 
-const STAR_SIZE = 26;
+const STAR_SIZE = 34;
 
-function StarGlyph({ fill, faded }: { fill: 'empty' | 'half' | 'full'; faded?: boolean }) {
+function StarGlyph({ fill }: { fill: 'empty' | 'half' | 'full' }) {
+  const name = fill === 'full' ? 'star' : fill === 'half' ? 'star-half' : 'star-outline';
   return (
-    <View style={styles.starGlyph} pointerEvents="none">
-      <Text style={[styles.star, styles.starEmpty, faded && styles.starPending]}>☆</Text>
-      {fill !== 'empty' && (
-        <View style={[styles.starClip, fill === 'half' ? { width: STAR_SIZE / 2 } : { width: STAR_SIZE }]}>
-          <Text style={[styles.star, styles.starFilled, faded && styles.starPending]}>★</Text>
-        </View>
-      )}
-    </View>
+    <Ionicons
+      name={name}
+      size={STAR_SIZE}
+      color={fill === 'empty' ? Colors.textFaint : Colors.rating}
+    />
   );
 }
 
+/**
+ * Rating selector (stored 1–10, shown as 0.5–5 stars). The whole star row is
+ * one touch target: tap or drag anywhere along it and the position snaps to
+ * the nearest half star, so half ratings don't need a precise tap on half a
+ * glyph. The value previews live while the finger is down and commits on
+ * release.
+ */
 function StarRating({
   rating,
   pending,
@@ -627,44 +643,91 @@ function StarRating({
   pending: boolean;
   onRate: (newRating: number) => void;
 }) {
-  const [pressedRating, setPressedRating] = useState<number | null>(null);
-  const displayValue = (pressedRating ?? rating ?? 0) / 2;
+  const [scrubRating, setScrubRating] = useState<number | null>(null);
+  const widthRef = useRef(0);
+  const shown = scrubRating ?? rating;
+  const displayValue = (shown ?? 0) / 2;
 
-  const labelText = pressedRating !== null
-    ? `${(pressedRating / 2).toFixed(1)} / 5`
-    : rating !== null
-      ? `${(rating / 2).toFixed(1)} / 5`
-      : 'Tap to rate';
+  const ratingAt = (x: number) =>
+    Math.min(10, Math.max(1, Math.ceil((x / Math.max(1, widthRef.current)) * 10)));
+
+  // A touch starts 'pending' and only becomes a rating gesture once it's
+  // clearly a tap or a sideways drag. A mostly-vertical move is a scroll that
+  // happened to start on the stars: cancel it and let the ScrollView take
+  // over, rather than committing whatever star the finger landed on.
+  const gesture = useRef<{ x: number; y: number; mode: 'pending' | 'scrub' | 'cancelled' }>(
+    { x: 0, y: 0, mode: 'pending' }
+  );
+
+  const onLayout = (e: LayoutChangeEvent) => { widthRef.current = e.nativeEvent.layout.width; };
+  const onGrant = (e: GestureResponderEvent) => {
+    gesture.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY, mode: 'pending' };
+  };
+  const onMove = (e: GestureResponderEvent) => {
+    const g = gesture.current;
+    if (g.mode === 'cancelled') return;
+    const dx = Math.abs(e.nativeEvent.pageX - g.x);
+    const dy = Math.abs(e.nativeEvent.pageY - g.y);
+    if (g.mode === 'pending') {
+      if (dy > 8 && dy > dx) { g.mode = 'cancelled'; setScrubRating(null); return; }
+      if (dx > 6) g.mode = 'scrub';
+    }
+    if (g.mode === 'scrub') setScrubRating(ratingAt(e.nativeEvent.locationX));
+  };
+  const onRelease = (e: GestureResponderEvent) => {
+    const cancelled = gesture.current.mode === 'cancelled';
+    setScrubRating(null);
+    if (cancelled) return;
+    const next = ratingAt(e.nativeEvent.locationX);
+    if (next !== rating) onRate(next);
+  };
+  const onCancel = () => {
+    gesture.current.mode = 'cancelled';
+    setScrubRating(null);
+  };
 
   return (
-    <View style={styles.ratingRow}>
-      {[1, 2, 3, 4, 5].map(star => {
-        const filled = displayValue >= star;
-        const half = !filled && displayValue >= star - 0.5;
-        const fill: 'full' | 'half' | 'empty' = filled ? 'full' : half ? 'half' : 'empty';
-        const leftVal = (star - 1) * 2 + 1;
-        const rightVal = star * 2;
-        return (
-          <View key={star} style={styles.starWrap}>
-            <Pressable
-              style={[styles.starHalf, styles.starHalfLeft]}
-              onPressIn={() => setPressedRating(leftVal)}
-              onPressOut={() => setPressedRating(null)}
-              onPress={() => { if (leftVal !== rating) onRate(leftVal); }}
-              disabled={pending}
-            />
-            <Pressable
-              style={[styles.starHalf, styles.starHalfRight]}
-              onPressIn={() => setPressedRating(rightVal)}
-              onPressOut={() => setPressedRating(null)}
-              onPress={() => { if (rightVal !== rating) onRate(rightVal); }}
-              disabled={pending}
-            />
-            <StarGlyph fill={fill} faded={pending} />
-          </View>
-        );
-      })}
-      <Text style={[styles.ratingLabel, pending && styles.starPending]}>{labelText}</Text>
+    <View style={styles.ratingBlock}>
+      <View
+        style={[styles.ratingRow, pending && styles.starPending]}
+        onLayout={onLayout}
+        onStartShouldSetResponder={() => !pending}
+        // Hand the touch to the ScrollView / album pager unless it's already
+        // a confirmed sideways scrub.
+        onResponderTerminationRequest={() => gesture.current.mode !== 'scrub'}
+        onResponderGrant={onGrant}
+        onResponderMove={onMove}
+        onResponderRelease={onRelease}
+        onResponderTerminate={onCancel}
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel="Rating"
+        accessibilityValue={{ text: shown ? `${(shown / 2).toFixed(1)} out of 5 stars` : 'Not rated' }}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={e => {
+          const current = rating ?? 0;
+          const next = e.nativeEvent.actionName === 'increment' ? Math.min(10, current + 1) : Math.max(1, current - 1);
+          if (next !== rating) onRate(next);
+        }}
+      >
+        {/* Children ignore touches so locationX is always relative to the row */}
+        <View style={styles.starsInner} pointerEvents="none">
+          {[1, 2, 3, 4, 5].map(star => {
+            const fill = displayValue >= star ? 'full' : displayValue >= star - 0.5 ? 'half' : 'empty';
+            return <StarGlyph key={star} fill={fill} />;
+          })}
+        </View>
+      </View>
+      <View style={styles.ratingValueWrap} pointerEvents="none">
+        {shown ? (
+          <Text style={[styles.ratingValue, scrubRating !== null && styles.ratingValueScrub]}>
+            {(shown / 2).toFixed(1)}
+            <Text style={styles.ratingOutOf}> / 5</Text>
+          </Text>
+        ) : (
+          <Text style={styles.ratingHint}>Tap or slide{'\n'}to rate</Text>
+        )}
+      </View>
     </View>
   );
 }
@@ -682,16 +745,18 @@ function TrackList({ tracks, currentTrackIndex }: { tracks: AlbumTrack[]; curren
         return (
           <View key={track.id}>
             <View style={[styles.trackRow, isCurrent && styles.trackRowCurrent, listened && !isCurrent && styles.trackRowListened]}>
-              <Text style={[styles.trackNum, isCurrent && styles.trackNumCurrent]}>
-                {isCurrent ? '♪' : track.trackNumber}
-              </Text>
+              <View style={styles.trackNumWrap}>
+                {isCurrent
+                  ? <Feather name="play" size={13} color={Colors.accent} />
+                  : <Text style={styles.trackNum}>{track.trackNumber}</Text>}
+              </View>
               <View style={styles.trackInfo}>
                 <Text style={[styles.trackName, isCurrent && styles.trackNameCurrent]} numberOfLines={1}>
                   {track.name}
                 </Text>
                 <Text style={styles.trackDuration}>{mins}:{secs}</Text>
               </View>
-              {listened && !isCurrent && <Text style={styles.listenedTick}>✓</Text>}
+              {listened && !isCurrent && <Feather name="check" size={16} color={Colors.success} />}
             </View>
             {isCurrent && <View style={styles.currentDivider} />}
           </View>
@@ -711,17 +776,24 @@ function Chip({ label }: { label: string }) {
 }
 
 // ── Styles ─────────────────────────────────────────────────────────────────────
+function actionBase() {
+  return {
+    height: 50, borderRadius: 12, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8
+  } as const;
+}
+
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.surfaceDark },
+  screen: { flex: 1, backgroundColor: Colors.bg },
   content: { paddingBottom: 60 },
-  centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
+  centered: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center', alignItems: 'center' },
 
   pager: { flex: 1 },
   pageSpinner: { marginTop: 24 },
   errorText: { color: Colors.textMuted, fontSize: 15, marginBottom: 16 },
   btnRetry: {
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)', borderRadius: 14,
+    backgroundColor: Colors.fill, borderWidth: 1,
+    borderColor: Colors.hairline, borderRadius: 14,
     paddingVertical: 12, paddingHorizontal: 24
   },
 
@@ -729,85 +801,71 @@ const styles = StyleSheet.create({
   artPlaceholder: { backgroundColor: Colors.surface },
 
   meta: { padding: 20 },
-  albumName: { color: Colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.4, marginBottom: 4 },
+  albumName: { color: Colors.text, fontSize: 26, fontFamily: Fonts.display, letterSpacing: -0.3, marginBottom: 4 },
   artistName: { color: Colors.textMuted, fontSize: 16, fontWeight: '500', marginBottom: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)', borderRadius: 20,
+    backgroundColor: Colors.fill, borderWidth: 1,
+    borderColor: Colors.hairline, borderRadius: 20,
     paddingHorizontal: 10, paddingVertical: 4
   },
   chipText: { color: Colors.textMuted, fontSize: 11, fontWeight: '500' },
 
-  ratingRow: {
+  ratingBlock: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 10,
-    gap: 2, marginBottom: 4
+    paddingHorizontal: 20, paddingVertical: 8, marginBottom: 8, gap: 16
   },
-  starWrap: { width: STAR_SIZE, height: STAR_SIZE, position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  starHalf: { position: 'absolute', top: 0, bottom: 0, width: '50%' },
-  starHalfLeft: { left: 0 },
-  starHalfRight: { right: 0 },
-  starGlyph: { width: STAR_SIZE, height: STAR_SIZE, position: 'relative' },
-  starClip: { position: 'absolute', top: 0, left: 0, height: STAR_SIZE, overflow: 'hidden' },
-  star: { fontSize: STAR_SIZE, lineHeight: STAR_SIZE },
-  starFilled: { color: '#de7c38' },
-  starEmpty: { color: 'rgba(255,255,255,0.18)' },
+  // Generous vertical padding so the touch strip is easy to hit
+  ratingRow: { flex: 1, paddingVertical: 8 },
+  starsInner: { flexDirection: 'row', justifyContent: 'space-between' },
   starPending: { opacity: 0.5 },
-  ratingLabel: { color: Colors.textMuted, fontSize: 13, marginLeft: 10 },
+  ratingValueWrap: { width: 64, alignItems: 'flex-end' },
+  ratingValue: { color: Colors.text, fontSize: 24, fontFamily: Fonts.display, fontVariant: ['tabular-nums'] },
+  ratingValueScrub: { color: Colors.rating },
+  ratingOutOf: { color: Colors.textMuted, fontSize: 13 },
+  ratingHint: { color: Colors.textMuted, fontSize: 11, textAlign: 'right', lineHeight: 15 },
 
   progressSection: { paddingHorizontal: 20, marginBottom: 4 },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   progressLabel: { color: Colors.textMuted, fontSize: 13 },
-  progressPct: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
+  progressPct: { color: Colors.accent, fontSize: 13, fontWeight: '600', fontVariant: ['tabular-nums'] },
 
   actions: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 10 },
-  btnSpotify: { backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  btnSpotifyText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  btnInfo: {
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)', borderRadius: 14,
-    paddingVertical: 14, alignItems: 'center'
-  },
-  btnInfoText: { color: Colors.text, fontSize: 14, fontWeight: '600' },
-  btnPromote: {
-    backgroundColor: 'rgba(120,166,60,0.15)', borderWidth: 1,
-    borderColor: 'rgba(120,166,60,0.4)', borderRadius: 14,
-    paddingVertical: 16, alignItems: 'center'
-  },
+  // All actions share one shape: 50pt tall, icon + label centred
+  btnSpotify: { ...actionBase(), backgroundColor: Colors.accent },
+  btnSpotifyText: { color: Colors.onAccent, fontSize: 15, fontWeight: '700' },
+  btnInfo: { ...actionBase(), backgroundColor: Colors.fill, borderWidth: 1, borderColor: Colors.hairline },
+  btnInfoText: { color: Colors.text, fontSize: 15, fontWeight: '600' },
+  btnPromote: { ...actionBase(), backgroundColor: Colors.successSoft, borderWidth: 1, borderColor: Colors.successBorder },
   btnPromoteDisabled: { opacity: 0.6 },
-  btnPromoteText: { color: '#b3d581', fontSize: 15, fontWeight: '700' },
-  btnPromotedDone: {
-    borderRadius: 14, paddingVertical: 16, alignItems: 'center',
-    backgroundColor: 'rgba(120,166,60,0.08)', borderWidth: 1, borderColor: 'rgba(120,166,60,0.2)'
-  },
-  btnPromotedDoneText: { color: 'rgba(179,213,129,0.5)', fontSize: 15, fontWeight: '600' },
+  btnPromoteText: { color: Colors.successText, fontSize: 15, fontWeight: '600', flexShrink: 1 },
+  btnPromotedDone: { ...actionBase(), borderWidth: 1, borderColor: Colors.successBorder },
+  btnPromotedDoneText: { color: Colors.successTextMuted, fontSize: 15, fontWeight: '600' },
 
   playlistTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingBottom: 16 },
   playlistTag: {
-    backgroundColor: 'rgba(132,61,255,0.12)', borderWidth: 1,
-    borderColor: 'rgba(132,61,255,0.25)', borderRadius: 6,
+    backgroundColor: Colors.accentSoft, borderWidth: 1,
+    borderColor: Colors.accentBorder, borderRadius: 6,
     paddingHorizontal: 10, paddingVertical: 3
   },
-  playlistTagBest: { backgroundColor: 'rgba(120,166,60,0.12)', borderColor: 'rgba(120,166,60,0.3)' },
-  playlistTagText: { color: '#bea6ff', fontSize: 11, fontWeight: '500' },
-  playlistTagTextBest: { color: '#b3d581' },
+  playlistTagBest: { backgroundColor: Colors.successSoft, borderColor: Colors.successBorder },
+  playlistTagText: { color: Colors.accent, fontSize: 11, fontWeight: '500' },
+  playlistTagTextBest: { color: Colors.successText },
 
-  tracksHeading: { color: Colors.text, fontSize: 16, fontWeight: '700', paddingHorizontal: 20, paddingBottom: 8 },
+  tracksHeading: { color: Colors.text, fontSize: 18, fontFamily: Fonts.displayMedium, paddingHorizontal: 20, paddingBottom: 8 },
   trackList: { paddingHorizontal: 20 },
   trackRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 14 },
   trackRowCurrent: {
-    backgroundColor: 'rgba(132,61,255,0.08)', borderRadius: 10,
+    backgroundColor: Colors.accentSoft, borderRadius: 10,
     paddingHorizontal: 10, marginHorizontal: -10
   },
   trackRowListened: { opacity: 0.45 },
-  trackNum: { width: 22, textAlign: 'center', color: Colors.textMuted, fontSize: 13, flexShrink: 0 },
-  trackNumCurrent: { color: Colors.primary, fontSize: 18 },
+  trackNumWrap: { width: 22, alignItems: 'center', flexShrink: 0 },
+  trackNum: { color: Colors.textMuted, fontSize: 13, fontVariant: ['tabular-nums'] },
   trackInfo: { flex: 1 },
   trackName: { color: Colors.text, fontSize: 15, fontWeight: '500' },
-  trackNameCurrent: { color: '#bea6ff', fontWeight: '600' },
+  trackNameCurrent: { color: Colors.accent, fontWeight: '600' },
   trackDuration: { color: Colors.textMuted, fontSize: 12, marginTop: 2 },
-  listenedTick: { color: '#78a63c', fontSize: 16 },
-  currentDivider: { height: 1, backgroundColor: 'rgba(132,61,255,0.2)', marginVertical: 2 },
+  currentDivider: { height: 1, backgroundColor: Colors.accentBorder, marginVertical: 2 },
   bottomSpacer: { height: 40 }
 });

@@ -15,7 +15,8 @@ import { useRouter } from 'expo-router';
 import { AppState, AppStateStatus } from 'react-native';
 import { fetchPlaylists, searchAlbums, syncHistory, AuthError, PlaylistSummary, PlaylistAlbum } from '../../../lib/api';
 import { getCachedPlaylists, cachePlaylists } from '../../../lib/db';
-import { Colors } from '../../../constants/colors';
+import { Feather } from '@expo/vector-icons';
+import { Colors, Fonts } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
 
 const DEBOUNCE_MS = 350;
@@ -135,7 +136,7 @@ export default function AlbumsIndexScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </SafeAreaView>
     );
   }
@@ -147,11 +148,11 @@ export default function AlbumsIndexScreen() {
         {!searchActive && <Text style={styles.heading}>Albums</Text>}
         <View style={styles.searchRow}>
           <View style={[styles.searchBar, searchActive && styles.searchBarFocused]}>
-            <Text style={styles.searchIcon}>🔍</Text>
+            <Feather name="search" size={16} color={searchActive ? Colors.accent : Colors.textMuted} />
             <TextInput
               ref={inputRef}
               style={styles.searchInput}
-              placeholder="Search playlists & albums…"
+              placeholder="Search playlists and albums"
               placeholderTextColor={Colors.textMuted}
               value={searchQuery}
               onChangeText={onChangeText}
@@ -160,7 +161,7 @@ export default function AlbumsIndexScreen() {
               autoCorrect={false}
               autoCapitalize="none"
             />
-            {searching && <ActivityIndicator size="small" color={Colors.primary} style={{ marginLeft: 4 }} />}
+            {searching && <ActivityIndicator size="small" color={Colors.accent} style={{ marginLeft: 4 }} />}
           </View>
           {searchActive && (
             <TouchableOpacity onPress={onCancel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -195,7 +196,7 @@ export default function AlbumsIndexScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => loadPlaylists({ showRefreshing: true })}
-              tintColor={Colors.primary}
+              tintColor={Colors.accent}
             />
           }
           ListEmptyComponent={
@@ -234,13 +235,15 @@ function PlaylistRow({
   return (
     <TouchableOpacity style={styles.playlistRow} onPress={onPress} activeOpacity={0.7}>
       <View style={[styles.playlistThumb, isNew ? styles.thumbNew : styles.thumbBest]}>
-        <Text style={styles.thumbIcon}>{isNew ? '♫' : '★'}</Text>
+        <Feather name={isNew ? 'disc' : 'award'} size={20} color={Colors.text} />
       </View>
       <View style={styles.playlistText}>
         <Text style={styles.playlistName} numberOfLines={1}>{playlist.name}</Text>
-        <Text style={styles.playlistMeta} numberOfLines={1}>{playlist.description || ' '}</Text>
+        {!!playlist.description && (
+          <Text style={styles.playlistMeta} numberOfLines={1}>{playlist.description}</Text>
+        )}
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <Feather name="chevron-right" size={18} color={Colors.textFaint} />
     </TouchableOpacity>
   );
 }
@@ -263,7 +266,7 @@ function SearchResults({
   if (noResults) {
     return (
       <View style={styles.noResults}>
-        <Text style={styles.noResultsIcon}>🔍</Text>
+        <Feather name="search" size={32} color={Colors.textFaint} style={styles.noResultsIcon} />
         <Text style={styles.noResultsTitle}>No results for &quot;{query}&quot;</Text>
         <Text style={styles.noResultsSub}>Try searching by album name, artist, or playlist date</Text>
       </View>
@@ -338,43 +341,42 @@ function AlbumRow({ album, onPress }: { album: PlaylistAlbum; onPress: () => voi
         <Text style={styles.albumName} numberOfLines={1}>{album.name}</Text>
         <Text style={styles.albumArtist} numberOfLines={1}>{artistNames}</Text>
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <Feather name="chevron-right" size={18} color={Colors.textFaint} />
     </TouchableOpacity>
   );
 }
 
 // ── Styles ─────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.surfaceDark },
-  centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  centered: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center', alignItems: 'center' },
 
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
   errorBox: {
-    backgroundColor: '#2d0a0a', borderRadius: 12, padding: 16,
-    marginHorizontal: 20, marginBottom: 16, borderWidth: 1, borderColor: '#5c1a1a'
+    backgroundColor: Colors.dangerBg, borderRadius: 12, padding: 16,
+    marginHorizontal: 20, marginBottom: 16, borderWidth: 1, borderColor: Colors.dangerBorder
   },
-  errorText: { color: '#ff6b6b', textAlign: 'center' },
-  heading: { fontSize: 28, fontWeight: '800', color: Colors.text, marginBottom: 14, letterSpacing: -0.5 },
+  errorText: { color: Colors.danger, textAlign: 'center' },
+  heading: { fontSize: 30, fontFamily: Fonts.display, color: Colors.text, marginBottom: 14, letterSpacing: -0.3 },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: Colors.fill,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: Colors.hairline,
     borderRadius: 13,
     paddingHorizontal: 14,
     paddingVertical: 10,
     gap: 10
   },
   searchBarFocused: {
-    borderColor: 'rgba(132,61,255,0.5)',
-    backgroundColor: 'rgba(132,61,255,0.06)'
+    borderColor: Colors.accentBorder,
+    backgroundColor: Colors.accentSoft
   },
-  searchIcon: { fontSize: 16 },
   searchInput: { flex: 1, color: Colors.text, fontSize: 16 },
-  cancelBtn: { color: Colors.primary, fontSize: 15, fontWeight: '600' },
+  cancelBtn: { color: Colors.accent, fontSize: 15, fontWeight: '600' },
 
   // Playlist row
   playlistRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 10, gap: 12 },
@@ -382,13 +384,11 @@ const styles = StyleSheet.create({
     width: 46, height: 46, borderRadius: 8,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0
   },
-  thumbNew: { backgroundColor: '#4a0fc4' },
-  thumbBest: { backgroundColor: '#a04e12' },
-  thumbIcon: { fontSize: 20 },
+  thumbNew: { backgroundColor: Colors.thumbNew },
+  thumbBest: { backgroundColor: Colors.thumbBest },
   playlistText: { flex: 1, minWidth: 0 },
   playlistName: { color: Colors.text, fontSize: 15, fontWeight: '600' },
   playlistMeta: { color: Colors.textMuted, fontSize: 12, marginTop: 2 },
-  chevron: { color: 'rgba(255,255,255,0.2)', fontSize: 20 },
 
   // Album row (search results)
   albumRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 10, gap: 12 },
@@ -397,30 +397,30 @@ const styles = StyleSheet.create({
   albumThumbPlaceholder: { backgroundColor: Colors.surface },
   progressPipTrack: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    height: 3, backgroundColor: 'rgba(255,255,255,0.12)'
+    height: 3, backgroundColor: Colors.track
   },
-  progressPipFill: { height: 3, backgroundColor: '#78a63c' },
+  progressPipFill: { height: 3, backgroundColor: Colors.accent },
   albumText: { flex: 1, minWidth: 0 },
   albumName: { color: Colors.text, fontSize: 15, fontWeight: '600' },
   albumArtist: { color: Colors.textMuted, fontSize: 12, marginTop: 2 },
 
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginHorizontal: 20 },
+  divider: { height: 1, backgroundColor: Colors.divider, marginHorizontal: 20 },
   sectionHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline',
     paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8
   },
-  sectionTitle: { color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: '700', letterSpacing: 0.8 },
-  sectionCount: { color: 'rgba(255,255,255,0.25)', fontSize: 11 },
+  sectionTitle: { color: Colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8 },
+  sectionCount: { color: Colors.textFaint, fontSize: 11 },
   sectionGap: { height: 28 },
 
   // Empty / no results
   emptyContainer: { flex: 1 },
   emptyState: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 32 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: Colors.text, marginBottom: 12 },
+  emptyTitle: { fontSize: 20, fontFamily: Fonts.display, color: Colors.text, marginBottom: 12 },
   emptySubtitle: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22 },
 
   noResults: { flex: 1, alignItems: 'center', paddingTop: 64, paddingHorizontal: 32 },
-  noResultsIcon: { fontSize: 36, marginBottom: 12, opacity: 0.4 },
-  noResultsTitle: { color: Colors.text, fontSize: 17, fontWeight: '600', marginBottom: 6 },
+  noResultsIcon: { marginBottom: 14 },
+  noResultsTitle: { color: Colors.text, fontSize: 19, fontFamily: Fonts.display, marginBottom: 6 },
   noResultsSub: { color: Colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 22 }
 });

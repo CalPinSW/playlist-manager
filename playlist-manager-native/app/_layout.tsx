@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
+import { Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
+import { Colors } from '../constants/colors';
 import { getStoredTokens, isTokenExpired, getValidAccessToken, ReauthRequiredError } from '../lib/auth';
 
 // Guard against re-init: Metro Fast Refresh re-executes this module's
@@ -45,10 +47,10 @@ function RootLayout() {
   const segments = useSegments();
   const [authChecked, setAuthChecked] = useState(false);
 
-  // Pre-load Ionicons font before the tab bar renders so Font.loadAsync
+  // Pre-load the icon fonts (and the Fraunces display face) before the tab bar renders so Font.loadAsync
   // is never called lazily in a production build (where an unhandled rejection
   // would crash the app via Hermes' strict promise-rejection handling).
-  const [fontsLoaded] = useFonts({ ...Ionicons.font });
+  const [fontsLoaded] = useFonts({ ...Ionicons.font, ...Feather.font, Fraunces_500Medium, Fraunces_600SemiBold });
 
   useEffect(() => {
     async function checkAuth() {
@@ -100,7 +102,7 @@ function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#0f0a1e' }
+          contentStyle: { backgroundColor: Colors.bg }
         }}
       >
         <Stack.Screen name="(tabs)" />
@@ -109,8 +111,9 @@ function RootLayout() {
           name="album/[albumId]"
           options={{
             headerShown: true,
-            headerStyle: { backgroundColor: '#0f0a1e' },
-            headerTintColor: '#843dff',
+            headerStyle: { backgroundColor: Colors.bg },
+            headerTintColor: Colors.accent,
+            headerTitleStyle: { color: Colors.text, fontWeight: '600', fontSize: 16 },
             headerTitle: '',
             headerBackTitle: 'Back'
           }}
@@ -119,9 +122,10 @@ function RootLayout() {
           name="album/[albumId]/info"
           options={{
             headerShown: true,
-            headerStyle: { backgroundColor: '#0f0a1e' },
-            headerTintColor: '#843dff',
-            headerTitle: 'Album Info',
+            headerStyle: { backgroundColor: Colors.bg },
+            headerTintColor: Colors.accent,
+            headerTitleStyle: { color: Colors.text, fontWeight: '600', fontSize: 16 },
+            headerTitle: 'Album info',
             headerBackTitle: 'Back'
           }}
         />
