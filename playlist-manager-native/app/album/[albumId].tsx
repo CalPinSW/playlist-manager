@@ -9,10 +9,13 @@ import {
   StyleSheet,
   ActivityIndicator,
   Linking,
-  Alert
+  Alert,
+  useWindowDimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent
 } from 'react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchAlbumDetail, fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
 import { ProgressBar } from '../../components/ProgressBar';
@@ -35,22 +38,24 @@ function extractPeriodKey(name: string): string {
     .toLowerCase();
 }
 
+/**
+ * Album detail. When opened with a playlistId, every album in that playlist is
+ * laid out in a horizontal pager so the user can swipe (or tap the strip) to
+ * move through the playlist without leaving this screen — moving between
+ * albums never touches the navigation stack, so Back always returns to
+ * wherever the user came from.
+ */
 export default function AlbumDetailScreen() {
   const { albumId, playlistId } = useLocalSearchParams<{ albumId: string; playlistId?: string }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
 
-  const [album, setAlbum] = useState<AlbumDetail | null>(null);
-  const [bestAlbumsPlaylist, setBestAlbumsPlaylist] = useState<PlaylistSummary | null>(null);
-  const [playlistAlbums, setPlaylistAlbums] = useState<PlaylistAlbum[]>([]);
-  const [playlistName, setPlaylistName] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [promoting, setPromoting] = useState(false);
-  const [promoted, setPromoted] = useState(false);
-  const [localRating, setLocalRating] = useState<number | null>(null);
-  const [ratingPending, setRatingPending] = useState(false);
+  const [albums, setAlbums] = useState<PlaylistAlbum[] | null>(null);
+  const [index, setIndex] = useState(0);
+  const [bestAlbumsPlaylists, setBestAlbumsPlaylists] = useState<PlaylistSummary[]>([]);
+  const [playlistName, setPlaylistName] = useState('');
 
-  // Ref for scrolling the playlist strip to the current album on load.
+  const pagerRef = useRef<FlatList<{ id: string }>>(null);
   const stripRef = useRef<FlatList<PlaylistAlbum>>(null);
 
   const handleAuthError = useCallback(async () => {
@@ -58,69 +63,182 @@ export default function AlbumDetailScreen() {
     router.replace('/(auth)/login');
   }, [router]);
 
-  const loadAlbum = useCallback(async () => {
-    try {
-      const requests: [Promise<AlbumDetail>, Promise<PlaylistSummary[]>, Promise<PlaylistAlbum[]>] = [
-        fetchAlbumDetail(albumId),
-        fetchPlaylists('Best Albums', 5),
-        playlistId ? fetchPlaylistAlbums(playlistId) : Promise.resolve([]),
-      ];
-      const [data, playlists, siblingAlbums] = await Promise.all(requests);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [playlists, siblingAlbums] = await Promise.all([
+          fetchPlaylists('Best Albums', 5),
+          playlistId ? fetchPlaylistAlbums(playlistId) : Promise.resolve([] as PlaylistAlbum[]),
+        ]);
+        if (cancelled) return;
+        setBestAlbumsPlaylists(playlists);
+        const idx = siblingAlbums.findIndex(a => a.id === albumId);
+        // Only page through the playlist if this album is actually in it —
+        // otherwise just show the one album.
+        setAlbums(idx >= 0 ? siblingAlbums : []);
+        setIndex(Math.max(idx, 0));
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof AuthError) { await handleAuthError(); return; }
+        // Still show the album itself; only the pager/promote context is lost.
+        setAlbums([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [albumId, playlistId, handleAuthError]);
 
+  // Keep the current album visible in the strip as the user swipes.
+  useEffect(() => {
+    if (!albums || albums.length === 0) return;
+    // Small delay lets the strip's FlatList finish layout on first render.
+    const t = setTimeout(() => {
+      stripRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [albums, index]);
+
+  const onPagerScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+  }, [width]);
+
+  const jumpTo = useCallback((targetAlbumId: string) => {
+    if (!albums) return;
+    const target = albums.findIndex(a => a.id === targetAlbumId);
+    if (target < 0) return;
+    setIndex(target);
+    pagerRef.current?.scrollToIndex({ index: target, animated: true });
+  }, [albums]);
+
+  const onPlaylistName = useCallback((name: string) => {
+    setPlaylistName(prev => prev || name);
+  }, []);
+
+  if (albums === null) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  const pages: { id: string }[] = albums.length > 0 ? albums : [{ id: albumId }];
+
+  return (
+    <View style={styles.screen}>
+      {albums.length > 1 && (
+        <Stack.Screen options={{ headerTitle: `${index + 1} of ${albums.length}` }} />
+      )}
+
+      {/* ── Playlist strip ──────────────────────────────────────────────────── */}
+      {albums.length > 0 && (
+        <PlaylistStrip
+          ref={stripRef}
+          albums={albums}
+          currentAlbumId={albums[index]?.id ?? albumId}
+          playlistName={playlistName}
+          onSelect={jumpTo}
+        />
+      )}
+
+      {/* ── Pager ────────────────────────────────────────────────────────────── */}
+      <FlatList
+        ref={pagerRef}
+        style={styles.pager}
+        data={pages}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={item => item.id}
+        initialScrollIndex={index}
+        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
+        onMomentumScrollEnd={onPagerScrollEnd}
+        // Mount the neighbours too so a swipe lands on an already-loaded page.
+        windowSize={3}
+        initialNumToRender={1}
+        maxToRenderPerBatch={1}
+        renderItem={({ item }) => (
+          <View style={{ width }}>
+            <AlbumPage
+              albumId={item.id}
+              playlistId={playlistId}
+              bestAlbumsPlaylists={bestAlbumsPlaylists}
+              onAuthError={handleAuthError}
+              onPlaylistName={onPlaylistName}
+            />
+          </View>
+        )}
+      />
+    </View>
+  );
+}
+
+// ── Album page ─────────────────────────────────────────────────────────────────
+
+function AlbumPage({
+  albumId,
+  playlistId,
+  bestAlbumsPlaylists,
+  onAuthError,
+  onPlaylistName
+}: {
+  albumId: string;
+  playlistId?: string;
+  bestAlbumsPlaylists: PlaylistSummary[];
+  onAuthError: () => Promise<void>;
+  onPlaylistName: (name: string) => void;
+}) {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  const [album, setAlbum] = useState<AlbumDetail | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [promoting, setPromoting] = useState(false);
+  const [promoted, setPromoted] = useState(false);
+  const [localRating, setLocalRating] = useState<number | null>(null);
+  const [ratingPending, setRatingPending] = useState(false);
+
+  const loadAlbum = useCallback(async () => {
+    setLoadFailed(false);
+    try {
+      const data = await fetchAlbumDetail(albumId);
       setAlbum(data);
       setPromoted(data.onPlaylists.some(p => BEST_ALBUMS_PATTERN.test(p.name)));
-
-      // Find the "Best Albums" playlist whose period matches the source playlist.
-      // We only promote if we can identify an exact corresponding playlist —
-      // falling back to "first result" risks silently adding to the wrong one.
-      const sourceName =
-        // Prefer the playlist the user explicitly navigated from.
-        data.onPlaylists.find(p => p.id === playlistId)?.name ??
-        // If no playlistId, look for a single unambiguous "New Albums" playlist
-        // on this album (if there are multiple we can't safely guess).
-        (() => {
-          const newAlbumPlaylists = data.onPlaylists.filter(
-            p => NEW_ALBUMS_PATTERN.test(p.name)
-          );
-          return newAlbumPlaylists.length === 1 ? newAlbumPlaylists[0].name : null;
-        })();
-
-      const targetBestAlbums = sourceName
-        ? (playlists.find(
-            p => extractPeriodKey(p.name) === extractPeriodKey(sourceName)
-          ) ?? null)
-        : null;
-
-      setBestAlbumsPlaylist(targetBestAlbums);
       setLocalRating(data.rating);
-
-      if (siblingAlbums.length > 0) {
-        setPlaylistAlbums(siblingAlbums);
-        // Infer playlist name from album's onPlaylists if we have it, else from the data itself.
-        const match = data.onPlaylists.find(p => p.id === playlistId);
-        setPlaylistName(match?.name ?? '');
-      }
+      const match = data.onPlaylists.find(p => p.id === playlistId);
+      if (match) onPlaylistName(match.name);
     } catch (err) {
-      if (err instanceof AuthError) { await handleAuthError(); return; }
-      Alert.alert('Error', 'Could not load album.');
-    } finally {
-      setLoading(false);
+      if (err instanceof AuthError) { await onAuthError(); return; }
+      // No Alert here — neighbouring pages load in the background, so a
+      // failure is shown inline on the page instead of popping up unprompted.
+      setLoadFailed(true);
     }
-  }, [albumId, playlistId, handleAuthError]);
+  }, [albumId, playlistId, onAuthError, onPlaylistName]);
 
   useEffect(() => { loadAlbum(); }, [loadAlbum]);
 
-  // Scroll the playlist strip so the current album is centred after data loads.
-  useEffect(() => {
-    if (playlistAlbums.length === 0) return;
-    const idx = playlistAlbums.findIndex(a => a.id === albumId);
-    if (idx > 0) {
-      // Small delay lets the FlatList finish layout before scrolling.
-      setTimeout(() => {
-        stripRef.current?.scrollToIndex({ index: idx, animated: false, viewPosition: 0.5 });
-      }, 100);
-    }
-  }, [playlistAlbums, albumId]);
+  // Find the "Best Albums" playlist whose period matches the source playlist.
+  // We only promote if we can identify an exact corresponding playlist —
+  // falling back to "first result" risks silently adding to the wrong one.
+  const bestAlbumsPlaylist = (() => {
+    if (!album) return null;
+    const sourceName =
+      // Prefer the playlist the user explicitly navigated from.
+      album.onPlaylists.find(p => p.id === playlistId)?.name ??
+      // If no playlistId, look for a single unambiguous "New Albums" playlist
+      // on this album (if there are multiple we can't safely guess).
+      (() => {
+        const newAlbumPlaylists = album.onPlaylists.filter(
+          p => NEW_ALBUMS_PATTERN.test(p.name)
+        );
+        return newAlbumPlaylists.length === 1 ? newAlbumPlaylists[0].name : null;
+      })();
+    return sourceName
+      ? (bestAlbumsPlaylists.find(
+          p => extractPeriodKey(p.name) === extractPeriodKey(sourceName)
+        ) ?? null)
+      : null;
+  })();
 
   const handlePromote = useCallback(async () => {
     if (!album || !bestAlbumsPlaylist || promoted || promoting) return;
@@ -130,12 +248,12 @@ export default function AlbumDetailScreen() {
       await promoteAlbum(album.id, bestAlbumsPlaylist.id);
     } catch (err) {
       setPromoted(false);
-      if (err instanceof AuthError) { await handleAuthError(); return; }
+      if (err instanceof AuthError) { await onAuthError(); return; }
       Alert.alert('Error', 'Could not add to Best Albums. Please try again.');
     } finally {
       setPromoting(false);
     }
-  }, [album, bestAlbumsPlaylist, promoted, promoting, handleAuthError]);
+  }, [album, bestAlbumsPlaylist, promoted, promoting, onAuthError]);
 
   const handleRating = useCallback(async (newRating: number) => {
     if (!album || ratingPending) return;
@@ -146,12 +264,12 @@ export default function AlbumDetailScreen() {
       await setRating(album.id, newRating);
     } catch (err) {
       setLocalRating(previous);
-      if (err instanceof AuthError) { await handleAuthError(); return; }
+      if (err instanceof AuthError) { await onAuthError(); return; }
       Alert.alert('Error', 'Could not save rating. Please try again.');
     } finally {
       setRatingPending(false);
     }
-  }, [album, localRating, ratingPending, handleAuthError]);
+  }, [album, localRating, ratingPending, onAuthError]);
 
   const openInSpotify = useCallback(() => {
     if (!album) return;
@@ -165,12 +283,18 @@ export default function AlbumDetailScreen() {
     router.push(`/album/${album.id}/info?${params.toString()}`);
   }, [album, router]);
 
-  const navigateToSibling = useCallback((targetAlbumId: string) => {
-    // Replace rather than push so the back stack doesn't grow with each album.
-    router.replace(`/album/${targetAlbumId}?playlistId=${playlistId}`);
-  }, [router, playlistId]);
+  if (loadFailed) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>Could not load album.</Text>
+        <TouchableOpacity style={styles.btnRetry} onPress={loadAlbum} activeOpacity={0.8}>
+          <Text style={styles.btnInfoText}>Try again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
-  if (loading || !album) {
+  if (!album) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -187,26 +311,15 @@ export default function AlbumDetailScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: 60 + insets.bottom }]}>
 
-      {/* ── Playlist strip ──────────────────────────────────────────────────── */}
-      {playlistAlbums.length > 0 && (
-        <PlaylistStrip
-          ref={stripRef}
-          albums={playlistAlbums}
-          currentAlbumId={albumId}
-          playlistName={playlistName}
-          onSelect={navigateToSibling}
-        />
-      )}
-
       {/* ── Art ──────────────────────────────────────────────────────────────── */}
       {album.imageUrl ? (
         <Image
           source={{ uri: album.imageUrl }}
-          style={[styles.art, playlistAlbums.length > 0 && styles.artWithStrip]}
+          style={styles.art}
           accessibilityLabel={`${album.name} by ${artistNames}`}
         />
       ) : (
-        <View style={[styles.art, styles.artPlaceholder, playlistAlbums.length > 0 && styles.artWithStrip]} />
+        <View style={[styles.art, styles.artPlaceholder]} />
       )}
 
       {/* ── Meta ─────────────────────────────────────────────────────────────── */}
@@ -289,8 +402,6 @@ export default function AlbumDetailScreen() {
 }
 
 // ── Playlist strip ─────────────────────────────────────────────────────────────
-
-import { forwardRef } from 'react';
 
 const STRIP_THUMB = 64;
 
@@ -525,8 +636,15 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 60 },
   centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
 
+  pager: { flex: 1 },
+  errorText: { color: Colors.textMuted, fontSize: 15, marginBottom: 16 },
+  btnRetry: {
+    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)', borderRadius: 14,
+    paddingVertical: 12, paddingHorizontal: 24
+  },
+
   art: { width: '100%', aspectRatio: 1 },
-  artWithStrip: { },
   artPlaceholder: { backgroundColor: Colors.surface },
 
   meta: { padding: 20 },
