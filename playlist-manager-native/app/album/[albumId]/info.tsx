@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchAlbumInfo, AlbumInfo, AuthError } from '../../../lib/api';
-import { Colors } from '../../../constants/colors';
+import { Colors, Fonts } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
 
 // While the server is enriching an album in the background, re-fetch on this interval
@@ -72,7 +72,7 @@ export default function AlbumInfoScreen() {
     <ScrollView
       style={styles.screen}
       contentContainerStyle={[styles.content, { paddingBottom: 60 + insets.bottom }]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.accent} />}
     >
       <View style={styles.header}>
         {imageUrl ? (
@@ -87,7 +87,7 @@ export default function AlbumInfoScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color={Colors.primary} style={styles.spinner} />
+        <ActivityIndicator size="large" color={Colors.accent} style={styles.spinner} />
       ) : loadError ? (
         <Text style={styles.message}>Could not load album info. Please try again later.</Text>
       ) : (
@@ -138,22 +138,22 @@ function formatCount(n: number): string {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.surfaceDark },
+  screen: { flex: 1, backgroundColor: Colors.bg },
   content: { padding: 20, paddingBottom: 60 },
 
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 24, gap: 14 },
   art: { width: ART_SIZE, height: ART_SIZE, borderRadius: 10 },
   artPlaceholder: { backgroundColor: Colors.surface },
   headerText: { flex: 1 },
-  albumName: { color: Colors.text, fontSize: 18, fontWeight: '800', letterSpacing: -0.3, marginBottom: 4 },
+  albumName: { color: Colors.text, fontSize: 20, fontFamily: Fonts.display, marginBottom: 4 },
   artistName: { color: Colors.textMuted, fontSize: 14, fontWeight: '500' },
 
   spinner: { marginTop: 40 },
 
   chip: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)', borderRadius: 20,
+    backgroundColor: Colors.fill, borderWidth: 1,
+    borderColor: Colors.hairline, borderRadius: 20,
     paddingHorizontal: 10, paddingVertical: 4, marginBottom: 16
   },
   chipText: { color: Colors.textMuted, fontSize: 11, fontWeight: '500' },

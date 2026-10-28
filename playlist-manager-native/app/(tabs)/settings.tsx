@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { clearTokens } from '../../lib/auth';
 import { reconnectSpotify } from '../../lib/spotifyReconnect';
-import { Colors } from '../../constants/colors';
+import { Colors, Fonts } from '../../constants/colors';
 
 /**
  * Settings tab.
@@ -69,8 +69,8 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.surfaceDark, padding: 20 },
-  heading: { fontSize: 28, fontWeight: '700', color: Colors.text, marginBottom: 32 },
+  container: { flex: 1, backgroundColor: Colors.bg, padding: 20 },
+  heading: { fontSize: 30, fontFamily: Fonts.display, color: Colors.text, marginBottom: 32, letterSpacing: -0.3 },
   button: {
     backgroundColor: Colors.surface,
     borderRadius: 12,
@@ -81,5 +81,5 @@ const styles = StyleSheet.create({
   },
   spacedButton: { marginBottom: 12 },
   buttonText: { color: Colors.text, fontSize: 16, fontWeight: '600' },
-  signOutText: { color: '#ff6b6b', fontSize: 16, fontWeight: '600' }
+  signOutText: { color: Colors.danger, fontSize: 16, fontWeight: '600' }
 });

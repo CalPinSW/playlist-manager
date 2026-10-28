@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { fetchPlaylistAlbums, AuthError, PlaylistAlbum } from '../../../lib/api';
 import { ProgressBar } from '../../../components/ProgressBar';
-import { Colors } from '../../../constants/colors';
+import { Colors, Fonts } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
 
 export default function PlaylistDetailScreen() {
@@ -57,7 +57,7 @@ export default function PlaylistDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </SafeAreaView>
     );
   }
@@ -72,7 +72,7 @@ export default function PlaylistDetailScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => loadAlbums({ showRefreshing: true })}
-          tintColor={Colors.primary}
+          tintColor={Colors.accent}
         />
       }
       ListHeaderComponent={
@@ -150,16 +150,16 @@ function AlbumCard({ album, onPress }: { album: PlaylistAlbum; onPress: () => vo
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.surfaceDark },
-  centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
+  screen: { flex: 1, backgroundColor: Colors.bg },
+  centered: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center', alignItems: 'center' },
   list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 40 },
   emptyContainer: { flex: 1, justifyContent: 'center', paddingHorizontal: 32 },
   subtitle: { color: Colors.textMuted, fontSize: 13, marginBottom: 12, marginTop: 4 },
   errorBox: {
-    backgroundColor: '#2d0a0a', borderRadius: 12, padding: 16,
-    marginBottom: 16, marginTop: 4, borderWidth: 1, borderColor: '#5c1a1a'
+    backgroundColor: Colors.dangerBg, borderRadius: 12, padding: 16,
+    marginBottom: 16, marginTop: 4, borderWidth: 1, borderColor: Colors.dangerBorder
   },
-  errorText: { color: '#ff6b6b', textAlign: 'center' },
+  errorText: { color: Colors.danger, textAlign: 'center' },
 
   card: {
     flexDirection: 'row',
@@ -176,22 +176,22 @@ const styles = StyleSheet.create({
     bottom: -4, right: -4,
     width: 18, height: 18,
     borderRadius: 9,
-    backgroundColor: '#78a63c',
+    backgroundColor: Colors.success,
     alignItems: 'center',
     justifyContent: 'center'
   },
-  completedTick: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  completedTick: { color: Colors.onSuccess, fontSize: 10, fontWeight: '700' },
 
   info: { flex: 1 },
   albumName: { color: Colors.text, fontSize: 15, fontWeight: '600', lineHeight: 20 },
   artistName: { color: Colors.textMuted, fontSize: 12, marginTop: 2, marginBottom: 8 },
   stats: { color: Colors.textMuted, fontSize: 11, marginTop: 4 },
-  unstarted: { color: 'rgba(255,255,255,0.2)', fontSize: 12, marginTop: 4, fontStyle: 'italic' },
+  unstarted: { color: Colors.textFaint, fontSize: 12, marginTop: 4, fontStyle: 'italic' },
 
-  chevron: { color: 'rgba(255,255,255,0.2)', fontSize: 20 },
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)' },
+  chevron: { color: Colors.textFaint, fontSize: 20 },
+  divider: { height: 1, backgroundColor: Colors.divider },
 
   emptyState: { alignItems: 'center', paddingVertical: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: Colors.text, marginBottom: 12 },
+  emptyTitle: { fontSize: 20, fontFamily: Fonts.display, color: Colors.text, marginBottom: 12 },
   emptySubtitle: { fontSize: 14, color: Colors.textMuted, textAlign: 'center' }
 });

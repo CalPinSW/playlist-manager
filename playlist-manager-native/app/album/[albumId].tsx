@@ -21,7 +21,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
 import { ProgressBar } from '../../components/ProgressBar';
-import { Colors } from '../../constants/colors';
+import { Colors, Fonts } from '../../constants/colors';
 import { clearTokens } from '../../lib/auth';
 import { getAlbumDetail, peekAlbumDetail, prefetchAlbumDetail, updateCachedAlbum } from '../../lib/albumCache';
 
@@ -169,7 +169,7 @@ export default function AlbumDetailScreen() {
   if (albums === null) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </View>
     );
   }
@@ -377,7 +377,7 @@ function AlbumPage({
             <Text style={styles.artistName}>{summary.artists.map(a => a.name).join(', ')}</Text>
           </View>
         )}
-        <ActivityIndicator size="large" color={Colors.primary} style={styles.pageSpinner} />
+        <ActivityIndicator size="large" color={Colors.accent} style={styles.pageSpinner} />
       </View>
     );
   }
@@ -549,7 +549,7 @@ const stripStyles = StyleSheet.create({
   heading: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#c9a8ff',
+    color: Colors.textMuted,
     letterSpacing: 1,
     textTransform: 'uppercase',
     paddingHorizontal: 16,
@@ -569,9 +569,9 @@ const stripStyles = StyleSheet.create({
     position: 'relative',
   },
   thumbCurrent: {
-    borderColor: Colors.primary,
+    borderColor: Colors.accent,
     // Slight scale-up via padding trick — shadows the current album
-    shadowColor: Colors.primary,
+    shadowColor: Colors.accent,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 6,
@@ -583,7 +583,7 @@ const stripStyles = StyleSheet.create({
   },
   thumbCurrentOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(132,61,255,0.15)',
+    backgroundColor: Colors.accentSoft,
   },
   progressDot: {
     position: 'absolute',
@@ -592,12 +592,12 @@ const stripStyles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     borderWidth: 1,
     borderColor: Colors.surface,
   },
   progressDotDone: {
-    backgroundColor: '#78a63c',
+    backgroundColor: Colors.success,
   },
 });
 
@@ -712,16 +712,16 @@ function Chip({ label }: { label: string }) {
 
 // ── Styles ─────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.surfaceDark },
+  screen: { flex: 1, backgroundColor: Colors.bg },
   content: { paddingBottom: 60 },
-  centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
+  centered: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center', alignItems: 'center' },
 
   pager: { flex: 1 },
   pageSpinner: { marginTop: 24 },
   errorText: { color: Colors.textMuted, fontSize: 15, marginBottom: 16 },
   btnRetry: {
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)', borderRadius: 14,
+    backgroundColor: Colors.fill, borderWidth: 1,
+    borderColor: Colors.hairline, borderRadius: 14,
     paddingVertical: 12, paddingHorizontal: 24
   },
 
@@ -729,12 +729,12 @@ const styles = StyleSheet.create({
   artPlaceholder: { backgroundColor: Colors.surface },
 
   meta: { padding: 20 },
-  albumName: { color: Colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.4, marginBottom: 4 },
+  albumName: { color: Colors.text, fontSize: 26, fontFamily: Fonts.display, letterSpacing: -0.3, marginBottom: 4 },
   artistName: { color: Colors.textMuted, fontSize: 16, fontWeight: '500', marginBottom: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)', borderRadius: 20,
+    backgroundColor: Colors.fill, borderWidth: 1,
+    borderColor: Colors.hairline, borderRadius: 20,
     paddingHorizontal: 10, paddingVertical: 4
   },
   chipText: { color: Colors.textMuted, fontSize: 11, fontWeight: '500' },
@@ -751,63 +751,63 @@ const styles = StyleSheet.create({
   starGlyph: { width: STAR_SIZE, height: STAR_SIZE, position: 'relative' },
   starClip: { position: 'absolute', top: 0, left: 0, height: STAR_SIZE, overflow: 'hidden' },
   star: { fontSize: STAR_SIZE, lineHeight: STAR_SIZE },
-  starFilled: { color: '#de7c38' },
-  starEmpty: { color: 'rgba(255,255,255,0.18)' },
+  starFilled: { color: Colors.rating },
+  starEmpty: { color: Colors.textFaint },
   starPending: { opacity: 0.5 },
   ratingLabel: { color: Colors.textMuted, fontSize: 13, marginLeft: 10 },
 
   progressSection: { paddingHorizontal: 20, marginBottom: 4 },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   progressLabel: { color: Colors.textMuted, fontSize: 13 },
-  progressPct: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
+  progressPct: { color: Colors.accent, fontSize: 13, fontWeight: '600', fontVariant: ['tabular-nums'] },
 
   actions: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 10 },
-  btnSpotify: { backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  btnSpotifyText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  btnSpotify: { backgroundColor: Colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  btnSpotifyText: { color: Colors.onAccent, fontSize: 15, fontWeight: '700' },
   btnInfo: {
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)', borderRadius: 14,
+    backgroundColor: Colors.fill, borderWidth: 1,
+    borderColor: Colors.hairline, borderRadius: 14,
     paddingVertical: 14, alignItems: 'center'
   },
   btnInfoText: { color: Colors.text, fontSize: 14, fontWeight: '600' },
   btnPromote: {
-    backgroundColor: 'rgba(120,166,60,0.15)', borderWidth: 1,
-    borderColor: 'rgba(120,166,60,0.4)', borderRadius: 14,
+    backgroundColor: Colors.successSoft, borderWidth: 1,
+    borderColor: Colors.successBorder, borderRadius: 14,
     paddingVertical: 16, alignItems: 'center'
   },
   btnPromoteDisabled: { opacity: 0.6 },
-  btnPromoteText: { color: '#b3d581', fontSize: 15, fontWeight: '700' },
+  btnPromoteText: { color: Colors.successText, fontSize: 15, fontWeight: '700' },
   btnPromotedDone: {
     borderRadius: 14, paddingVertical: 16, alignItems: 'center',
-    backgroundColor: 'rgba(120,166,60,0.08)', borderWidth: 1, borderColor: 'rgba(120,166,60,0.2)'
+    backgroundColor: Colors.successSoft, borderWidth: 1, borderColor: Colors.successBorder
   },
-  btnPromotedDoneText: { color: 'rgba(179,213,129,0.5)', fontSize: 15, fontWeight: '600' },
+  btnPromotedDoneText: { color: Colors.successTextMuted, fontSize: 15, fontWeight: '600' },
 
   playlistTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingBottom: 16 },
   playlistTag: {
-    backgroundColor: 'rgba(132,61,255,0.12)', borderWidth: 1,
-    borderColor: 'rgba(132,61,255,0.25)', borderRadius: 6,
+    backgroundColor: Colors.accentSoft, borderWidth: 1,
+    borderColor: Colors.accentBorder, borderRadius: 6,
     paddingHorizontal: 10, paddingVertical: 3
   },
-  playlistTagBest: { backgroundColor: 'rgba(120,166,60,0.12)', borderColor: 'rgba(120,166,60,0.3)' },
-  playlistTagText: { color: '#bea6ff', fontSize: 11, fontWeight: '500' },
-  playlistTagTextBest: { color: '#b3d581' },
+  playlistTagBest: { backgroundColor: Colors.successSoft, borderColor: Colors.successBorder },
+  playlistTagText: { color: Colors.accent, fontSize: 11, fontWeight: '500' },
+  playlistTagTextBest: { color: Colors.successText },
 
-  tracksHeading: { color: Colors.text, fontSize: 16, fontWeight: '700', paddingHorizontal: 20, paddingBottom: 8 },
+  tracksHeading: { color: Colors.text, fontSize: 18, fontFamily: Fonts.displayMedium, paddingHorizontal: 20, paddingBottom: 8 },
   trackList: { paddingHorizontal: 20 },
   trackRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 14 },
   trackRowCurrent: {
-    backgroundColor: 'rgba(132,61,255,0.08)', borderRadius: 10,
+    backgroundColor: Colors.accentSoft, borderRadius: 10,
     paddingHorizontal: 10, marginHorizontal: -10
   },
   trackRowListened: { opacity: 0.45 },
   trackNum: { width: 22, textAlign: 'center', color: Colors.textMuted, fontSize: 13, flexShrink: 0 },
-  trackNumCurrent: { color: Colors.primary, fontSize: 18 },
+  trackNumCurrent: { color: Colors.accent, fontSize: 18 },
   trackInfo: { flex: 1 },
   trackName: { color: Colors.text, fontSize: 15, fontWeight: '500' },
-  trackNameCurrent: { color: '#bea6ff', fontWeight: '600' },
+  trackNameCurrent: { color: Colors.accent, fontWeight: '600' },
   trackDuration: { color: Colors.textMuted, fontSize: 12, marginTop: 2 },
-  listenedTick: { color: '#78a63c', fontSize: 16 },
-  currentDivider: { height: 1, backgroundColor: 'rgba(132,61,255,0.2)', marginVertical: 2 },
+  listenedTick: { color: Colors.success, fontSize: 16 },
+  currentDivider: { height: 1, backgroundColor: Colors.accentBorder, marginVertical: 2 },
   bottomSpacer: { height: 40 }
 });

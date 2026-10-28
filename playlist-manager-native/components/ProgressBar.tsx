@@ -29,14 +29,14 @@ const styles = StyleSheet.create({
   track: {
     width: '100%',
     height: 6,
-    backgroundColor: Colors.progressTrack,
+    backgroundColor: Colors.track,
     borderRadius: 3,
     overflow: 'hidden'
   },
   trackCompact: { height: 4 },
   fill: {
     height: '100%',
-    backgroundColor: Colors.progressFill,
+    backgroundColor: Colors.accent,
     borderRadius: 3
   }
 });

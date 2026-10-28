@@ -8,22 +8,27 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Design system tokens (matching web app design review decisions)
-        primary: '#843dff',       // purple accent — CTAs, active tab
-        secondary: '#78a63c',     // green — promote button, completion
+        // Mirrors constants/colors.ts ("liner notes" palette) — keep in sync
+        bg: '#14110f',            // page background
         surface: {
-          DEFAULT: '#1a1030',     // card background
-          dark: '#0f0a1e',        // page background
+          DEFAULT: '#1f1a16',     // cards
+          raised: '#29231e',
         },
         text: {
-          DEFAULT: '#f0ecff',     // primary text
-          muted: '#9d8ec4',       // secondary text
+          DEFAULT: '#efe6d8',     // primary text
+          muted: '#a89b8a',       // secondary text
+          faint: '#6e6357',
         },
-        border: '#2d1f5e',        // subtle borders
+        border: '#332b25',
+        accent: '#e8552d',        // playing / current / primary action
+        success: '#8fa77a',       // finished / promoted
+        rating: '#d9a441',        // stars
+        danger: '#ff7a6b',
       },
       fontFamily: {
         // SF Pro is the system font on iOS — referenced by name in RN
         sans: ['System'],
+        display: ['Fraunces_600SemiBold'],
       }
     }
   },

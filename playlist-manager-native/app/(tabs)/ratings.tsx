@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchRatings, AuthError, RatedAlbum } from '../../lib/api';
-import { Colors } from '../../constants/colors';
+import { Colors, Fonts } from '../../constants/colors';
 import { clearTokens } from '../../lib/auth';
 
 type DateFilter = 'all' | 'thisMonth' | 'thisYear' | number;
@@ -194,7 +194,7 @@ export default function RatingsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </SafeAreaView>
     );
   }
@@ -209,7 +209,7 @@ export default function RatingsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => loadRatings({ showRefreshing: true })}
-            tintColor={Colors.primary}
+            tintColor={Colors.accent}
           />
         }
         ListHeaderComponent={
@@ -270,7 +270,7 @@ export default function RatingsScreen() {
         ListEmptyComponent={
           albums.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="star" size={40} color="#de7c38" style={styles.emptyIcon} />
+              <Ionicons name="star" size={40} color={Colors.rating} style={styles.emptyIcon} />
               <Text style={styles.emptyTitle}>No ratings yet</Text>
               <Text style={styles.emptySubtitle}>
                 Open any album and tap the stars to rate it.
@@ -349,7 +349,7 @@ function StarRow({ rating }: { rating: number }) {
           : half
           ? 'star-half'
           : 'star-outline';
-        const color = filled || half ? '#de7c38' : 'rgba(255,255,255,0.2)';
+        const color = filled || half ? Colors.rating : Colors.textFaint;
         return <Ionicons key={i} name={name} size={14} color={color} />;
       })}
       <Text style={styles.ratingLabel}>{display.toFixed(1)}</Text>
@@ -376,7 +376,7 @@ function RatedAlbumRow({ album, onPress }: { album: RatedAlbum; onPress: () => v
         <StarRow rating={album.rating} />
       </View>
 
-      <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.2)" />
+      <Ionicons name="chevron-forward" size={18} color={Colors.textFaint} />
     </TouchableOpacity>
   );
 }
@@ -438,7 +438,7 @@ function FilterModal({
                 <Ionicons
                   name={sortBy === opt.value ? 'radio-button-on' : 'radio-button-off'}
                   size={20}
-                  color={sortBy === opt.value ? Colors.primary : 'rgba(255,255,255,0.25)'}
+                  color={sortBy === opt.value ? Colors.accent : Colors.textFaint}
                 />
               </TouchableOpacity>
             ))}
@@ -527,19 +527,19 @@ function FilterModal({
 
 // ── Styles ─────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.surfaceDark },
-  centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  centered: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center', alignItems: 'center' },
   listContent: { paddingBottom: 40 },
 
   heading: {
-    fontSize: 28, fontWeight: '800', color: Colors.text,
-    letterSpacing: -0.5, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12
+    fontSize: 30, fontFamily: Fonts.display, color: Colors.text,
+    letterSpacing: -0.3, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12
   },
   errorBox: {
-    backgroundColor: '#2d0a0a', borderRadius: 12, padding: 16,
-    marginHorizontal: 20, marginBottom: 16, borderWidth: 1, borderColor: '#5c1a1a'
+    backgroundColor: Colors.dangerBg, borderRadius: 12, padding: 16,
+    marginHorizontal: 20, marginBottom: 16, borderWidth: 1, borderColor: Colors.dangerBorder
   },
-  errorText: { color: '#ff6b6b', textAlign: 'center' },
+  errorText: { color: Colors.danger, textAlign: 'center' },
 
   dateChipRow: { paddingHorizontal: 20, gap: 8, paddingBottom: 12 },
 
@@ -549,26 +549,26 @@ const styles = StyleSheet.create({
   },
   filtersButton: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: Colors.fill,
+    borderWidth: 1, borderColor: Colors.hairline,
     borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7
   },
   filtersButtonText: { color: Colors.text, fontSize: 13, fontWeight: '600' },
   filterBadge: {
-    backgroundColor: Colors.primary, borderRadius: 8,
+    backgroundColor: Colors.accent, borderRadius: 8,
     minWidth: 16, height: 16, paddingHorizontal: 4,
     alignItems: 'center', justifyContent: 'center'
   },
-  filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  filterBadgeText: { color: Colors.onAccent, fontSize: 10, fontWeight: '700' },
   resultsCount: { color: Colors.textMuted, fontSize: 12, flex: 1 },
-  clearLink: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
+  clearLink: { color: Colors.accent, fontSize: 13, fontWeight: '600' },
 
   chip: {
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: Colors.hairline,
+    backgroundColor: Colors.fill,
     borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7
   },
-  chipActive: { backgroundColor: 'rgba(132,61,255,0.18)', borderColor: Colors.primary },
+  chipActive: { backgroundColor: Colors.accentSoft, borderColor: Colors.accent },
   chipText: { color: Colors.textMuted, fontSize: 13, fontWeight: '600' },
   chipTextActive: { color: Colors.text },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 },
@@ -586,56 +586,56 @@ const styles = StyleSheet.create({
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 4 },
   ratingLabel: { color: Colors.textMuted, fontSize: 11, marginLeft: 4 },
 
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginHorizontal: 20 },
+  divider: { height: 1, backgroundColor: Colors.divider, marginHorizontal: 20 },
 
   emptyContainer: { flex: 1 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80 },
   emptyIcon: { opacity: 0.4, marginBottom: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: Colors.text, marginBottom: 8 },
+  emptyTitle: { fontSize: 20, fontFamily: Fonts.display, color: Colors.text, marginBottom: 8 },
   emptySubtitle: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22, paddingHorizontal: 32 },
   clearFiltersButton: {
-    marginTop: 16, backgroundColor: Colors.primary,
+    marginTop: 16, backgroundColor: Colors.accent,
     borderRadius: 10, paddingHorizontal: 18, paddingVertical: 10
   },
-  clearFiltersButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  clearFiltersButtonText: { color: Colors.onAccent, fontSize: 14, fontWeight: '700' },
 
   // Modal
-  modalContainer: { flex: 1, backgroundColor: Colors.surfaceDark },
+  modalContainer: { flex: 1, backgroundColor: Colors.bg },
   modalHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)'
+    borderBottomWidth: 1, borderBottomColor: Colors.hairline
   },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, letterSpacing: -0.3 },
+  modalTitle: { fontSize: 22, fontFamily: Fonts.display, color: Colors.text, letterSpacing: -0.2 },
   modalContent: { padding: 20, paddingBottom: 40 },
   sectionLabel: {
-    color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: '700',
+    color: Colors.textMuted, fontSize: 11, fontWeight: '700',
     letterSpacing: 0.8, marginBottom: 10, marginTop: 4
   },
   optionList: { marginBottom: 24 },
   optionRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)'
+    paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: Colors.hairline
   },
   optionLabel: { color: Colors.text, fontSize: 15 },
   artistSearchInput: {
-    backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: Colors.fill, borderWidth: 1, borderColor: Colors.hairline,
     borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9,
     color: Colors.text, fontSize: 14, marginBottom: 12
   },
   modalFooter: {
     flexDirection: 'row', gap: 12,
     paddingHorizontal: 20, paddingVertical: 14,
-    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)'
+    borderTopWidth: 1, borderTopColor: Colors.hairline
   },
   footerClearButton: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', paddingVertical: 12
+    borderRadius: 10, borderWidth: 1, borderColor: Colors.hairline, paddingVertical: 12
   },
   footerClearButtonText: { color: Colors.text, fontSize: 15, fontWeight: '600' },
   footerDoneButton: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    borderRadius: 10, backgroundColor: Colors.primary, paddingVertical: 12
+    borderRadius: 10, backgroundColor: Colors.accent, paddingVertical: 12
   },
-  footerDoneButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' }
+  footerDoneButtonText: { color: Colors.onAccent, fontSize: 15, fontWeight: '700' }
 });

@@ -17,7 +17,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { fetchProgress, fetchNowPlaying, syncHistory, resumePlayback, ProgressEntry, NowPlaying, AuthError, SpotifyReauthError } from '../../lib/api';
 import { promptSpotifyReconnect } from '../../lib/spotifyReconnect';
 import { getCachedProgress, cacheProgress } from '../../lib/db';
-import { Colors } from '../../constants/colors';
+import { Colors, Fonts } from '../../constants/colors';
 import { useRouter } from 'expo-router';
 import { clearTokens } from '../../lib/auth';
 import { writeNowPlaying } from '../../modules/widget-bridge';
@@ -172,7 +172,7 @@ export default function NowScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </SafeAreaView>
     );
   }
@@ -188,7 +188,7 @@ export default function NowScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => loadData({ showRefreshing: true })}
-            tintColor={Colors.primary}
+            tintColor={Colors.accent}
           />
         }
       >
@@ -352,7 +352,7 @@ function PlaylistSection({
           disabled={resuming}
         >
           {resuming
-            ? <ActivityIndicator size="small" color={Colors.primary} />
+            ? <ActivityIndicator size="small" color={Colors.accent} />
             : <Text style={styles.resumeBtnText}>▶  Resume</Text>
           }
         </TouchableOpacity>
@@ -496,10 +496,10 @@ function EmptyState() {
 // ── Styles ─────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.surfaceDark },
-  centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  centered: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center', alignItems: 'center' },
   scroll: { padding: 20, paddingBottom: 48 },
-  heading: { fontSize: 28, fontWeight: '700', color: Colors.text, marginBottom: 24 },
+  heading: { fontSize: 30, fontFamily: Fonts.display, color: Colors.text, marginBottom: 24, letterSpacing: -0.3 },
 
   // ── Playlist section ────────────────────────────────────────────────────────
 
@@ -544,10 +544,10 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   playlistName: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#c9a8ff',
-    letterSpacing: 0.1,
+    fontSize: 16,
+    fontFamily: Fonts.display,
+    color: Colors.text,
+    letterSpacing: -0.2,
   },
   playlistMeta: {
     fontSize: 11,
@@ -563,17 +563,18 @@ const styles = StyleSheet.create({
   playlistProgressTrack: {
     flex: 1,
     height: 4,
-    backgroundColor: Colors.progressTrack,
+    backgroundColor: Colors.track,
     borderRadius: 2,
     overflow: 'hidden',
   },
   playlistProgressFill: {
     height: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     borderRadius: 2,
   },
   playlistProgressPct: {
     fontSize: 11,
+    fontVariant: ['tabular-nums'],
     color: Colors.textMuted,
     flexShrink: 0,
     minWidth: 32,
@@ -586,8 +587,8 @@ const styles = StyleSheet.create({
     gap: 2,
     flexShrink: 0,
   },
-  viewAllText: { fontSize: 12, color: Colors.primary, fontWeight: '600' },
-  viewAllChevron: { fontSize: 18, color: Colors.primary, lineHeight: 20 },
+  viewAllText: { fontSize: 12, color: Colors.text, fontWeight: '600' },
+  viewAllChevron: { fontSize: 18, color: Colors.textMuted, lineHeight: 20 },
 
   // ── Resume button ───────────────────────────────────────────────────────────
 
@@ -599,9 +600,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginBottom: 4,
     borderRadius: 8,
-    backgroundColor: 'rgba(120,166,60,0.12)',
+    backgroundColor: Colors.accentSoft,
     borderWidth: 1,
-    borderColor: 'rgba(120,166,60,0.35)',
+    borderColor: Colors.accentBorder,
     minHeight: 36,
   },
   resumeBtnDisabled: {
@@ -610,7 +611,7 @@ const styles = StyleSheet.create({
   resumeBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#78a63c',
+    color: Colors.accent,
     letterSpacing: 0.3,
   },
 
@@ -651,7 +652,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: Colors.surfaceDark,
+    backgroundColor: Colors.bg,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -660,14 +661,14 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   albumCard: {
-    backgroundColor: Colors.surfaceDark,
+    backgroundColor: Colors.bg,
     borderRadius: 10,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.border,
   },
   albumCardLive: {
-    borderColor: '#78a63c',
+    borderColor: Colors.accent,
     borderWidth: 1.5,
   },
 
@@ -689,13 +690,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(0,0,0,0.72)',
+    backgroundColor: Colors.overlay,
     borderRadius: 6,
     paddingHorizontal: 5,
     paddingVertical: 2,
   },
-  liveDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#78a63c' },
-  liveText: { fontSize: 9, fontWeight: '800', color: '#78a63c', letterSpacing: 0.5 },
+  liveDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: Colors.accent },
+  liveText: { fontSize: 9, fontWeight: '800', color: Colors.accent, letterSpacing: 0.5 },
 
   doneBadge: {
     position: 'absolute',
@@ -704,13 +705,13 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#78a63c',
+    backgroundColor: Colors.success,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
     borderColor: Colors.surface,
   },
-  doneTick: { color: '#fff', fontSize: 10, fontWeight: '800' },
+  doneTick: { color: Colors.onSuccess, fontSize: 10, fontWeight: '800' },
 
   albumCardBody: {
     padding: 8,
@@ -729,20 +730,20 @@ const styles = StyleSheet.create({
   },
   albumCardTrack: {
     fontSize: 10,
-    color: 'rgba(200,180,255,0.7)',
+    color: Colors.textMuted,
     fontStyle: 'italic',
     marginBottom: 5,
   },
   albumCardProgressTrack: {
     height: 3,
-    backgroundColor: Colors.progressTrack,
+    backgroundColor: Colors.track,
     borderRadius: 2,
     overflow: 'hidden',
     marginBottom: 4,
   },
   albumCardProgressFill: {
     height: '100%',
-    backgroundColor: Colors.progressFill,
+    backgroundColor: Colors.accent,
     borderRadius: 2,
   },
   albumCardProgressText: {
@@ -763,11 +764,11 @@ const styles = StyleSheet.create({
   expandBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.primary,
+    color: Colors.text,
   },
   expandBtnChevron: {
     fontSize: 16,
-    color: Colors.primary,
+    color: Colors.textMuted,
     lineHeight: 18,
     transform: [{ rotate: '90deg' }],
   },
@@ -776,11 +777,11 @@ const styles = StyleSheet.create({
   },
 
   // Error
-  errorBox: { backgroundColor: '#2d0a0a', borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#5c1a1a' },
-  errorText: { color: '#ff6b6b', textAlign: 'center' },
+  errorBox: { backgroundColor: Colors.dangerBg, borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: Colors.dangerBorder },
+  errorText: { color: Colors.danger, textAlign: 'center' },
 
   // Empty
   emptyState: { alignItems: 'center', paddingVertical: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: Colors.text, marginBottom: 12 },
+  emptyTitle: { fontSize: 20, fontFamily: Fonts.display, color: Colors.text, marginBottom: 12 },
   emptySubtitle: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22 },
 });

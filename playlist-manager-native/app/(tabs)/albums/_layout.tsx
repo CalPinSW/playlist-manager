@@ -10,11 +10,11 @@ export default function AlbumsLayout() {
     <Stack
       screenOptions={{
         headerShown: true,
-        headerStyle: { backgroundColor: Colors.surfaceDark },
-        headerTintColor: Colors.primary,
+        headerStyle: { backgroundColor: Colors.bg },
+        headerTintColor: Colors.accent,
         headerTitle: '',
         headerBackTitle: 'Back',
-        contentStyle: { backgroundColor: Colors.surfaceDark }
+        contentStyle: { backgroundColor: Colors.bg }
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />

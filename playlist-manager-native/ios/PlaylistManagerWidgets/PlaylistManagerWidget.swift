@@ -161,16 +161,28 @@ struct ArtView: View {
           .scaledToFill()
       } else {
         ZStack {
-          Color(red: 0.10, green: 0.06, blue: 0.18)
+          Palette.surface
           Image(systemName: "music.note")
             .font(.system(size: size * 0.28))
-            .foregroundColor(Color(white: 1, opacity: 0.15))
+            .foregroundColor(Palette.textFaint)
         }
       }
     }
     .frame(width: size, height: size)
     .clipped()
   }
+}
+
+/// "Liner notes" palette — mirrors constants/colors.ts in the RN app.
+enum Palette {
+  static let bg        = Color(red: 0.078, green: 0.067, blue: 0.059) // #14110f
+  static let surface   = Color(red: 0.122, green: 0.102, blue: 0.086) // #1f1a16
+  static let raised    = Color(red: 0.161, green: 0.137, blue: 0.118) // #29231e
+  static let text      = Color(red: 0.937, green: 0.902, blue: 0.847) // #efe6d8
+  static let textMuted = Color(red: 0.659, green: 0.608, blue: 0.541) // #a89b8a
+  static let textFaint = Color(red: 0.431, green: 0.388, blue: 0.341) // #6e6357
+  static let accent    = Color(red: 0.910, green: 0.333, blue: 0.176) // #e8552d
+  static let rating    = Color(red: 0.851, green: 0.643, blue: 0.255) // #d9a441
 }
 
 /// Five tappable star chips — interactive on iOS 17+, display-only on older.
@@ -204,13 +216,13 @@ struct StarRatingView: View {
     ZStack {
       RoundedRectangle(cornerRadius: 6)
         .fill(filled
-          ? Color(red: 0.51, green: 0.24, blue: 1.0).opacity(0.45)
-          : Color(red: 0.18, green: 0.12, blue: 0.37).opacity(0.7))
+          ? Palette.rating.opacity(0.22)
+          : Palette.raised.opacity(0.7))
       Text(filled ? "★" : "☆")
         .font(.system(size: chipSize))
         .foregroundColor(filled
-          ? Color(red: 0.70, green: 0.52, blue: 1.0)
-          : Color(red: 0.35, green: 0.28, blue: 0.55))
+          ? Palette.rating
+          : Palette.textFaint)
     }
     .frame(width: chipSize + 10, height: chipSize + 8)
   }
@@ -237,13 +249,13 @@ struct SmallWidgetView: View {
       // Frosted glass footer
       VStack(alignment: .leading, spacing: 2) {
         Text(entry.albumName)
-          .font(.system(size: 11.5, weight: .bold))
-          .foregroundColor(.white)
+          .font(.system(size: 12, weight: .semibold, design: .serif))
+          .foregroundColor(Palette.text)
           .lineLimit(1)
 
         Text(entry.artistName)
           .font(.system(size: 9.5))
-          .foregroundColor(Color(white: 1, opacity: 0.55))
+          .foregroundColor(Palette.textMuted)
           .lineLimit(1)
 
         Spacer().frame(height: 4)
@@ -256,8 +268,8 @@ struct SmallWidgetView: View {
       .background(
         LinearGradient(
           colors: [
-            Color(red: 0.04, green: 0.02, blue: 0.09).opacity(0.97),
-            Color(red: 0.04, green: 0.02, blue: 0.09).opacity(0.85),
+            Palette.bg.opacity(0.97),
+            Palette.bg.opacity(0.85),
             Color.clear
           ],
           startPoint: .bottom,
@@ -271,14 +283,14 @@ struct SmallWidgetView: View {
 
   private var emptyView: some View {
     ZStack {
-      Color(red: 0.063, green: 0.035, blue: 0.118)
+      Palette.bg
       VStack(spacing: 6) {
         Image(systemName: "music.note")
           .font(.system(size: 24))
-          .foregroundColor(Color(white: 1, opacity: 0.2))
+          .foregroundColor(Palette.textFaint)
         Text("Nothing\nplaying")
           .font(.system(size: 10))
-          .foregroundColor(Color(white: 1, opacity: 0.2))
+          .foregroundColor(Palette.textFaint)
           .multilineTextAlignment(.center)
       }
     }
@@ -290,9 +302,9 @@ struct SmallWidgetView: View {
 struct MediumWidgetView: View {
   let entry: NowPlayingEntry
 
-  private let surface   = Color(red: 0.063, green: 0.035, blue: 0.118)
-  private let textMuted = Color(red: 0.61,  green: 0.56,  blue: 0.77)
-  private let green     = Color(red: 0.47,  green: 0.65,  blue: 0.24)
+  private let surface   = Palette.surface
+  private let textMuted = Palette.textMuted
+  private let live      = Palette.accent
 
   var body: some View {
     if entry.hasAlbum {
@@ -312,19 +324,19 @@ struct MediumWidgetView: View {
         // "Now Playing" / "Last Played" badge
         HStack(spacing: 4) {
           Circle()
-            .fill(entry.isPlaying ? green : Color.clear)
+            .fill(entry.isPlaying ? live : Color.clear)
             .frame(width: 5, height: 5)
-            .shadow(color: entry.isPlaying ? green : .clear, radius: 3)
+            .shadow(color: entry.isPlaying ? live : .clear, radius: 3)
           Text(entry.isPlaying ? "NOW PLAYING" : "LAST PLAYED")
             .font(.system(size: 8.5, weight: .bold))
-            .foregroundColor(entry.isPlaying ? green : textMuted)
+            .foregroundColor(entry.isPlaying ? live : textMuted)
             .tracking(0.8)
         }
         .padding(.bottom, 6)
 
         Text(entry.albumName)
-          .font(.system(size: 14, weight: .heavy))
-          .foregroundColor(.white)
+          .font(.system(size: 15, weight: .semibold, design: .serif))
+          .foregroundColor(Palette.text)
           .lineLimit(2)
           .fixedSize(horizontal: false, vertical: true)
 
@@ -339,7 +351,7 @@ struct MediumWidgetView: View {
         VStack(alignment: .leading, spacing: 5) {
           Text("RATE")
             .font(.system(size: 8.5, weight: .bold))
-            .foregroundColor(Color(white: 1, opacity: 0.2))
+            .foregroundColor(Palette.textFaint)
             .tracking(1)
 
           StarRatingView(albumId: entry.albumId, rating: entry.rating, chipSize: 13)
@@ -358,14 +370,14 @@ struct MediumWidgetView: View {
       HStack(spacing: 14) {
         Image(systemName: "music.note")
           .font(.system(size: 28))
-          .foregroundColor(Color(white: 1, opacity: 0.12))
+          .foregroundColor(Palette.textFaint.opacity(0.6))
         VStack(alignment: .leading, spacing: 4) {
           Text("Nothing playing")
             .font(.system(size: 13, weight: .semibold))
-            .foregroundColor(Color(white: 1, opacity: 0.2))
+            .foregroundColor(Palette.textFaint)
           Text("Open Spotify to get started")
             .font(.system(size: 11))
-            .foregroundColor(Color(white: 1, opacity: 0.12))
+            .foregroundColor(Palette.textFaint.opacity(0.6))
         }
       }
     }
