@@ -17,13 +17,17 @@ import {
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fetchAlbumDetail, fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
+import { fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Colors } from '../../constants/colors';
 import { clearTokens } from '../../lib/auth';
+import { getAlbumDetail, peekAlbumDetail, prefetchAlbumDetail, updateCachedAlbum } from '../../lib/albumCache';
 
 const BEST_ALBUMS_PATTERN = /best albums/i;
 const NEW_ALBUMS_PATTERN  = /new albums/i;
+
+// How many albums either side of the current one to fetch ahead of a swipe.
+const PREFETCH_RADIUS = 2;
 
 /**
  * Strip a leading "New Albums" or "Best Albums" label and normalise the
@@ -55,7 +59,7 @@ export default function AlbumDetailScreen() {
   const [bestAlbumsPlaylists, setBestAlbumsPlaylists] = useState<PlaylistSummary[]>([]);
   const [playlistName, setPlaylistName] = useState('');
 
-  const pagerRef = useRef<FlatList<{ id: string }>>(null);
+  const pagerRef = useRef<FlatList<{ id: string; summary?: PlaylistAlbum }>>(null);
   const stripRef = useRef<FlatList<PlaylistAlbum>>(null);
 
   const handleAuthError = useCallback(async () => {
@@ -98,6 +102,18 @@ export default function AlbumDetailScreen() {
     return () => clearTimeout(t);
   }, [albums, index]);
 
+  // Warm the detail cache and artwork for nearby albums so swiping or tapping
+  // into them doesn't wait on the network.
+  useEffect(() => {
+    if (!albums) return;
+    for (let i = index - PREFETCH_RADIUS; i <= index + PREFETCH_RADIUS; i++) {
+      const neighbour = albums[i];
+      if (!neighbour) continue;
+      prefetchAlbumDetail(neighbour.id);
+      if (neighbour.imageUrl) Image.prefetch(neighbour.imageUrl).catch(() => {});
+    }
+  }, [albums, index]);
+
   const onPagerScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     setIndex(Math.round(e.nativeEvent.contentOffset.x / width));
   }, [width]);
@@ -106,9 +122,13 @@ export default function AlbumDetailScreen() {
     if (!albums) return;
     const target = albums.findIndex(a => a.id === targetAlbumId);
     if (target < 0) return;
+    // Only animate to an adjacent page: animating a long jump scrolls through
+    // (and mounts, and fetches) every album in between.
+    const animated = Math.abs(target - index) <= 1;
     setIndex(target);
-    pagerRef.current?.scrollToIndex({ index: target, animated: true });
-  }, [albums]);
+    if (!animated) prefetchAlbumDetail(albums[target].id);
+    pagerRef.current?.scrollToIndex({ index: target, animated });
+  }, [albums, index]);
 
   const onPlaylistName = useCallback((name: string) => {
     setPlaylistName(prev => prev || name);
@@ -122,7 +142,8 @@ export default function AlbumDetailScreen() {
     );
   }
 
-  const pages: { id: string }[] = albums.length > 0 ? albums : [{ id: albumId }];
+  const pages: { id: string; summary?: PlaylistAlbum }[] =
+    albums.length > 0 ? albums.map(a => ({ id: a.id, summary: a })) : [{ id: albumId }];
 
   return (
     <View style={styles.screen}>
@@ -161,6 +182,7 @@ export default function AlbumDetailScreen() {
           <View style={{ width }}>
             <AlbumPage
               albumId={item.id}
+              summary={item.summary}
               playlistId={playlistId}
               bestAlbumsPlaylists={bestAlbumsPlaylists}
               onAuthError={handleAuthError}
@@ -177,12 +199,15 @@ export default function AlbumDetailScreen() {
 
 function AlbumPage({
   albumId,
+  summary,
   playlistId,
   bestAlbumsPlaylists,
   onAuthError,
   onPlaylistName
 }: {
   albumId: string;
+  /** Playlist listing data, shown while the full detail loads. */
+  summary?: PlaylistAlbum;
   playlistId?: string;
   bestAlbumsPlaylists: PlaylistSummary[];
   onAuthError: () => Promise<void>;
@@ -191,17 +216,21 @@ function AlbumPage({
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const [album, setAlbum] = useState<AlbumDetail | null>(null);
+  // Seed from the cache so a prefetched album renders on the first frame.
+  const cached = peekAlbumDetail(albumId);
+  const [album, setAlbum] = useState<AlbumDetail | null>(cached);
   const [loadFailed, setLoadFailed] = useState(false);
   const [promoting, setPromoting] = useState(false);
-  const [promoted, setPromoted] = useState(false);
-  const [localRating, setLocalRating] = useState<number | null>(null);
+  const [promoted, setPromoted] = useState(
+    cached?.onPlaylists.some(p => BEST_ALBUMS_PATTERN.test(p.name)) ?? false
+  );
+  const [localRating, setLocalRating] = useState<number | null>(cached?.rating ?? null);
   const [ratingPending, setRatingPending] = useState(false);
 
   const loadAlbum = useCallback(async () => {
     setLoadFailed(false);
     try {
-      const data = await fetchAlbumDetail(albumId);
+      const data = await getAlbumDetail(albumId);
       setAlbum(data);
       setPromoted(data.onPlaylists.some(p => BEST_ALBUMS_PATTERN.test(p.name)));
       setLocalRating(data.rating);
@@ -246,6 +275,9 @@ function AlbumPage({
     setPromoted(true);
     try {
       await promoteAlbum(album.id, bestAlbumsPlaylist.id);
+      updateCachedAlbum(album.id, {
+        onPlaylists: [...album.onPlaylists, { id: bestAlbumsPlaylist.id, name: bestAlbumsPlaylist.name }]
+      });
     } catch (err) {
       setPromoted(false);
       if (err instanceof AuthError) { await onAuthError(); return; }
@@ -262,6 +294,7 @@ function AlbumPage({
     setRatingPending(true);
     try {
       await setRating(album.id, newRating);
+      updateCachedAlbum(album.id, { rating: newRating });
     } catch (err) {
       setLocalRating(previous);
       if (err instanceof AuthError) { await onAuthError(); return; }
@@ -295,9 +328,22 @@ function AlbumPage({
   }
 
   if (!album) {
+    // Show what we already know from the playlist listing so the page isn't
+    // blank while the tracks/rating load.
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={styles.screen}>
+        {summary?.imageUrl ? (
+          <Image source={{ uri: summary.imageUrl }} style={styles.art} accessibilityLabel={summary.name} />
+        ) : (
+          <View style={[styles.art, styles.artPlaceholder]} />
+        )}
+        {summary && (
+          <View style={styles.meta}>
+            <Text style={styles.albumName}>{summary.name}</Text>
+            <Text style={styles.artistName}>{summary.artists.map(a => a.name).join(', ')}</Text>
+          </View>
+        )}
+        <ActivityIndicator size="large" color={Colors.primary} style={styles.pageSpinner} />
       </View>
     );
   }
@@ -637,6 +683,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
 
   pager: { flex: 1 },
+  pageSpinner: { marginTop: 24 },
   errorText: { color: Colors.textMuted, fontSize: 15, marginBottom: 16 },
   btnRetry: {
     backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
