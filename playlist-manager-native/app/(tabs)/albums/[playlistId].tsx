@@ -99,7 +99,7 @@ export default function PlaylistDetailScreen() {
       renderItem={({ item }) => (
         <AlbumCard
           album={item}
-          onPress={() => router.push(`/album/${item.id}`)}
+          onPress={() => router.push(`/album/${item.id}?playlistId=${playlistId}`)}
         />
       )}
     />

@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  Animated,
+  Easing,
   useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent
@@ -17,13 +19,23 @@ import {
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fetchAlbumDetail, fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
+import { fetchPlaylistAlbums, fetchPlaylists, promoteAlbum, setRating, AuthError, AlbumDetail, AlbumTrack, PlaylistAlbum, PlaylistSummary } from '../../lib/api';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Colors } from '../../constants/colors';
 import { clearTokens } from '../../lib/auth';
+import { getAlbumDetail, peekAlbumDetail, prefetchAlbumDetail, updateCachedAlbum } from '../../lib/albumCache';
 
 const BEST_ALBUMS_PATTERN = /best albums/i;
 const NEW_ALBUMS_PATTERN  = /new albums/i;
+
+// Long strip jumps fake a page swipe: the current page slides out this
+// fraction of the screen width while fading, then the target slides in.
+const JUMP_SLIDE_FRACTION = 0.3;
+const JUMP_OUT_MS = 120;
+const JUMP_IN_MS = 200;
+
+// How many albums either side of the current one to fetch ahead of a swipe.
+const PREFETCH_RADIUS = 2;
 
 /**
  * Strip a leading "New Albums" or "Best Albums" label and normalise the
@@ -55,8 +67,10 @@ export default function AlbumDetailScreen() {
   const [bestAlbumsPlaylists, setBestAlbumsPlaylists] = useState<PlaylistSummary[]>([]);
   const [playlistName, setPlaylistName] = useState('');
 
-  const pagerRef = useRef<FlatList<{ id: string }>>(null);
+  const pagerRef = useRef<FlatList<{ id: string; summary?: PlaylistAlbum }>>(null);
   const stripRef = useRef<FlatList<PlaylistAlbum>>(null);
+  const jumpSlide = useRef(new Animated.Value(0)).current;
+  const jumpOpacity = useRef(new Animated.Value(1)).current;
 
   const handleAuthError = useCallback(async () => {
     await clearTokens();
@@ -98,6 +112,18 @@ export default function AlbumDetailScreen() {
     return () => clearTimeout(t);
   }, [albums, index]);
 
+  // Warm the detail cache and artwork for nearby albums so swiping or tapping
+  // into them doesn't wait on the network.
+  useEffect(() => {
+    if (!albums) return;
+    for (let i = index - PREFETCH_RADIUS; i <= index + PREFETCH_RADIUS; i++) {
+      const neighbour = albums[i];
+      if (!neighbour) continue;
+      prefetchAlbumDetail(neighbour.id);
+      if (neighbour.imageUrl) Image.prefetch(neighbour.imageUrl).catch(() => {});
+    }
+  }, [albums, index]);
+
   const onPagerScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     setIndex(Math.round(e.nativeEvent.contentOffset.x / width));
   }, [width]);
@@ -106,9 +132,35 @@ export default function AlbumDetailScreen() {
     if (!albums) return;
     const target = albums.findIndex(a => a.id === targetAlbumId);
     if (target < 0) return;
+    if (target === index) return;
     setIndex(target);
-    pagerRef.current?.scrollToIndex({ index: target, animated: true });
-  }, [albums]);
+
+    // Adjacent pages: a real animated scroll is already a swipe.
+    if (Math.abs(target - index) === 1) {
+      pagerRef.current?.scrollToIndex({ index: target, animated: true });
+      return;
+    }
+
+    // Longer jumps: animating the FlatList would scroll through (and mount,
+    // and fetch) every album in between, so instead slide the current page out
+    // towards the jump direction, snap to the target, and slide it in from
+    // the other side — reads as a swipe matching the playlist order.
+    prefetchAlbumDetail(albums[target].id);
+    const offset = width * JUMP_SLIDE_FRACTION * (target > index ? 1 : -1);
+    jumpSlide.stopAnimation();
+    jumpOpacity.stopAnimation();
+    Animated.parallel([
+      Animated.timing(jumpSlide, { toValue: -offset, duration: JUMP_OUT_MS, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      Animated.timing(jumpOpacity, { toValue: 0, duration: JUMP_OUT_MS, useNativeDriver: true }),
+    ]).start(() => {
+      pagerRef.current?.scrollToIndex({ index: target, animated: false });
+      jumpSlide.setValue(offset);
+      Animated.parallel([
+        Animated.timing(jumpSlide, { toValue: 0, duration: JUMP_IN_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(jumpOpacity, { toValue: 1, duration: JUMP_IN_MS, useNativeDriver: true }),
+      ]).start();
+    });
+  }, [albums, index, width, jumpSlide, jumpOpacity]);
 
   const onPlaylistName = useCallback((name: string) => {
     setPlaylistName(prev => prev || name);
@@ -122,7 +174,8 @@ export default function AlbumDetailScreen() {
     );
   }
 
-  const pages: { id: string }[] = albums.length > 0 ? albums : [{ id: albumId }];
+  const pages: { id: string; summary?: PlaylistAlbum }[] =
+    albums.length > 0 ? albums.map(a => ({ id: a.id, summary: a })) : [{ id: albumId }];
 
   return (
     <View style={styles.screen}>
@@ -142,33 +195,36 @@ export default function AlbumDetailScreen() {
       )}
 
       {/* ── Pager ────────────────────────────────────────────────────────────── */}
-      <FlatList
-        ref={pagerRef}
-        style={styles.pager}
-        data={pages}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={item => item.id}
-        initialScrollIndex={index}
-        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
-        onMomentumScrollEnd={onPagerScrollEnd}
-        // Mount the neighbours too so a swipe lands on an already-loaded page.
-        windowSize={3}
-        initialNumToRender={1}
-        maxToRenderPerBatch={1}
-        renderItem={({ item }) => (
-          <View style={{ width }}>
-            <AlbumPage
-              albumId={item.id}
-              playlistId={playlistId}
-              bestAlbumsPlaylists={bestAlbumsPlaylists}
-              onAuthError={handleAuthError}
-              onPlaylistName={onPlaylistName}
-            />
-          </View>
-        )}
-      />
+      <Animated.View style={[styles.pager, { opacity: jumpOpacity, transform: [{ translateX: jumpSlide }] }]}>
+        <FlatList
+          ref={pagerRef}
+          style={styles.pager}
+          data={pages}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={item => item.id}
+          initialScrollIndex={index}
+          getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
+          onMomentumScrollEnd={onPagerScrollEnd}
+          // Mount the neighbours too so a swipe lands on an already-loaded page.
+          windowSize={3}
+          initialNumToRender={1}
+          maxToRenderPerBatch={1}
+          renderItem={({ item }) => (
+            <View style={{ width }}>
+              <AlbumPage
+                albumId={item.id}
+                summary={item.summary}
+                playlistId={playlistId}
+                bestAlbumsPlaylists={bestAlbumsPlaylists}
+                onAuthError={handleAuthError}
+                onPlaylistName={onPlaylistName}
+              />
+            </View>
+          )}
+        />
+      </Animated.View>
     </View>
   );
 }
@@ -177,12 +233,15 @@ export default function AlbumDetailScreen() {
 
 function AlbumPage({
   albumId,
+  summary,
   playlistId,
   bestAlbumsPlaylists,
   onAuthError,
   onPlaylistName
 }: {
   albumId: string;
+  /** Playlist listing data, shown while the full detail loads. */
+  summary?: PlaylistAlbum;
   playlistId?: string;
   bestAlbumsPlaylists: PlaylistSummary[];
   onAuthError: () => Promise<void>;
@@ -191,17 +250,21 @@ function AlbumPage({
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const [album, setAlbum] = useState<AlbumDetail | null>(null);
+  // Seed from the cache so a prefetched album renders on the first frame.
+  const cached = peekAlbumDetail(albumId);
+  const [album, setAlbum] = useState<AlbumDetail | null>(cached);
   const [loadFailed, setLoadFailed] = useState(false);
   const [promoting, setPromoting] = useState(false);
-  const [promoted, setPromoted] = useState(false);
-  const [localRating, setLocalRating] = useState<number | null>(null);
+  const [promoted, setPromoted] = useState(
+    cached?.onPlaylists.some(p => BEST_ALBUMS_PATTERN.test(p.name)) ?? false
+  );
+  const [localRating, setLocalRating] = useState<number | null>(cached?.rating ?? null);
   const [ratingPending, setRatingPending] = useState(false);
 
   const loadAlbum = useCallback(async () => {
     setLoadFailed(false);
     try {
-      const data = await fetchAlbumDetail(albumId);
+      const data = await getAlbumDetail(albumId);
       setAlbum(data);
       setPromoted(data.onPlaylists.some(p => BEST_ALBUMS_PATTERN.test(p.name)));
       setLocalRating(data.rating);
@@ -246,6 +309,9 @@ function AlbumPage({
     setPromoted(true);
     try {
       await promoteAlbum(album.id, bestAlbumsPlaylist.id);
+      updateCachedAlbum(album.id, {
+        onPlaylists: [...album.onPlaylists, { id: bestAlbumsPlaylist.id, name: bestAlbumsPlaylist.name }]
+      });
     } catch (err) {
       setPromoted(false);
       if (err instanceof AuthError) { await onAuthError(); return; }
@@ -262,6 +328,7 @@ function AlbumPage({
     setRatingPending(true);
     try {
       await setRating(album.id, newRating);
+      updateCachedAlbum(album.id, { rating: newRating });
     } catch (err) {
       setLocalRating(previous);
       if (err instanceof AuthError) { await onAuthError(); return; }
@@ -295,9 +362,22 @@ function AlbumPage({
   }
 
   if (!album) {
+    // Show what we already know from the playlist listing so the page isn't
+    // blank while the tracks/rating load.
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={styles.screen}>
+        {summary?.imageUrl ? (
+          <Image source={{ uri: summary.imageUrl }} style={styles.art} accessibilityLabel={summary.name} />
+        ) : (
+          <View style={[styles.art, styles.artPlaceholder]} />
+        )}
+        {summary && (
+          <View style={styles.meta}>
+            <Text style={styles.albumName}>{summary.name}</Text>
+            <Text style={styles.artistName}>{summary.artists.map(a => a.name).join(', ')}</Text>
+          </View>
+        )}
+        <ActivityIndicator size="large" color={Colors.primary} style={styles.pageSpinner} />
       </View>
     );
   }
@@ -637,6 +717,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, backgroundColor: Colors.surfaceDark, justifyContent: 'center', alignItems: 'center' },
 
   pager: { flex: 1 },
+  pageSpinner: { marginTop: 24 },
   errorText: { color: Colors.textMuted, fontSize: 15, marginBottom: 16 },
   btnRetry: {
     backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
