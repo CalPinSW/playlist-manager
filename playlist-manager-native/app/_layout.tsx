@@ -23,6 +23,14 @@ if (!Sentry.getClient()) {
   });
 }
 
+// Deep links straight to a stacked screen (e.g. the widget's
+// playlistmanager://album/<id>) would otherwise open it as the only route in
+// the stack, leaving the header back button with nothing to go back to.
+// This makes expo-router put (tabs) underneath it.
+export const unstable_settings = {
+  initialRouteName: '(tabs)'
+};
+
 /**
  * Root layout. Handles auth gate:
  * - If no stored tokens → redirect to login
