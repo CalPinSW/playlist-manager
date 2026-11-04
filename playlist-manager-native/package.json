@@ -57,5 +57,14 @@
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
     ]
+  },
+  "overrides": {
+    "react-native-widget-extension": {
+      "@xmldom/xmldom": "^0.8.15"
+    },
+    "xcode": {
+      "uuid": "^11.1.1"
+    },
+    "postcss": "^8.5.32"
   }
 }

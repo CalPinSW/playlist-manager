@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,md}'",
     "format:check": "prettier --check '**/*.{js,jsx,ts,tsx,json,css,md}'",
-    "trigger:deploy": "npx trigger.dev@4.5.12 deploy"
+    "trigger:deploy": "npx trigger.dev@4.8.3 deploy"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.6.1",
@@ -31,11 +31,11 @@
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.9.0",
     "@prisma/extension-accelerate": "^2.0.1",
-    "@sentry/nextjs": "^10.70.0",
+    "@sentry/nextjs": "^10.78.0",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "@tanstack/react-query": "^5.80.6",
     "@tanstack/react-query-devtools": "^5.80.6",
-    "@trigger.dev/sdk": "4.5.12",
+    "@trigger.dev/sdk": "4.8.3",
     "concurrently": "^9.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -47,14 +47,14 @@
     "highlight.js": "^11.9.0",
     "jszip": "^3.10.1",
     "jwks-rsa": "^3.2.0",
-    "morgan": "^1.10.0",
+    "morgan": "^1.12.1",
     "musicbrainz-api": "^0.25.0",
-    "next": "15.5.24",
+    "next": "15.5.29",
     "nodemon": "^3.0.0",
     "prettier-plugin-tailwindcss": "^0.6.12",
     "prisma": "^6.9.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "react": "19.0.9",
+    "react-dom": "19.0.9",
     "react-toastify": "^11.0.5",
     "wikibase-sdk": "^10.2.3"
   },
@@ -65,27 +65,30 @@
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
-    "@trigger.dev/build": "4.5.12",
+    "@trigger.dev/build": "4.8.3",
     "@types/react": "19.2.14",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
     "@vitejs/plugin-react": "^4.3.4",
     "cypress": "^15.21.1",
     "eslint": "^9.31.0",
-    "eslint-config-next": "^15.2.4",
+    "eslint-config-next": "^15.5.29",
     "eslint-config-prettier": "^10.1.5",
     "jsdom": "^30.0.1",
-    "postcss": "^8.5.4",
+    "postcss": "^8.5.32",
     "prettier": "^3.1.0",
     "start-server-and-test": "^2.0.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.8",
     "typescript": "5.8.2",
-    "vitest": "^3.0.9"
+    "vitest": "^4.1.12"
   },
   "overrides": {
-    "eslint": {
-      "brace-expansion": "1.1.12"
+    "next": {
+      "postcss": "^8.5.32"
+    },
+    "minimatch@3": {
+      "brace-expansion": "^1.1.21"
     }
   }
 }
