@@ -1,6 +1,12 @@
 import { Stack } from 'expo-router';
 import { Colors } from '../../../constants/colors';
 
+// Keeps the playlist list beneath a playlist opened from outside this tab (see
+// the withAnchor push on the Now tab), so it always has something to go back to.
+export const unstable_settings = {
+  initialRouteName: 'index'
+};
+
 /**
  * Stack navigator for the Albums tab.
  * index → playlist detail → (album detail is root-level Stack in _layout.tsx)
