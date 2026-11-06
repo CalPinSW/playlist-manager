@@ -197,7 +197,7 @@ export default function NowScreen() {
   }, [router]);
 
   const navigateToPlaylist = useCallback((playlistId: string) => {
-    router.push(`/(tabs)/albums/${playlistId}`);
+    router.push(`/(tabs)/albums/${playlistId}`, { withAnchor: true });
   }, [router]);
 
   // ── Render ────────────────────────────────────────────────────────────────────
