@@ -162,6 +162,8 @@ export type NowPlaying =
       progressMs: number;
       /** Total duration of the current track in ms */
       durationMs: number;
+      /** The album's tracks in trackIndex order; absent from older server responses */
+      tracks?: { name: string; durationMs: number }[];
     };
 
 export interface RatedAlbum {

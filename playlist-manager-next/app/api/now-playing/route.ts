@@ -88,7 +88,9 @@ const handler = async (accessToken: access_token, req: NextRequest) => {
         trackName: track.name,
         totalTracks: album.tracks.length,
         progressMs: playback.progress_ms ?? 0,
-        durationMs: track.duration_ms
+        durationMs: track.duration_ms,
+        // Lets the app estimate its position after time away, before the next poll.
+        tracks: album.tracks.map(t => ({ name: t.name, durationMs: t.duration_ms }))
       },
       { status: 200 }
     );
