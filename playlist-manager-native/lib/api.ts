@@ -164,7 +164,18 @@ export type NowPlaying =
       durationMs: number;
       /** The album's tracks in trackIndex order; absent from older server responses */
       tracks?: { name: string; durationMs: number }[];
+      /** The next albums in the playlist being played, in order; absent unless playing a playlist unshuffled */
+      upcomingAlbums?: UpcomingAlbum[];
     };
+
+export interface UpcomingAlbum {
+  albumId: string;
+  albumName: string;
+  albumImageUrl: string;
+  albumUri: string;
+  artistNames: string[];
+  tracks: { name: string; durationMs: number }[];
+}
 
 export interface RatedAlbum {
   albumId: string;

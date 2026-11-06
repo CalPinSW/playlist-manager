@@ -17,7 +17,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { fetchProgress, fetchNowPlaying, syncHistory, resumePlayback, ProgressEntry, NowPlaying, AuthError, SpotifyReauthError } from '../../lib/api';
 import { promptSpotifyReconnect } from '../../lib/spotifyReconnect';
 import { getCachedProgress, cacheProgress, getCachedNowPlaying, cacheNowPlaying } from '../../lib/db';
-import { estimateNowPlaying } from '../../lib/nowPlayingEstimate';
+import { estimateNowPlaying, mergeEstimatedAlbums, EstimatedAlbum } from '../../lib/nowPlayingEstimate';
 import { Colors, Fonts } from '../../constants/colors';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -61,6 +61,7 @@ export default function NowScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
+  const [estimatedAlbums, setEstimatedAlbums] = useState<EstimatedAlbum[]>([]);
   const appState = useRef(AppState.currentState);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasLiveNowPlayingRef = useRef(false);
@@ -118,6 +119,7 @@ export default function NowScreen() {
       const live = await fetchNowPlaying();
       hasLiveNowPlayingRef.current = true;
       setNowPlaying(live);
+      setEstimatedAlbums([]);
       cacheNowPlaying(live).catch(() => null);
       if ('albumId' in live && live.isPlaying) {
         writeNowPlaying({
@@ -148,7 +150,9 @@ export default function NowScreen() {
     hasLiveNowPlayingRef.current = false;
     const cached = await getCachedNowPlaying().catch(() => null);
     if (!cached || hasLiveNowPlayingRef.current) return;
-    setNowPlaying(estimateNowPlaying(cached.nowPlaying, Date.now() - cached.fetchedAt));
+    const estimate = estimateNowPlaying(cached.nowPlaying, Date.now() - cached.fetchedAt);
+    setNowPlaying(estimate?.nowPlaying ?? null);
+    setEstimatedAlbums(estimate?.albums ?? []);
   }, []);
 
   useEffect(() => {
@@ -182,7 +186,11 @@ export default function NowScreen() {
     return override ? { ...entry, ...override } : entry;
   }, [liveOverrides]);
 
-  const groups = useMemo(() => groupByPlaylist(progress), [progress]);
+  const groups = useMemo(() => {
+    if (!liveData?.playlistId) return groupByPlaylist(progress);
+    const playlist = { id: liveData.playlistId, name: liveData.playlistName ?? '' };
+    return groupByPlaylist(mergeEstimatedAlbums(progress, estimatedAlbums, playlist, new Date().toISOString()));
+  }, [progress, estimatedAlbums, liveData?.playlistId, liveData?.playlistName]);
 
   const navigateToAlbum = useCallback((albumId: string, playlistId: string) => {
     router.push(`/album/${albumId}?playlistId=${playlistId}`);
