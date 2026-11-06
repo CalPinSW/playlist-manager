@@ -16,7 +16,8 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchProgress, fetchNowPlaying, syncHistory, resumePlayback, ProgressEntry, NowPlaying, AuthError, SpotifyReauthError } from '../../lib/api';
 import { promptSpotifyReconnect } from '../../lib/spotifyReconnect';
-import { getCachedProgress, cacheProgress } from '../../lib/db';
+import { getCachedProgress, cacheProgress, getCachedNowPlaying, cacheNowPlaying } from '../../lib/db';
+import { estimateNowPlaying, mergeEstimatedAlbums, EstimatedAlbum } from '../../lib/nowPlayingEstimate';
 import { Colors, Fonts } from '../../constants/colors';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -60,8 +61,10 @@ export default function NowScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
+  const [estimatedAlbums, setEstimatedAlbums] = useState<EstimatedAlbum[]>([]);
   const appState = useRef(AppState.currentState);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasLiveNowPlayingRef = useRef(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollYRef = useRef(0);
 
@@ -77,16 +80,25 @@ export default function NowScreen() {
       }
     }
 
-    try {
-      await syncHistory().catch((err) => {
-        console.warn('[sync] syncHistory failed — progress may be stale:', err?.message ?? err);
-        if (err instanceof SpotifyReauthError) {
-          promptSpotifyReconnect(() => loadData({ showRefreshing: true }));
-        }
-      });
-      const data = await fetchProgress();
+    // The server cron already syncs every 15 min, so fetch progress alongside
+    // the on-open sync rather than after it, then refetch once the sync lands.
+    const synced = syncHistory().then(() => true, (err) => {
+      console.warn('[sync] syncHistory failed — progress may be stale:', err?.message ?? err);
+      if (err instanceof SpotifyReauthError) {
+        promptSpotifyReconnect(() => loadData({ showRefreshing: true }));
+      }
+      return false;
+    });
+
+    const applyProgress = async (data: ProgressEntry[]) => {
       setProgress(data);
+      setLoading(false);
       await cacheProgress(data).catch(() => null);
+    };
+
+    try {
+      await applyProgress(await fetchProgress());
+      if (await synced) await applyProgress(await fetchProgress());
     } catch (err) {
       if (err instanceof AuthError) {
         await clearTokens();
@@ -105,7 +117,10 @@ export default function NowScreen() {
   const pollNowPlaying = useCallback(async () => {
     try {
       const live = await fetchNowPlaying();
+      hasLiveNowPlayingRef.current = true;
       setNowPlaying(live);
+      setEstimatedAlbums([]);
+      cacheNowPlaying(live).catch(() => null);
       if ('albumId' in live && live.isPlaying) {
         writeNowPlaying({
           albumId:    live.albumId,
@@ -129,16 +144,28 @@ export default function NowScreen() {
     if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
   }, []);
 
+  // Projects the last snapshot forward by the time since it was fetched. Only
+  // fills the gap before the first live poll returns — never overwrites it.
+  const showEstimatedNowPlaying = useCallback(async () => {
+    hasLiveNowPlayingRef.current = false;
+    const cached = await getCachedNowPlaying().catch(() => null);
+    if (!cached || hasLiveNowPlayingRef.current) return;
+    const estimate = estimateNowPlaying(cached.nowPlaying, Date.now() - cached.fetchedAt);
+    setNowPlaying(estimate?.nowPlaying ?? null);
+    setEstimatedAlbums(estimate?.albums ?? []);
+  }, []);
+
   useEffect(() => {
+    showEstimatedNowPlaying();
     loadData();
     startPolling();
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
-      if (appState.current.match(/inactive|background/) && next === 'active') { loadData(); startPolling(); }
+      if (appState.current.match(/inactive|background/) && next === 'active') { showEstimatedNowPlaying(); loadData(); startPolling(); }
       else if (next.match(/inactive|background/)) stopPolling();
       appState.current = next;
     });
     return () => { sub.remove(); stopPolling(); };
-  }, [loadData, startPolling, stopPolling]);
+  }, [loadData, showEstimatedNowPlaying, startPolling, stopPolling]);
 
   // ── Live data merge ───────────────────────────────────────────────────────────
 
@@ -159,7 +186,11 @@ export default function NowScreen() {
     return override ? { ...entry, ...override } : entry;
   }, [liveOverrides]);
 
-  const groups = useMemo(() => groupByPlaylist(progress), [progress]);
+  const groups = useMemo(() => {
+    if (!liveData?.playlistId) return groupByPlaylist(progress);
+    const playlist = { id: liveData.playlistId, name: liveData.playlistName ?? '' };
+    return groupByPlaylist(mergeEstimatedAlbums(progress, estimatedAlbums, playlist, new Date().toISOString()));
+  }, [progress, estimatedAlbums, liveData?.playlistId, liveData?.playlistName]);
 
   const navigateToAlbum = useCallback((albumId: string, playlistId: string) => {
     router.push(`/album/${albumId}?playlistId=${playlistId}`);

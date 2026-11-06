@@ -8,6 +8,7 @@
  * Tables:
  *   playlists      — mirrors PlaylistSummary
  *   progress       — mirrors ProgressEntry (one row per album per playlist)
+ *   now_playing    — single row holding the last NowPlaying response as JSON
  *
  * Conflict resolution: last-write-wins using the listened_at timestamp that
  * comes from the server. We only cache what the server returns — no local
@@ -16,7 +17,7 @@
  */
 
 import * as SQLite from 'expo-sqlite';
-import { ProgressEntry, PlaylistSummary } from './api';
+import { ProgressEntry, PlaylistSummary, NowPlaying } from './api';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -45,6 +46,12 @@ async function getDb(): Promise<SQLite.SQLiteDatabase> {
       progress_percent       INTEGER NOT NULL,
       total_playlist_albums  INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (album_id, playlist_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS now_playing (
+      id          INTEGER PRIMARY KEY CHECK (id = 1),
+      data        TEXT NOT NULL,
+      fetched_at  INTEGER NOT NULL
     );
   `);
 
@@ -149,4 +156,24 @@ export async function getCachedProgress(): Promise<ProgressEntry[]> {
     // artistNames is not cached in SQLite — will be populated from the server on next sync
     artistNames: [],
   }));
+}
+
+// ── Now playing ────────────────────────────────────────────────────────────────
+
+export async function cacheNowPlaying(nowPlaying: NowPlaying): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO now_playing (id, data, fetched_at) VALUES (1, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET data = excluded.data, fetched_at = excluded.fetched_at`,
+    [JSON.stringify(nowPlaying), Date.now()]
+  );
+}
+
+export async function getCachedNowPlaying(): Promise<{ nowPlaying: NowPlaying; fetchedAt: number } | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ data: string; fetched_at: number }>(
+    `SELECT data, fetched_at FROM now_playing WHERE id = 1`
+  );
+  if (!row) return null;
+  return { nowPlaying: JSON.parse(row.data), fetchedAt: row.fetched_at };
 }

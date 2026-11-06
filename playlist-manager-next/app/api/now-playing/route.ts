@@ -21,6 +21,7 @@ import { withAuth } from '../withAuth';
 import { withSpotifyAccessToken } from '../spotify/utilities/getAccessTokensFromRequest';
 import { getUserFromRequest } from '../user/handler';
 import prisma from '../../../lib/prisma';
+import { getUpcomingAlbums } from './upcomingAlbums';
 
 const NEW_ALBUMS_PATTERN = /new albums/i;
 
@@ -67,10 +68,20 @@ const handler = async (accessToken: access_token, req: NextRequest) => {
     // Track index within album (0-based), ordered by disc/track number.
     const trackIndex = album.tracks.findIndex(t => t.id === track.id);
 
-    // Prefer "New Albums" playlist; fall back to first playlist found.
+    // The playlist actually being played, if it's one of the user's playlists holding this album.
+    const contextPlaylistId = playback.context?.type === 'playlist' ? playback.context.uri.split(':')[2] : null;
+    const contextRel = album.playlistalbumrelationship.find(r => r.playlist_id === contextPlaylistId);
+
+    // Otherwise prefer "New Albums" playlist; fall back to first playlist found.
     const playlistRel =
+      contextRel ??
       album.playlistalbumrelationship.find(r => NEW_ALBUMS_PATTERN.test(r.playlist.name)) ??
       album.playlistalbumrelationship[0];
+
+    const upcomingAlbums =
+      contextRel && !playback.shuffle_state
+        ? await getUpcomingAlbums(contextRel.playlist_id, contextRel.album_index)
+        : [];
 
     const artistName = track.artists?.map(a => a.name).join(', ') ?? album.name;
 
@@ -88,7 +99,10 @@ const handler = async (accessToken: access_token, req: NextRequest) => {
         trackName: track.name,
         totalTracks: album.tracks.length,
         progressMs: playback.progress_ms ?? 0,
-        durationMs: track.duration_ms
+        durationMs: track.duration_ms,
+        // Lets the app estimate its position after time away, before the next poll.
+        tracks: album.tracks.map(t => ({ name: t.name, durationMs: t.duration_ms })),
+        upcomingAlbums
       },
       { status: 200 }
     );
