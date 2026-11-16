@@ -64,7 +64,7 @@ On the native side (`playlist-manager-native/lib/auth.ts`), Auth0 PKCE runs thro
 
 ### Data model & the `listening_progress` migration
 
-`prisma/schema.prisma` is mid-migration: `playback_state` / `playbackstatealbumrelationship` / `playbackstateplaylistrelationship` are the legacy progress-tracking tables, being replaced by `listening_progress` (plus new `sync_log` and `album_rating` tables). Check which model a given piece of code is reading before extending it — new work should target `listening_progress`, not the legacy tables. `sync_log` stores a per-user `played_at` cursor for the retroactive-history sync described below. Genres reuse the existing `genre`/`albumgenrerelationship` tables — there is no separate genre table for the new features.
+`prisma/schema.prisma` is mid-migration: `playback_state` / `playbackstatealbumrelationship` / `playbackstateplaylistrelationship` are the legacy progress-tracking tables, being replaced by `listening_progress` (plus new `sync_log` and `album_rating` tables). Check which model a given piece of code is reading before extending it — new work should target `listening_progress`, not the legacy tables. `sync_log` stores a per-user `played_at` cursor for the retroactive-history sync described below. Genres reuse the existing `genre`/`albumgenrerelationship` tables — there is no separate genre table for the new features. `album_info` (summary, critical reception, review links, Last.fm stats) and `artist_info` (bio) cache third-party enrichment from MusicBrainz/Wikipedia/Last.fm, written only by the `enrich-album-info` Trigger.dev task — see `playlist-manager-next/app/trigger/CLAUDE.md` for the matching and retry rules.
 
 ### Retroactive playback sync (why there's no live playback tracking)
 

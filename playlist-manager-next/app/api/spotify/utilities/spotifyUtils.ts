@@ -2,6 +2,7 @@ import { SimplifiedAlbum, SimplifiedArtist, SimplifiedTrack, SpotifyApi } from '
 import prisma from '../../../../lib/prisma';
 import getAllAlbumTracks from './spotify/getAllAlbumTracks';
 import { linkAlbumGenres } from '../../albums/utilities/linkAlbumGenres';
+import { triggerAlbumEnrichmentBatch } from '../../albums/utilities/triggerAlbumEnrichment';
 
 // Create or update an artist in the database
 export async function createOrUpdateArtist(artist: SimplifiedArtist) {
@@ -137,6 +138,15 @@ export async function getOrCreateAlbum(spotifySdk: SpotifyApi, album: Simplified
     for (const track of albumTracks) {
       await createTrackOrNone(track, album);
     }
+  }
+
+  // Start fetching the album's bio/reviews/artist info now rather than waiting for the
+  // hourly sweep. Queued last so the artist links the task reads already exist. Best
+  // effort: a failure to queue must not fail the playlist sync, and the sweep catches it.
+  try {
+    await triggerAlbumEnrichmentBatch([dbAlbum.id]);
+  } catch (error) {
+    console.error(`[getOrCreateAlbum] failed to queue enrichment for album ${dbAlbum.id}`, error);
   }
 
   return dbAlbum;

@@ -2,17 +2,22 @@ import { schedules, logger } from '@trigger.dev/sdk';
 import prisma from '../../lib/prisma';
 import { triggerAlbumEnrichmentBatch } from '../api/albums/utilities/triggerAlbumEnrichment';
 
-// Each enrich-album-info run takes a few seconds and they run one at a time, so cap how
+// Each enrich-album-info run takes several seconds and they run one at a time, so cap how
 // much backlog one sweep adds; anything left over is picked up by the next tick.
 const MAX_ALBUMS_PER_SWEEP = 200;
 
 /**
  * enrichMissingAlbumInfoTask — hourly sweep that queues enrich-album-info for any album
- * with no album_info row yet (i.e. albums added by playlist syncs since the last sweep).
+ * with no album_info row yet, then (with whatever capacity is left) for albums whose info
+ * is due a refresh: next_refresh_at has passed, or is null because the row predates
+ * refresh scheduling.
  *
- * The info route only enriches on demand when someone opens an album's info screen; this
- * makes sure albums are already enriched by then, and recovers anything the on-demand
- * trigger missed. Re-queues are deduped by the per-album idempotency key, so an album
+ * The refresh half is what fills in new releases over time — on release day there is
+ * usually no Wikipedia article or review to find, so enrichAlbumInfo schedules a re-check
+ * a few days out (see nextRefreshAt) and this sweep picks it up.
+ *
+ * Playlist syncs and the info route also queue enrichment directly; this is the safety
+ * net for both. Re-queues are deduped by the per-album idempotency key, so an album
  * that's still queued from a previous tick (or from the route) isn't queued twice.
  */
 export const enrichMissingAlbumInfoTask = schedules.task({
@@ -20,17 +25,33 @@ export const enrichMissingAlbumInfoTask = schedules.task({
   cron: '0 * * * *',
   maxDuration: 120,
   run: async () => {
-    const albums = await prisma.album.findMany({
+    const missing = await prisma.album.findMany({
       where: { album_info: null },
       select: { id: true },
       take: MAX_ALBUMS_PER_SWEEP
     });
 
-    logger.log('enrich-missing-album-info: albums needing enrichment', { count: albums.length });
-    if (albums.length > 0) {
-      await triggerAlbumEnrichmentBatch(albums.map(album => album.id));
+    const due =
+      missing.length < MAX_ALBUMS_PER_SWEEP
+        ? await prisma.album_info.findMany({
+            where: { OR: [{ next_refresh_at: null }, { next_refresh_at: { lte: new Date() } }] },
+            select: { album_id: true },
+            // Never-scheduled rows first, then the most overdue.
+            orderBy: { next_refresh_at: { sort: 'asc', nulls: 'first' } },
+            take: MAX_ALBUMS_PER_SWEEP - missing.length
+          })
+        : [];
+
+    logger.log('enrich-missing-album-info: albums needing enrichment', {
+      missing: missing.length,
+      dueRefresh: due.length
+    });
+
+    const albumIds = [...missing.map(album => album.id), ...due.map(info => info.album_id)];
+    if (albumIds.length > 0) {
+      await triggerAlbumEnrichmentBatch(albumIds);
     }
 
-    return { triggered: albums.length };
+    return { triggered: albumIds.length, missing: missing.length, dueRefresh: due.length };
   }
 });

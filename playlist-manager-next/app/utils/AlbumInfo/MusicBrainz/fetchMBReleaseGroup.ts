@@ -5,7 +5,7 @@ import fetchMBReleaseGroupMatch from './fetchMBReleaseGroupMatch';
 const fetchMBReleaseGroup = async (albumName: string, firstArtistName: string): Promise<IReleaseGroup | null> => {
   const mbReleaseGroupMatch = await fetchMBReleaseGroupMatch(albumName, firstArtistName);
   if (!mbReleaseGroupMatch) return null;
-  return mbApi.lookup('release-group', mbReleaseGroupMatch.id, ['url-rels', 'genres', 'tags']);
+  return mbApi.lookup('release-group', mbReleaseGroupMatch.id, ['url-rels', 'genres', 'tags', 'artists']);
 };
 
 export default fetchMBReleaseGroup;

@@ -1,7 +1,8 @@
-import { View, Text, ScrollView, Image, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Image, StyleSheet, ActivityIndicator, RefreshControl, Pressable, Linking } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { fetchAlbumInfo, AlbumInfo, AuthError } from '../../../lib/api';
 import { Colors, Fonts } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
@@ -49,8 +50,14 @@ export default function AlbumInfoScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  const waitingForEnrichment = !!info?.pending && info.enrichmentQueued;
+  // Queued covers both the first fetch for an album (`pending`) and a refresh of info that
+  // was due — e.g. a new release being re-checked for reviews — so poll for either.
+  const waitingForEnrichment = !!info?.enrichmentQueued;
   const polling = waitingForEnrichment && pollsLeft > 0 && !loadError;
+
+  const reviewLinks = info?.reviewLinks ?? [];
+  const artists = info?.artists ?? [];
+  const hasContent = !!info?.summary || !!info?.reception || reviewLinks.length > 0 || artists.length > 0;
 
   useEffect(() => {
     if (!polling) return;
@@ -107,25 +114,92 @@ export default function AlbumInfoScreen() {
             </Text>
           )}
 
-          {info?.summary ? (
-            <Text style={styles.summary}>{info.summary}</Text>
-          ) : polling ? (
+          {!!info?.summary && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>About the album</Text>
+              <Text style={styles.body}>{info.summary}</Text>
+              <SourceLink
+                source={info.summarySource}
+                url={info.summarySource === 'wikipedia' ? info.wikipediaUrl : null}
+              />
+            </View>
+          )}
+
+          {(!!info?.reception || reviewLinks.length > 0) && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Reviews</Text>
+              {!!info?.reception && (
+                <>
+                  <Text style={styles.body}>{info.reception}</Text>
+                  <SourceLink source="wikipedia" url={info.wikipediaUrl} />
+                </>
+              )}
+              {reviewLinks.length > 0 && (
+                <View style={[styles.links, !!info?.reception && styles.linksAfterText]}>
+                  {reviewLinks.map(link => (
+                    <Pressable
+                      key={link.url}
+                      style={styles.linkChip}
+                      onPress={() => openUrl(link.url)}
+                      accessibilityRole="link"
+                      accessibilityLabel={`Read the review on ${link.source}`}
+                    >
+                      <Text style={styles.linkChipText}>{link.source}</Text>
+                      <Feather name="arrow-up-right" size={13} color={Colors.textMuted} />
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {artists.map(artistBio => (
+            <View key={artistBio.id} style={styles.section}>
+              <Text style={styles.sectionTitle}>About {artistBio.name}</Text>
+              {!!artistBio.description && <Text style={styles.descriptor}>{artistBio.description}</Text>}
+              <Text style={styles.body}>{artistBio.bio}</Text>
+              <SourceLink source={artistBio.bioSource} url={artistBio.url} />
+            </View>
+          ))}
+
+          {polling ? (
             <View style={styles.pendingRow}>
               <ActivityIndicator size="small" color={Colors.textMuted} />
-              <Text style={[styles.message, styles.pendingText]}>Fetching more info about this album…</Text>
+              <Text style={[styles.message, styles.pendingText]}>
+                {hasContent ? 'Checking for more info…' : 'Fetching more info about this album…'}
+              </Text>
             </View>
-          ) : (
+          ) : !hasContent ? (
             <Text style={styles.message}>
               {waitingForEnrichment
                 ? "Still fetching info for this album — pull down to refresh in a minute."
                 : info?.pending
                   ? "Couldn't fetch info for this album right now — pull down to try again."
-                  : 'No extra info found for this album.'}
+                  : "Nothing has been written about this album yet. New releases are re-checked every few days."}
             </Text>
-          )}
+          ) : null}
         </>
       )}
     </ScrollView>
+  );
+}
+
+const SOURCE_NAMES: Record<string, string> = { wikipedia: 'Wikipedia', lastfm: 'Last.fm' };
+
+function openUrl(url: string) {
+  Linking.openURL(url).catch(() => {});
+}
+
+/** Attribution line under a block of text; a link when there's somewhere to read more. */
+function SourceLink({ source, url }: { source: string | null; url: string | null }) {
+  const name = source ? SOURCE_NAMES[source] : null;
+  if (!name) return null;
+  if (!url) return <Text style={styles.source}>From {name}</Text>;
+  return (
+    <Pressable onPress={() => openUrl(url)} accessibilityRole="link" hitSlop={8} style={styles.sourceRow}>
+      <Text style={[styles.source, styles.sourceLinkText]}>Read more on {name}</Text>
+      <Feather name="arrow-up-right" size={13} color={Colors.accent} />
+    </Pressable>
   );
 }
 
@@ -160,7 +234,24 @@ const styles = StyleSheet.create({
 
   stats: { color: Colors.textMuted, fontSize: 13, fontWeight: '500', marginBottom: 16 },
 
-  summary: { color: Colors.text, fontSize: 15, lineHeight: 22 },
+  section: { marginBottom: 28 },
+  sectionTitle: { color: Colors.text, fontSize: 17, fontFamily: Fonts.display, marginBottom: 8 },
+  descriptor: { color: Colors.textMuted, fontSize: 13, fontWeight: '500', marginBottom: 8 },
+  body: { color: Colors.text, fontSize: 15, lineHeight: 22 },
+
+  sourceRow: { flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start', marginTop: 10 },
+  source: { color: Colors.textFaint, fontSize: 12, fontWeight: '500', marginTop: 10 },
+  sourceLinkText: { color: Colors.accent, marginTop: 0 },
+
+  links: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  linksAfterText: { marginTop: 14 },
+  linkChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: Colors.fill, borderWidth: 1, borderColor: Colors.hairline,
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7
+  },
+  linkChipText: { color: Colors.text, fontSize: 13, fontWeight: '500' },
+
   message: { color: Colors.textMuted, fontSize: 14, lineHeight: 20, marginTop: 8 },
   pendingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
   pendingText: { marginTop: 0 }
