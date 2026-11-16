@@ -8,8 +8,9 @@ import { enrichAlbumInfo } from '../api/albums/utilities/enrichAlbumInfo';
  *
  * Queued (via app/api/albums/utilities/triggerAlbumEnrichment.ts, deduped per album) when
  * a playlist sync adds a new album, by GET /api/albums/[albumId]/info whenever an album's
- * cached info is missing or due a refresh, by the hourly enrich-missing-album-info sweep,
- * and by the backfill.
+ * cached info is missing or due a re-check, by POST /api/albums/[albumId]/info/refresh
+ * (the info screen's manual "Check again"), by the hourly enrich-missing-album-info
+ * sweep, and by the backfill.
  * MusicBrainz enforces a ~1 req/sec rate limit, which is exactly why this runs as a
  * background task rather than inline in the request path.
  */
@@ -23,11 +24,11 @@ export const enrichAlbumInfoTask = task({
   queue: {
     concurrencyLimit: 1
   },
-  run: async (payload: { albumId: string }) => {
-    const { albumId } = payload;
-    logger.log('enrich-album-info triggered', { albumId });
+  run: async (payload: { albumId: string; force?: boolean }) => {
+    const { albumId, force } = payload;
+    logger.log('enrich-album-info triggered', { albumId, force: !!force });
 
-    await enrichAlbumInfo(albumId);
+    await enrichAlbumInfo(albumId, { force });
 
     logger.log('enrich-album-info complete', { albumId });
     return { albumId };

@@ -79,13 +79,13 @@ describe('GET /api/albums/[albumId]/info', () => {
     expect(body).toMatchObject({ pending: false, enrichmentQueued: true, summary: 'A record.' });
   });
 
-  it('treats info from before refresh scheduling (no next_refresh_at) as due', async () => {
+  it('leaves complete or given-up info (no next_refresh_at) alone', async () => {
     mockPrisma.album.findFirst.mockResolvedValue(makeAlbum(makeInfo(null)));
 
     const { body } = await callRoute();
 
-    expect(mockTriggerNow).toHaveBeenCalledWith('album-1');
-    expect(body).toMatchObject({ pending: false, enrichmentQueued: true });
+    expect(mockTriggerNow).not.toHaveBeenCalled();
+    expect(body).toMatchObject({ pending: false, enrichmentQueued: false, nextRefreshAt: null });
   });
 
   it('returns reception, review links and bios for artists that have one', async () => {

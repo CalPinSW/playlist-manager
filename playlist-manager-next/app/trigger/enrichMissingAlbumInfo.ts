@@ -8,13 +8,13 @@ const MAX_ALBUMS_PER_SWEEP = 200;
 
 /**
  * enrichMissingAlbumInfoTask — hourly sweep that queues enrich-album-info for any album
- * with no album_info row yet, then (with whatever capacity is left) for albums whose info
- * is due a refresh: next_refresh_at has passed, or is null because the row predates
- * refresh scheduling.
+ * with no album_info row yet, then (with whatever capacity is left) for incomplete albums
+ * whose next_refresh_at has passed. Rows with next_refresh_at null are complete or have
+ * used up their retries, and are never picked up here.
  *
- * The refresh half is what fills in new releases over time — on release day there is
- * usually no Wikipedia article or review to find, so enrichAlbumInfo schedules a re-check
- * a few days out (see nextRefreshAt) and this sweep picks it up.
+ * The re-check half is what fills in new releases over time — on release day there is
+ * usually no Wikipedia article or review to find, so enrichAlbumInfo schedules re-checks
+ * with exponential backoff (see scheduleNextRefresh) and this sweep runs them.
  *
  * Playlist syncs and the info route also queue enrichment directly; this is the safety
  * net for both. Re-queues are deduped by the per-album idempotency key, so an album
@@ -34,10 +34,9 @@ export const enrichMissingAlbumInfoTask = schedules.task({
     const due =
       missing.length < MAX_ALBUMS_PER_SWEEP
         ? await prisma.album_info.findMany({
-            where: { OR: [{ next_refresh_at: null }, { next_refresh_at: { lte: new Date() } }] },
+            where: { next_refresh_at: { lte: new Date() } },
             select: { album_id: true },
-            // Never-scheduled rows first, then the most overdue.
-            orderBy: { next_refresh_at: { sort: 'asc', nulls: 'first' } },
+            orderBy: { next_refresh_at: 'asc' }, // most overdue first
             take: MAX_ALBUMS_PER_SWEEP - missing.length
           })
         : [];

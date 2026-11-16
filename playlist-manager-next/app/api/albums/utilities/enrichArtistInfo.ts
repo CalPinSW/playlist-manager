@@ -9,17 +9,18 @@ import {
 } from '../../../utils/AlbumInfo/Wikibase/fetchWikipediaData';
 import { fetchLastFmArtistInfo } from '../../../utils/AlbumInfo/LastFm/fetchLastFmAlbumInfo';
 
-// An artist's bio barely changes, so one that was found is kept for a long time; one that
-// wasn't is retried soon, since new acts get Wikipedia/Last.fm pages as they get noticed.
-export const ARTIST_BIO_FRESH_DAYS = 180;
-export const ARTIST_BIO_RETRY_DAYS = 4;
+// A bio that was found is left alone (only a forced refresh re-fetches it). One that
+// wasn't is looked for again whenever one of the artist's albums is re-checked — but not
+// more than once in this many days, so an artist with several albums isn't re-fetched for
+// each of them.
+export const ARTIST_BIO_RETRY_DAYS = 2;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function artistInfoIsFresh(info: Pick<artist_info, 'bio' | 'fetched_at'> | null, now = new Date()): boolean {
   if (!info) return false;
-  const maxAgeDays = info.bio ? ARTIST_BIO_FRESH_DAYS : ARTIST_BIO_RETRY_DAYS;
-  return now.getTime() - info.fetched_at.getTime() < maxAgeDays * DAY_MS;
+  if (info.bio) return true;
+  return now.getTime() - info.fetched_at.getTime() < ARTIST_BIO_RETRY_DAYS * DAY_MS;
 }
 
 export interface ArtistEnrichmentResult {
@@ -31,8 +32,8 @@ export interface ArtistEnrichmentResult {
 /**
  * Finds a biography for one artist and caches it in artist_info: Wikipedia (via the
  * artist's MusicBrainz → Wikidata link, or failing that a validated Wikipedia search),
- * falling back to Last.fm. Skips the lookups entirely while the cached row is fresh, so
- * an artist with several albums in a backfill is only fetched once.
+ * falling back to Last.fm. Skips the lookups entirely while the cached row is fresh
+ * (unless `force`), so an artist with several albums in a backfill is only fetched once.
  *
  * `mbArtistIdHint` is the artist's MusicBrainz id when the caller already has it from the
  * album's release group — the most reliable way to identify same-named artists.
@@ -40,9 +41,10 @@ export interface ArtistEnrichmentResult {
 export async function enrichArtistInfo(
   artist: { id: string; name: string },
   existing: artist_info | null,
-  mbArtistIdHint?: string | null
+  mbArtistIdHint?: string | null,
+  force = false
 ): Promise<ArtistEnrichmentResult> {
-  if (artistInfoIsFresh(existing)) return { hasBio: !!existing?.bio, hadErrors: false };
+  if (!force && artistInfoIsFresh(existing)) return { hasBio: !!existing?.bio, hadErrors: false };
 
   let hadErrors = false;
   const attempt = async <T>(label: string, lookup: () => Promise<T | null>): Promise<T | null> => {

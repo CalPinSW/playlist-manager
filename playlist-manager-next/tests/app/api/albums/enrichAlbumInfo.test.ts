@@ -38,13 +38,13 @@ vi.mock('../../../../app/utils/AlbumInfo/LastFm/fetchLastFmAlbumInfo', () => ({
 vi.mock('../../../../app/api/albums/utilities/linkAlbumGenres', () => ({ linkAlbumGenres: mocks.linkAlbumGenres }));
 
 import {
-  ALBUM_INFO_STALE_DAYS,
-  ERROR_RETRY_DAYS,
-  INCOMPLETE_RETRY_DAYS,
-  NEW_RELEASE_RETRY_DAYS,
+  FIRST_RETRY_DAYS,
+  RETRY_WINDOW_DAYS,
+  albumInfoIsDue,
   enrichAlbumInfo,
   extractReviewLinks,
-  nextRefreshAt
+  retryDelayDays,
+  scheduleNextRefresh
 } from '../../../../app/api/albums/utilities/enrichAlbumInfo';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -52,26 +52,40 @@ const now = new Date('2026-11-16T12:00:00Z');
 const daysBefore = (d: number) => new Date(now.getTime() - d * DAY_MS);
 const daysUntil = (date: Date, from = now) => Math.round((date.getTime() - from.getTime()) / DAY_MS);
 
-describe('nextRefreshAt', () => {
-  const complete = { hasSummary: true, hasReception: true, hasArtistBio: true, hadErrors: false, now };
+describe('retry schedule', () => {
+  it('doubles the gap after each attempt and ends exactly a year after the first', () => {
+    const delays: number[] = [];
+    for (let attempts = 1; retryDelayDays(attempts) !== null; attempts++) delays.push(retryDelayDays(attempts));
 
-  it('re-checks a new release soon while anything is missing', () => {
-    const releaseDate = daysBefore(3);
-    expect(daysUntil(nextRefreshAt({ ...complete, releaseDate, hasSummary: false }))).toBe(NEW_RELEASE_RETRY_DAYS);
-    expect(daysUntil(nextRefreshAt({ ...complete, releaseDate, hasReception: false }))).toBe(NEW_RELEASE_RETRY_DAYS);
-    expect(daysUntil(nextRefreshAt({ ...complete, releaseDate }))).toBe(ALBUM_INFO_STALE_DAYS);
+    expect(delays).toEqual([2, 4, 8, 16, 32, 64, 128, 111]);
+    expect(delays.reduce((sum, d) => sum + d, 0)).toBe(RETRY_WINDOW_DAYS);
   });
 
-  it('backs off for older albums, and does not chase a missing reception section', () => {
-    const releaseDate = daysBefore(400);
-    expect(daysUntil(nextRefreshAt({ ...complete, releaseDate, hasArtistBio: false }))).toBe(INCOMPLETE_RETRY_DAYS);
-    expect(daysUntil(nextRefreshAt({ ...complete, releaseDate, hasReception: false }))).toBe(ALBUM_INFO_STALE_DAYS);
+  it('gives up once the window is used up', () => {
+    expect(retryDelayDays(9)).toBeNull();
+    expect(retryDelayDays(50)).toBeNull();
+    expect(scheduleNextRefresh({ complete: false, attempts: 9, now })).toBeNull();
   });
 
-  it('retries quickly after a source error, however complete the result looks', () => {
-    expect(daysUntil(nextRefreshAt({ ...complete, releaseDate: daysBefore(400), hadErrors: true }))).toBe(
-      ERROR_RETRY_DAYS
-    );
+  it('never schedules a complete album, whatever the attempt count', () => {
+    expect(scheduleNextRefresh({ complete: true, attempts: 1, now })).toBeNull();
+  });
+
+  it('schedules an incomplete album by its attempt count', () => {
+    expect(daysUntil(scheduleNextRefresh({ complete: false, attempts: 1, now }))).toBe(FIRST_RETRY_DAYS);
+    expect(daysUntil(scheduleNextRefresh({ complete: false, attempts: 4, now }))).toBe(16);
+  });
+});
+
+describe('albumInfoIsDue', () => {
+  it('is due with no info, or once next_refresh_at has passed', () => {
+    expect(albumInfoIsDue(null, now)).toBe(true);
+    expect(albumInfoIsDue({ next_refresh_at: daysBefore(1) }, now)).toBe(true);
+  });
+
+  it('is not due before next_refresh_at, or ever when it is null (complete / given up)', () => {
+    expect(albumInfoIsDue({ next_refresh_at: daysBefore(-1) }, now)).toBe(false);
+    expect(albumInfoIsDue({ next_refresh_at: null }, now)).toBe(false);
   });
 });
 
@@ -164,7 +178,8 @@ describe('enrichAlbumInfo', () => {
       bio_source: 'wikipedia',
       description: 'Royal Blood description'
     });
-    expect(daysUntil(savedAlbumInfo().next_refresh_at, new Date())).toBe(ALBUM_INFO_STALE_DAYS);
+    // Complete → left alone: no further automatic checks.
+    expect(savedAlbumInfo()).toMatchObject({ next_refresh_at: null, refresh_attempts: 1 });
   });
 
   it('falls back to Wikipedia search and Last.fm when MusicBrainz has no match', async () => {
@@ -182,11 +197,11 @@ describe('enrichAlbumInfo', () => {
       lastfm_listeners: 5
     });
     expect(savedArtistInfo()).toMatchObject({ bio: 'A duo from Brighton.', bio_source: 'lastfm' });
-    // New release still missing a reception section → checked again soon.
-    expect(daysUntil(savedAlbumInfo().next_refresh_at, new Date())).toBe(NEW_RELEASE_RETRY_DAYS);
+    // Still no reviews → first re-check in a couple of days.
+    expect(daysUntil(savedAlbumInfo().next_refresh_at, new Date())).toBe(FIRST_RETRY_DAYS);
   });
 
-  it('keeps previously stored info when a source errors, and retries the next day', async () => {
+  it('keeps previously stored info when a source errors, and stays on the backoff schedule', async () => {
     mocks.prisma.album.findUnique.mockResolvedValue(
       album({
         album_info: {
@@ -199,7 +214,8 @@ describe('enrichAlbumInfo', () => {
           reception: 'Old reception.',
           review_links: [{ url: 'https://old.example/review', source: 'old.example' }],
           lastfm_listeners: 1,
-          lastfm_playcount: 2
+          lastfm_playcount: 2,
+          refresh_attempts: 2
         }
       })
     );
@@ -216,7 +232,10 @@ describe('enrichAlbumInfo', () => {
       reception: 'Old reception.',
       review_links: [{ url: 'https://old.example/review', source: 'old.example' }]
     });
-    expect(daysUntil(update.next_refresh_at, new Date())).toBe(ERROR_RETRY_DAYS);
+    // Third attempt, still no artist bio → 8 days. An erroring source backs off like any
+    // other incomplete run rather than being retried daily forever.
+    expect(update.refresh_attempts).toBe(3);
+    expect(daysUntil(update.next_refresh_at, new Date())).toBe(8);
   });
 
   it('clears a previously stored summary when a clean run finds nothing', async () => {
@@ -228,6 +247,31 @@ describe('enrichAlbumInfo', () => {
     await enrichAlbumInfo('album-1');
 
     expect(mocks.prisma.album_info.upsert.mock.calls[0][0].update).toMatchObject({ summary: null, summary_source: null });
+  });
+
+  it('stops scheduling once the retries are used up', async () => {
+    mocks.prisma.album.findUnique.mockResolvedValue(album({ album_info: { refresh_attempts: 8, review_links: [] } }));
+
+    await enrichAlbumInfo('album-1');
+
+    expect(mocks.prisma.album_info.upsert.mock.calls[0][0].update).toMatchObject({
+      refresh_attempts: 9,
+      next_refresh_at: null
+    });
+  });
+
+  it('re-fetches a cached artist bio only when forced', async () => {
+    const cached = { bio: 'Cached bio.', fetched_at: new Date(0), mb_artist_id: 'mb-artist' };
+    mocks.prisma.album.findUnique.mockResolvedValue(
+      album({ albumartistrelationship: [{ artist: { ...artist, artist_info: cached } }] })
+    );
+    mocks.fetchMBArtist.mockResolvedValue({ id: 'mb-artist', relations: [] });
+
+    await enrichAlbumInfo('album-1');
+    expect(mocks.fetchMBArtist).not.toHaveBeenCalled();
+
+    await enrichAlbumInfo('album-1', { force: true });
+    expect(mocks.fetchMBArtist).toHaveBeenCalledWith('mb-artist');
   });
 
   it('does not re-fetch an artist whose bio is already cached and fresh', async () => {
@@ -253,5 +297,6 @@ describe('enrichAlbumInfo', () => {
 
     expect(mocks.fetchMBReleaseGroup).not.toHaveBeenCalled();
     expect(savedAlbumInfo().next_refresh_at).toBeInstanceOf(Date);
+    expect(savedAlbumInfo().refresh_attempts).toBe(1);
   });
 });

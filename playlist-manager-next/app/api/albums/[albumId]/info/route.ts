@@ -15,7 +15,7 @@ import { triggerAlbumEnrichmentNow } from '../../utilities/triggerAlbumEnrichmen
  * genre/albumgenrerelationship tables.
  *
  * Always returns whatever is cached (possibly nothing yet, `pending: true`). If the cache
- * is missing or past its next_refresh_at, it queues enrichAlbumInfoTask (deduped per
+ * is missing or an incomplete album's scheduled re-check (next_refresh_at) has come up, it queues enrichAlbumInfoTask (deduped per
  * album, prioritised ahead of sweep backlog) — MusicBrainz's ~1 req/sec limit makes the
  * enrichment itself unsuitable to run inline, so the client polls this route while
  * `enrichmentQueued` to pick up the result once the background task completes. The
@@ -82,6 +82,9 @@ const getAlbumInfoHandler = async (request: NextRequest, { params }: { params: P
         listeners: info?.lastfm_listeners ?? null,
         playcount: info?.lastfm_playcount ?? null,
         fetchedAt: info?.fetched_at ?? null,
+        // When the next automatic re-check is scheduled; null once the info is complete or
+        // the retries have run out (POST .../info/refresh still re-checks on demand).
+        nextRefreshAt: info?.next_refresh_at ?? null,
         pending: !info,
         // Whether an enrichment run is queued as of this response — either the first one
         // (`pending`) or a refresh of info that was due. `pending` without this means

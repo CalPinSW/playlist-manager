@@ -1,9 +1,10 @@
 -- Migration: artist bios + album reception/reviews + enrichment retry scheduling
 --
 -- album_info gains the Wikipedia article URL, its "Critical reception" section, review
--- links from MusicBrainz, and next_refresh_at. Existing rows keep next_refresh_at NULL,
--- which the pipeline treats as "due now" — so every album enriched before this migration
--- is re-enriched (by the hourly sweep, the backfill task, or on first view).
+-- links from MusicBrainz, and the retry schedule (next_refresh_at + refresh_attempts).
+-- next_refresh_at NULL means "no further automatic checks", so existing rows are set due
+-- now: every album enriched before this migration is re-enriched once (by the hourly
+-- sweep, the backfill task, or on first view) and then follows the new schedule.
 --
 -- artist_info caches one biography per artist, shared across their albums.
 
@@ -11,7 +12,10 @@ ALTER TABLE "album_info"
     ADD COLUMN "wikipedia_url" VARCHAR(500),
     ADD COLUMN "reception" TEXT,
     ADD COLUMN "review_links" JSONB,
-    ADD COLUMN "next_refresh_at" TIMESTAMP(3);
+    ADD COLUMN "next_refresh_at" TIMESTAMP(3),
+    ADD COLUMN "refresh_attempts" INTEGER NOT NULL DEFAULT 0;
+
+UPDATE "album_info" SET "next_refresh_at" = CURRENT_TIMESTAMP;
 
 CREATE INDEX "album_info_next_refresh_at_idx" ON "album_info"("next_refresh_at");
 

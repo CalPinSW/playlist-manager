@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import { fetchAlbumInfo, AlbumInfo, AuthError } from '../../../lib/api';
+import { fetchAlbumInfo, refreshAlbumInfo, AlbumInfo, AuthError } from '../../../lib/api';
 import { Colors, Fonts } from '../../../constants/colors';
 import { clearTokens } from '../../../lib/auth';
 
@@ -29,6 +29,10 @@ export default function AlbumInfoScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [pollsLeft, setPollsLeft] = useState(MAX_POLLS);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Set while a manual "Check again" is running: the `fetchedAt` the info had when it was
+  // requested ('' if it had none). The run is done once the server reports a different one.
+  const [recheckFrom, setRecheckFrom] = useState<string | null>(null);
+  const [recheckError, setRecheckError] = useState(false);
 
   const handleAuthError = useCallback(async () => {
     await clearTokens();
@@ -52,7 +56,10 @@ export default function AlbumInfoScreen() {
 
   // Queued covers both the first fetch for an album (`pending`) and a refresh of info that
   // was due — e.g. a new release being re-checked for reviews — so poll for either.
-  const waitingForEnrichment = !!info?.enrichmentQueued;
+  // A manual re-check isn't reflected in `enrichmentQueued` (that only covers automatic
+  // runs), so it's tracked here by watching for `fetchedAt` to move.
+  const rechecking = recheckFrom !== null && (info?.fetchedAt ?? '') === recheckFrom;
+  const waitingForEnrichment = !!info?.enrichmentQueued || rechecking;
   const polling = waitingForEnrichment && pollsLeft > 0 && !loadError;
 
   const reviewLinks = info?.reviewLinks ?? [];
@@ -67,6 +74,18 @@ export default function AlbumInfoScreen() {
     }, POLL_INTERVAL_MS);
     return () => { if (pollTimer.current) clearTimeout(pollTimer.current); };
   }, [polling, info, load]);
+
+  const onCheckAgain = useCallback(async () => {
+    setRecheckError(false);
+    try {
+      await refreshAlbumInfo(albumId);
+      setPollsLeft(MAX_POLLS);
+      setRecheckFrom(info?.fetchedAt ?? '');
+    } catch (err) {
+      if (err instanceof AuthError) { await handleAuthError(); return; }
+      setRecheckError(true);
+    }
+  }, [albumId, info?.fetchedAt, handleAuthError]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -169,15 +188,35 @@ export default function AlbumInfoScreen() {
                 {hasContent ? 'Checking for more info…' : 'Fetching more info about this album…'}
               </Text>
             </View>
-          ) : !hasContent ? (
-            <Text style={styles.message}>
-              {waitingForEnrichment
-                ? "Still fetching info for this album — pull down to refresh in a minute."
-                : info?.pending
-                  ? "Couldn't fetch info for this album right now — pull down to try again."
-                  : "Nothing has been written about this album yet. New releases are re-checked every few days."}
-            </Text>
-          ) : null}
+          ) : (
+            <>
+              {waitingForEnrichment ? (
+                <Text style={styles.message}>
+                  Still fetching info for this album — pull down to refresh in a minute.
+                </Text>
+              ) : !hasContent ? (
+                <Text style={styles.message}>
+                  {info?.pending
+                    ? "Couldn't fetch info for this album right now."
+                    : 'Nothing has been written about this album yet.'}
+                </Text>
+              ) : null}
+              <View style={[styles.footer, hasContent && styles.footerAfterContent]}>
+                <Text style={styles.footerNote}>{checkStatus(info)}</Text>
+                <Pressable
+                  style={({ pressed }) => [styles.checkButton, pressed && styles.checkButtonPressed]}
+                  onPress={onCheckAgain}
+                  accessibilityRole="button"
+                >
+                  <Feather name="refresh-cw" size={14} color={Colors.text} />
+                  <Text style={styles.checkButtonText}>Check again</Text>
+                </Pressable>
+                {recheckError && (
+                  <Text style={styles.footerError}>Couldn't start a check. Please try again.</Text>
+                )}
+              </View>
+            </>
+          )}
         </>
       )}
     </ScrollView>
@@ -201,6 +240,19 @@ function SourceLink({ source, url }: { source: string | null; url: string | null
       <Feather name="arrow-up-right" size={13} color={Colors.accent} />
     </Pressable>
   );
+}
+
+function formatDay(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** One line on when this album was last looked up and whether it will be again. */
+function checkStatus(info: AlbumInfo | null): string {
+  if (!info?.fetchedAt) return 'Not checked yet.';
+  const last = `Last checked ${formatDay(info.fetchedAt)}.`;
+  return info.nextRefreshAt
+    ? `${last} Next automatic check ${formatDay(info.nextRefreshAt)}.`
+    : `${last} No more automatic checks.`;
 }
 
 const ART_SIZE = 88;
@@ -254,5 +306,20 @@ const styles = StyleSheet.create({
 
   message: { color: Colors.textMuted, fontSize: 14, lineHeight: 20, marginTop: 8 },
   pendingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
-  pendingText: { marginTop: 0 }
+  pendingText: { marginTop: 0 },
+
+  footer: { marginTop: 16, alignItems: 'flex-start', gap: 12 },
+  footerAfterContent: {
+    marginTop: 0, paddingTop: 20,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border
+  },
+  footerNote: { color: Colors.textFaint, fontSize: 12, lineHeight: 17 },
+  footerError: { color: Colors.accent, fontSize: 12 },
+  checkButton: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: Colors.fill, borderWidth: 1, borderColor: Colors.hairline,
+    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 9
+  },
+  checkButtonPressed: { opacity: 0.6 },
+  checkButtonText: { color: Colors.text, fontSize: 13, fontWeight: '600' }
 });

@@ -8,7 +8,7 @@
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { getValidAccessToken, ReauthRequiredError } from './auth';
-import { API_ENDPOINTS, albumUrl, albumInfoUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl, resumePlaybackUrl } from '../constants/api';
+import { API_ENDPOINTS, albumUrl, albumInfoUrl, albumInfoRefreshUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl, resumePlaybackUrl } from '../constants/api';
 
 export class AuthError extends Error {
   constructor(message = 'Not authenticated') {
@@ -364,7 +364,14 @@ export interface AlbumInfo {
   /** Last.fm listener/play counts — null if Last.fm has no match or isn't configured. */
   listeners: number | null;
   playcount: number | null;
+  /** When the info was last looked up — changes each time an enrichment run completes. */
   fetchedAt: string | null;
+  /**
+   * When the server will next re-check automatically. Null once the info is complete or
+   * the retries (exponential backoff over a year) have run out — `refreshAlbumInfo` still
+   * forces a re-check.
+   */
+  nextRefreshAt: string | null;
   /** True when nothing is cached for this album yet. */
   pending: boolean;
   /**
@@ -389,6 +396,20 @@ export async function fetchAlbumInfo(albumId: string): Promise<AlbumInfo> {
     throw new Error(`fetchAlbumInfo failed: ${res.status}`);
   }
   return res.json();
+}
+
+/**
+ * POST /api/albums/[albumId]/info/refresh — ask the server to look this album up again,
+ * whatever state its info is in. Returns once the run is queued; poll `fetchAlbumInfo`
+ * until `fetchedAt` changes to see the result.
+ */
+export async function refreshAlbumInfo(albumId: string): Promise<void> {
+  const res = await authedFetch(albumInfoRefreshUrl(albumId), { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[api] refreshAlbumInfo failed:', res.status, body);
+    throw new Error(`refreshAlbumInfo failed: ${res.status}`);
+  }
 }
 
 /**

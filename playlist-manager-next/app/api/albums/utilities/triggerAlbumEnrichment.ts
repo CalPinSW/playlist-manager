@@ -32,13 +32,31 @@ export async function triggerAlbumEnrichmentNow(albumId: string) {
   );
 }
 
+// A manual refresh must not be swallowed by the 6h dedupe above (the whole point is to
+// re-run an album that was enriched recently), so it gets its own key — held just long
+// enough to absorb a double tap.
+const MANUAL_REFRESH_DEDUPE_TTL = '1m';
+
+/** Queue a user-requested re-check of one album, whatever state its info is in. */
+export async function triggerAlbumEnrichmentManual(albumId: string) {
+  return tasks.trigger<typeof enrichAlbumInfoTask>(
+    'enrich-album-info',
+    { albumId, force: true },
+    {
+      idempotencyKey: await idempotencyKeys.create(`enrich-album-info-manual:${albumId}`, { scope: 'global' }),
+      idempotencyKeyTTL: MANUAL_REFRESH_DEDUPE_TTL,
+      priority: ON_DEMAND_PRIORITY_SECONDS
+    }
+  );
+}
+
 /** Queue background enrichment for many albums (sweep / backfill). */
-export async function triggerAlbumEnrichmentBatch(albumIds: string[]) {
+export async function triggerAlbumEnrichmentBatch(albumIds: string[], options: { force?: boolean } = {}) {
   for (let i = 0; i < albumIds.length; i += BATCH_SIZE) {
     const chunk = albumIds.slice(i, i + BATCH_SIZE);
     const items = await Promise.all(
       chunk.map(async albumId => ({
-        payload: { albumId },
+        payload: { albumId, force: options.force },
         options: { idempotencyKey: await enrichmentKey(albumId), idempotencyKeyTTL: ENRICHMENT_DEDUPE_TTL }
       }))
     );

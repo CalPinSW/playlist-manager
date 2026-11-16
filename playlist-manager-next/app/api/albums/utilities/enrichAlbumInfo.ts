@@ -13,18 +13,14 @@ import { normalizeName } from '../../../utils/AlbumInfo/textMatch';
 import { linkAlbumGenres } from './linkAlbumGenres';
 import { enrichArtistInfo } from './enrichArtistInfo';
 
-// How long fully-enriched album info is trusted before being re-fetched.
-export const ALBUM_INFO_STALE_DAYS = 180;
-// A new release has little written about it on day one: MusicBrainz entries, Wikipedia
-// articles and reviews all appear over the following weeks. While an album is this recent
-// and still missing something, keep checking back.
-export const NEW_RELEASE_WINDOW_DAYS = 120;
-export const NEW_RELEASE_RETRY_DAYS = 4;
-// Older albums that are still missing a summary or artist bio are unlikely to gain one
-// soon, but are worth an occasional re-check.
-export const INCOMPLETE_RETRY_DAYS = 30;
-// A source was unreachable, so the result is incomplete for reasons that should clear up.
-export const ERROR_RETRY_DAYS = 1;
+// Retry schedule for albums whose info is still incomplete. A new release has little
+// written about it on day one — MusicBrainz entries, Wikipedia articles and reviews appear
+// over the following weeks — so keep checking back, but less and less often, and stop
+// altogether after a year: some albums will simply never have a Wikipedia page.
+// The gap doubles after each attempt (2, 4, 8, ... days); the last one is shortened so
+// the final check lands exactly RETRY_WINDOW_DAYS after the first.
+export const FIRST_RETRY_DAYS = 2;
+export const RETRY_WINDOW_DAYS = 365;
 
 // MusicBrainz tags are user-submitted folksonomy (can include noise like "2020s" or
 // "usa" alongside real genres), so rank by tag count and keep only the strongest few.
@@ -45,36 +41,45 @@ export interface ReviewLink {
 }
 
 /**
- * When an album should next be enriched, based on how complete the result was. Stored in
- * album_info.next_refresh_at; the info route and the hourly sweep both re-queue once it
- * passes. This is what lets albums enriched on release day fill in later.
+ * Days to wait before the next automatic check, given how many attempts have been made
+ * (including the one that just finished). Null once the retry window is used up.
+ * Attempts 1..8 → 2, 4, 8, 16, 32, 64, 128, 111 days; a 9th attempt is the last.
  */
-export function nextRefreshAt(input: {
-  releaseDate: Date;
-  hasSummary: boolean;
-  hasReception: boolean;
-  hasArtistBio: boolean;
-  hadErrors: boolean;
-  now?: Date;
-}): Date {
-  const now = input.now ?? new Date();
-  const inDays = (days: number) => new Date(now.getTime() + days * DAY_MS);
-
-  if (input.hadErrors) return inDays(ERROR_RETRY_DAYS);
-
-  const isNewRelease = now.getTime() - input.releaseDate.getTime() < NEW_RELEASE_WINDOW_DAYS * DAY_MS;
-  if (isNewRelease) {
-    const complete = input.hasSummary && input.hasReception && input.hasArtistBio;
-    return inDays(complete ? ALBUM_INFO_STALE_DAYS : NEW_RELEASE_RETRY_DAYS);
-  }
-  // Plenty of older albums never get a reception section, so that alone doesn't count as
-  // incomplete once the new-release window has passed.
-  return inDays(input.hasSummary && input.hasArtistBio ? ALBUM_INFO_STALE_DAYS : INCOMPLETE_RETRY_DAYS);
+export function retryDelayDays(attemptsSoFar: number): number | null {
+  const attempts = Math.max(1, attemptsSoFar);
+  const elapsed = FIRST_RETRY_DAYS * (2 ** (attempts - 1) - 1);
+  if (elapsed >= RETRY_WINDOW_DAYS) return null;
+  return Math.min(FIRST_RETRY_DAYS * 2 ** (attempts - 1), RETRY_WINDOW_DAYS - elapsed);
 }
 
-/** True when cached info is missing or due a refresh. */
+/**
+ * When an album should next be enriched automatically — stored in
+ * album_info.next_refresh_at, which the info route and the hourly sweep act on.
+ *   - complete info → null: left alone from here on.
+ *   - incomplete    → exponential backoff via retryDelayDays, then null (given up).
+ * A run where a source errored is scheduled the same way as any other incomplete run, so
+ * a source that stays broken can't cause endless retries.
+ */
+export function scheduleNextRefresh(input: { complete: boolean; attempts: number; now?: Date }): Date | null {
+  if (input.complete) return null;
+  const delay = retryDelayDays(input.attempts);
+  if (delay === null) return null;
+  return new Date((input.now ?? new Date()).getTime() + delay * DAY_MS);
+}
+
+/** Complete = nothing left worth re-checking for: a summary, some reviews, and a bio. */
+export function albumInfoIsComplete(input: {
+  hasSummary: boolean;
+  hasReviews: boolean;
+  hasArtistBio: boolean;
+}): boolean {
+  return input.hasSummary && input.hasReviews && input.hasArtistBio;
+}
+
+/** True when there is no cached info yet, or its scheduled automatic re-check has come up. */
 export function albumInfoIsDue(info: { next_refresh_at: Date | null } | null, now = new Date()): boolean {
-  return !info || !info.next_refresh_at || info.next_refresh_at.getTime() <= now.getTime();
+  if (!info) return true;
+  return !!info.next_refresh_at && info.next_refresh_at.getTime() <= now.getTime();
 }
 
 // Looks an album up on MusicBrainz, Wikipedia and Last.fm and persists whatever it finds:
@@ -83,7 +88,10 @@ export function albumInfoIsDue(info: { next_refresh_at: Date | null } | null, no
 // artist_info. Each external call fails independently so one source being down doesn't
 // discard data already fetched from another — and a failed lookup never overwrites
 // something a previous run found.
-export async function enrichAlbumInfo(albumId: string): Promise<void> {
+//
+// `force` (manual refresh, or a full backfill) also re-fetches artist bios that would
+// otherwise be considered settled.
+export async function enrichAlbumInfo(albumId: string, options: { force?: boolean } = {}): Promise<void> {
   const album = await prisma.album.findUnique({
     where: { id: albumId },
     include: {
@@ -94,15 +102,16 @@ export async function enrichAlbumInfo(albumId: string): Promise<void> {
   if (!album) return;
 
   const artists = album.albumartistrelationship.map(rel => rel.artist);
+  const attempts = (album.album_info?.refresh_attempts ?? 0) + 1;
   const firstArtistName = artists[0]?.name;
   if (!firstArtistName) {
     // Nothing to look up by, but still record the attempt — otherwise the
     // enrich-missing-album-info sweep would re-queue this album forever.
-    const retryAt = new Date(Date.now() + INCOMPLETE_RETRY_DAYS * DAY_MS);
+    const retryAt = scheduleNextRefresh({ complete: false, attempts });
     await prisma.album_info.upsert({
       where: { album_id: albumId },
-      update: { fetched_at: new Date(), next_refresh_at: retryAt },
-      create: { album_id: albumId, next_refresh_at: retryAt }
+      update: { fetched_at: new Date(), next_refresh_at: retryAt, refresh_attempts: attempts },
+      create: { album_id: albumId, next_refresh_at: retryAt, refresh_attempts: attempts }
     });
     return;
   }
@@ -177,13 +186,11 @@ export async function enrichAlbumInfo(albumId: string): Promise<void> {
       credit => normalizeName(credit.artist?.name) === normalizeName(artist.name)
     );
     try {
-      const result = await enrichArtistInfo(artist, artist.artist_info, credited?.artist?.id);
+      const result = await enrichArtistInfo(artist, artist.artist_info, credited?.artist?.id, options.force);
       // Completeness is judged on the primary artist; a featured artist without a page
       // shouldn't keep the whole album on the retry schedule.
       if (index === 0) hasArtistBio = result.hasBio;
-      if (result.hadErrors) hadErrors = true;
     } catch (error) {
-      hadErrors = true;
       console.error(`[enrichAlbumInfo] artist enrichment failed for artist ${artist.id}`, error);
     }
   }
@@ -215,12 +222,14 @@ export async function enrichAlbumInfo(albumId: string): Promise<void> {
     lastfm_listeners: keep(lastfm?.listeners ?? null, previous?.lastfm_listeners),
     lastfm_playcount: keep(lastfm?.playcount ?? null, previous?.lastfm_playcount),
     fetched_at: new Date(),
-    next_refresh_at: nextRefreshAt({
-      releaseDate: album.release_date,
-      hasSummary: !!finalSummary,
-      hasReception: !!finalReception,
-      hasArtistBio,
-      hadErrors
+    refresh_attempts: attempts,
+    next_refresh_at: scheduleNextRefresh({
+      complete: albumInfoIsComplete({
+        hasSummary: !!finalSummary,
+        hasReviews: !!finalReception || (Array.isArray(finalReviewLinks) && finalReviewLinks.length > 0),
+        hasArtistBio
+      }),
+      attempts
     })
   };
 
