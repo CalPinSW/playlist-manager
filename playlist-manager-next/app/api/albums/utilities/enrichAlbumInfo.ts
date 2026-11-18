@@ -82,6 +82,41 @@ export function albumInfoIsDue(info: { next_refresh_at: Date | null } | null, no
   return !!info.next_refresh_at && info.next_refresh_at.getTime() <= now.getTime();
 }
 
+/**
+ * What one enrichment run ended up with — returned as the Trigger.dev run's output and
+ * turned into run tags (see app/trigger/enrichAlbumInfo.ts), so the dashboard shows
+ * whether a run found anything without digging through logs.
+ *
+ * `found` describes what is stored after the run. That is this run's result, except
+ * where a source errored and a value from an earlier run was kept (see `errors`).
+ */
+export interface EnrichmentReport {
+  albumId: string;
+  /** "Album — Artist", for reading the dashboard. */
+  album: string | null;
+  /**
+   *  - complete:   summary, reviews and primary-artist bio all found; no more automatic checks
+   *  - incomplete: something is missing; re-checked automatically at `nextRefreshAt`
+   *  - gave-up:    something is missing and the retries have run out
+   *  - skipped:    nothing to look up (album not found, or it has no artists)
+   */
+  status: 'complete' | 'incomplete' | 'gave-up' | 'skipped';
+  /** Which of summary / reviews / artist-bio are still missing. */
+  missing: ('summary' | 'reviews' | 'artist-bio')[];
+  found: {
+    musicBrainz: boolean;
+    summary: string | null; // source: 'wikipedia' | 'lastfm'
+    reception: boolean;
+    reviewLinks: number;
+    lastFmStats: boolean;
+    artistBios: { name: string; source: string | null; cached: boolean }[];
+  };
+  /** Lookups that failed (network/API errors) — "not found" is not an error. */
+  errors: string[];
+  attempts: number;
+  nextRefreshAt: string | null;
+}
+
 // Looks an album up on MusicBrainz, Wikipedia and Last.fm and persists whatever it finds:
 // genres into the shared genre/albumgenrerelationship tables, the album's summary /
 // critical reception / review links into album_info, and its artists' bios into
@@ -91,7 +126,7 @@ export function albumInfoIsDue(info: { next_refresh_at: Date | null } | null, no
 //
 // `force` (manual refresh, or a full backfill) also re-fetches artist bios that would
 // otherwise be considered settled.
-export async function enrichAlbumInfo(albumId: string, options: { force?: boolean } = {}): Promise<void> {
+export async function enrichAlbumInfo(albumId: string, options: { force?: boolean } = {}): Promise<EnrichmentReport> {
   const album = await prisma.album.findUnique({
     where: { id: albumId },
     include: {
@@ -99,7 +134,7 @@ export async function enrichAlbumInfo(albumId: string, options: { force?: boolea
       albumartistrelationship: { orderBy: { id: 'asc' }, include: { artist: { include: { artist_info: true } } } }
     }
   });
-  if (!album) return;
+  if (!album) return skippedReport(albumId, null, 0, null);
 
   const artists = album.albumartistrelationship.map(rel => rel.artist);
   const attempts = (album.album_info?.refresh_attempts ?? 0) + 1;
@@ -113,15 +148,17 @@ export async function enrichAlbumInfo(albumId: string, options: { force?: boolea
       update: { fetched_at: new Date(), next_refresh_at: retryAt, refresh_attempts: attempts },
       create: { album_id: albumId, next_refresh_at: retryAt, refresh_attempts: attempts }
     });
-    return;
+    return skippedReport(albumId, album.name, attempts, retryAt);
   }
 
   let hadErrors = false;
+  const errors: string[] = [];
   const attempt = async <T>(label: string, lookup: () => Promise<T | null>): Promise<T | null> => {
     try {
       return await lookup();
     } catch (error) {
       hadErrors = true;
+      errors.push(label);
       console.error(`[enrichAlbumInfo] ${label} failed for album ${albumId}`, error);
       return null;
     }
@@ -181,6 +218,7 @@ export async function enrichAlbumInfo(albumId: string, options: { force?: boolea
   }
 
   let hasArtistBio = false;
+  const artistBios: EnrichmentReport['found']['artistBios'] = [];
   for (const [index, artist] of artists.slice(0, MAX_ARTISTS_TO_ENRICH).entries()) {
     const credited = (releaseGroup?.['artist-credit'] ?? []).find(
       credit => normalizeName(credit.artist?.name) === normalizeName(artist.name)
@@ -190,7 +228,11 @@ export async function enrichAlbumInfo(albumId: string, options: { force?: boolea
       // Completeness is judged on the primary artist; a featured artist without a page
       // shouldn't keep the whole album on the retry schedule.
       if (index === 0) hasArtistBio = result.hasBio;
+      artistBios.push({ name: artist.name, source: result.bioSource, cached: result.cached });
+      errors.push(...result.errors.map(label => `${label} (${artist.name})`));
     } catch (error) {
+      errors.push(`artist enrichment (${artist.name})`);
+      artistBios.push({ name: artist.name, source: null, cached: false });
       console.error(`[enrichAlbumInfo] artist enrichment failed for artist ${artist.id}`, error);
     }
   }
@@ -210,6 +252,10 @@ export async function enrichAlbumInfo(albumId: string, options: { force?: boolea
       ? (previous.review_links as Prisma.InputJsonValue)
       : (reviewLinks as unknown as Prisma.InputJsonValue);
 
+  const hasReviews = !!finalReception || (Array.isArray(finalReviewLinks) && finalReviewLinks.length > 0);
+  const complete = albumInfoIsComplete({ hasSummary: !!finalSummary, hasReviews, hasArtistBio });
+  const nextRefresh = scheduleNextRefresh({ complete, attempts });
+
   const data = {
     mb_release_group_id: keep(releaseGroup?.id ?? null, previous?.mb_release_group_id),
     mb_type: keep(releaseGroup?.['primary-type'] ?? null, previous?.mb_type),
@@ -223,14 +269,7 @@ export async function enrichAlbumInfo(albumId: string, options: { force?: boolea
     lastfm_playcount: keep(lastfm?.playcount ?? null, previous?.lastfm_playcount),
     fetched_at: new Date(),
     refresh_attempts: attempts,
-    next_refresh_at: scheduleNextRefresh({
-      complete: albumInfoIsComplete({
-        hasSummary: !!finalSummary,
-        hasReviews: !!finalReception || (Array.isArray(finalReviewLinks) && finalReviewLinks.length > 0),
-        hasArtistBio
-      }),
-      attempts
-    })
+    next_refresh_at: nextRefresh
   };
 
   // Always upsert (even with nothing found) so next_refresh_at gates retries — otherwise
@@ -240,6 +279,47 @@ export async function enrichAlbumInfo(albumId: string, options: { force?: boolea
     update: data,
     create: { album_id: albumId, ...data }
   });
+
+  const missing: EnrichmentReport['missing'] = [];
+  if (!finalSummary) missing.push('summary');
+  if (!hasReviews) missing.push('reviews');
+  if (!hasArtistBio) missing.push('artist-bio');
+
+  return {
+    albumId,
+    album: `${album.name} — ${firstArtistName}`,
+    status: complete ? 'complete' : nextRefresh ? 'incomplete' : 'gave-up',
+    missing,
+    found: {
+      musicBrainz: !!data.mb_release_group_id,
+      summary: data.summary ? data.summary_source : null,
+      reception: !!finalReception,
+      reviewLinks: Array.isArray(finalReviewLinks) ? finalReviewLinks.length : 0,
+      lastFmStats: data.lastfm_listeners !== null,
+      artistBios
+    },
+    errors,
+    attempts,
+    nextRefreshAt: nextRefresh?.toISOString() ?? null
+  };
+}
+
+function skippedReport(
+  albumId: string,
+  albumName: string | null,
+  attempts: number,
+  nextRefresh: Date | null
+): EnrichmentReport {
+  return {
+    albumId,
+    album: albumName,
+    status: 'skipped',
+    missing: ['summary', 'reviews', 'artist-bio'],
+    found: { musicBrainz: false, summary: null, reception: false, reviewLinks: 0, lastFmStats: false, artistBios: [] },
+    errors: [],
+    attempts,
+    nextRefreshAt: nextRefresh?.toISOString() ?? null
+  };
 }
 
 function rankGenreTags(tags: { name: string; count: number }[]): string[] {

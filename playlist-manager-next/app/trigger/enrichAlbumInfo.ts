@@ -1,5 +1,17 @@
-import { task, logger } from '@trigger.dev/sdk';
-import { enrichAlbumInfo } from '../api/albums/utilities/enrichAlbumInfo';
+import { task, logger, tags } from '@trigger.dev/sdk';
+import { enrichAlbumInfo, EnrichmentReport } from '../api/albums/utilities/enrichAlbumInfo';
+
+/**
+ * Run tags summarising the outcome, so the Trigger.dev runs list can be filtered by them:
+ * `status:complete|incomplete|gave-up|skipped`, a `missing:<thing>` per gap, and
+ * `errors` when a source couldn't be reached. At most 5 — Trigger.dev allows 10 per run.
+ */
+export function enrichmentTags(report: EnrichmentReport): string[] {
+  const result = [`status:${report.status}`];
+  if (report.status !== 'skipped') result.push(...report.missing.map(gap => `missing:${gap}`));
+  if (report.errors.length > 0) result.push('errors');
+  return result;
+}
 
 /**
  * enrichAlbumInfoTask — for one album, fetches MusicBrainz genres/type and review links, a
@@ -28,9 +40,17 @@ export const enrichAlbumInfoTask = task({
     const { albumId, force } = payload;
     logger.log('enrich-album-info triggered', { albumId, force: !!force });
 
-    await enrichAlbumInfo(albumId, { force });
+    const report = await enrichAlbumInfo(albumId, { force });
 
-    logger.log('enrich-album-info complete', { albumId });
-    return { albumId };
+    logger.log(`enrich-album-info ${report.status}: ${report.album ?? albumId}`, { ...report });
+    try {
+      await tags.add(enrichmentTags(report));
+    } catch (error) {
+      // Tags are a dashboard convenience; the enrichment itself is already saved.
+      logger.warn('enrich-album-info: failed to tag run', { error: String(error) });
+    }
+
+    // Shown as the run's output in the dashboard.
+    return report;
   }
 });

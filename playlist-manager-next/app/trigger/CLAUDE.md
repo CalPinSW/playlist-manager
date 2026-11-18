@@ -43,6 +43,12 @@ from `dirs: ['./app/trigger']`. See the Trigger.dev v4 API rules in the repo-roo
   `{ "all": true }` does the same for every album.
 - **A failed lookup never overwrites stored data** (`hadErrors`), but a clean run that
   finds nothing does clear it.
+- **Each run reports its outcome.** `enrichAlbumInfo` returns an `EnrichmentReport`
+  (status, what's missing, where each piece came from, which lookups errored, next
+  check), which the task returns as its **run output** and summarises as **run tags**:
+  `status:complete|incomplete|gave-up|skipped`, `missing:summary|reviews|artist-bio`, and
+  `errors` when a source couldn't be reached. Filter the dashboard's runs list by tag to
+  see e.g. every run with `errors` (a broken source or API key) or `status:gave-up`.
 - Artist bios live in `artist_info` (one row per artist, shared across albums). A found
   bio is kept until a forced run; a missing one is retried when the artist's albums are,
   at most once every 2 days.
