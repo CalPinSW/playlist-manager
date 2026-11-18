@@ -34,6 +34,9 @@ export const albumUrl = (albumId: string) =>
 export const albumInfoUrl = (albumId: string) =>
   `${API_BASE_URL}/api/albums/${albumId}/info`;
 
+export const albumInfoRefreshUrl = (albumId: string) =>
+  `${API_BASE_URL}/api/albums/${albumId}/info/refresh`;
+
 export const addAlbumToPlaylistUrl = (playlistId: string) =>
   `${API_BASE_URL}/api/playlists/${playlistId}/add-album`;
 

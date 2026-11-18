@@ -50,7 +50,13 @@ npm run build:ios:preview  # eas build --platform ios --profile preview
 npm run build:android      # eas build --platform android --profile development
 ```
 
-There is no lint/test script configured in this app. Env vars live in `.env` (`EXPO_PUBLIC_*` prefix — bundled into the client, never put secrets here); see `.env.example`.
+```bash
+npm run lint               # expo lint
+npm run typecheck          # tsc --noEmit
+npm test                   # jest
+```
+
+CI (`.github/workflows/native-ci.yml`) runs all three on every PR touching this app — lint errors fail the build (warnings don't). Env vars live in `.env` (`EXPO_PUBLIC_*` prefix — bundled into the client, never put secrets here); see `.env.example`.
 
 This app ships a prebuilt `ios/` project (widget extension, App Group entitlements) rather than generating it fresh each time — running `npx expo prebuild` will regenerate it and can clobber those native customizations, so avoid it unless you specifically mean to reconfigure native config and know what you're touching.
 
@@ -64,7 +70,7 @@ On the native side (`playlist-manager-native/lib/auth.ts`), Auth0 PKCE runs thro
 
 ### Data model & the `listening_progress` migration
 
-`prisma/schema.prisma` is mid-migration: `playback_state` / `playbackstatealbumrelationship` / `playbackstateplaylistrelationship` are the legacy progress-tracking tables, being replaced by `listening_progress` (plus new `sync_log` and `album_rating` tables). Check which model a given piece of code is reading before extending it — new work should target `listening_progress`, not the legacy tables. `sync_log` stores a per-user `played_at` cursor for the retroactive-history sync described below. Genres reuse the existing `genre`/`albumgenrerelationship` tables — there is no separate genre table for the new features.
+`prisma/schema.prisma` is mid-migration: `playback_state` / `playbackstatealbumrelationship` / `playbackstateplaylistrelationship` are the legacy progress-tracking tables, being replaced by `listening_progress` (plus new `sync_log` and `album_rating` tables). Check which model a given piece of code is reading before extending it — new work should target `listening_progress`, not the legacy tables. `sync_log` stores a per-user `played_at` cursor for the retroactive-history sync described below. Genres reuse the existing `genre`/`albumgenrerelationship` tables — there is no separate genre table for the new features. `album_info` (summary, critical reception, review links, Last.fm stats) and `artist_info` (bio) cache third-party enrichment from MusicBrainz/Wikipedia/Last.fm, written only by the `enrich-album-info` Trigger.dev task — see `playlist-manager-next/app/trigger/CLAUDE.md` for the matching and retry rules.
 
 ### Retroactive playback sync (why there's no live playback tracking)
 

@@ -52,8 +52,35 @@ model album_info {
   summary_source       String?  @db.VarChar(50) // 'wikipedia' | 'lastfm'
   lastfm_listeners     Int?
   lastfm_playcount     Int?
+  wikipedia_url        String?  @db.VarChar(500)
+  // Plain-text "Critical reception" section of the album's Wikipedia article.
+  reception            String?  @db.Text
+  // Review URLs linked from the MusicBrainz release group: [{ url, source }].
+  review_links         Json?
   fetched_at           DateTime @default(now())
+  // When enrichment is next attempted automatically (see scheduleNextRefresh in
+  // enrichAlbumInfo.ts). Null = no further automatic checks: the info is complete, or the
+  // retries have run out. A manual refresh from the info screen still works.
+  next_refresh_at      DateTime?
+  // Automatic/manual enrichment runs so far; drives the exponential retry backoff.
+  refresh_attempts     Int      @default(0)
   album                album    @relation(fields: [album_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([next_refresh_at])
+}
+
+// Cached biography for an artist (Wikipedia, falling back to Last.fm). One row per artist,
+// shared by every album they appear on; written by the enrich-album-info task.
+model artist_info {
+  artist_id     String   @id @db.VarChar(255)
+  mb_artist_id  String?  @db.VarChar(255)
+  // Short descriptor, e.g. "American rapper and producer".
+  description   String?  @db.VarChar(500)
+  bio           String?  @db.Text
+  bio_source    String?  @db.VarChar(50) // 'wikipedia' | 'lastfm'
+  url           String?  @db.VarChar(500) // "read more" link for bio_source
+  fetched_at    DateTime @default(now())
+  artist        artist   @relation(fields: [artist_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model album_notes {
@@ -96,6 +123,7 @@ model artist {
   uri                     String                    @db.VarChar(255)
   albumartistrelationship albumartistrelationship[]
   trackartistrelationship trackartistrelationship[]
+  artist_info             artist_info?
 }
 
 model genre {

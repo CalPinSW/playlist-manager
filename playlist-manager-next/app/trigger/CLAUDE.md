@@ -13,9 +13,39 @@ from `dirs: ['./app/trigger']`. See the Trigger.dev v4 API rules in the repo-roo
 | `sync-playlist` | `syncPlaylist.ts` | `task` | fired by `sync-recently-played` | Re-fetch one playlist's albums from Spotify when new listening activity is seen |
 | `update-users-playlist-data-scheduled` | `updateUsersPlaylistDataScheduled.ts` | `schedules.task` | cron `0 0 * * 6` (00:00 Sat UTC) | Fan out `update-playlist-data` over every user |
 | `update-playlist-data` | `updatePlaylistData.ts` | `task` | fired by the weekly scheduled task | Discover/refresh all of one user's "…Albums…" playlists |
-| `enrich-album-info` | `enrichAlbumInfo.ts` | `task` | queued by `GET /api/albums/[albumId]/info`, `enrich-missing-album-info` and `backfill-album-info` — always via `app/api/albums/utilities/triggerAlbumEnrichment.ts`, which dedupes with a global per-album idempotency key (6h TTL) and gives on-demand (info-screen) runs priority over sweep backlog | Fetch MusicBrainz genres/type + Wikipedia summary + Last.fm listener/playcount stats (and bio fallback) for one album, persist to `album_info` + `genre`/`albumgenrerelationship`. `queue.concurrencyLimit: 1` — MusicBrainz's ~1 req/sec limit is only enforced in-process by `musicbrainz-api`, so this caps actual concurrent runs across the whole environment instead. Last.fm needs `LASTFM_API_KEY`; without it that source silently returns nothing |
-| `enrich-missing-album-info` | `enrichMissingAlbumInfo.ts` | `schedules.task` | cron `0 * * * *` (hourly) | Queue `enrich-album-info` for up to 200 albums with no `album_info` row (i.e. newly synced albums), so info is ready before anyone opens it and nothing depends solely on the route's on-demand trigger |
-| `backfill-album-info` | `backfillAlbumInfo.ts` | `task` | manual (dashboard/CLI), one-off | Find every album with no `album_info` row or zero linked genres and batch-trigger `enrich-album-info` for each |
+| `enrich-album-info` | `enrichAlbumInfo.ts` | `task` | queued when a playlist sync creates a new album (`getOrCreateAlbum`), by `GET /api/albums/[albumId]/info` (when due), by `POST /api/albums/[albumId]/info/refresh` (manual), by `enrich-missing-album-info` and by `backfill-album-info` — always via `app/api/albums/utilities/triggerAlbumEnrichment.ts`, which dedupes with a global per-album idempotency key (6h TTL) and gives on-demand (info-screen) runs priority over sweep backlog | For one album: MusicBrainz genres/type/review links, Wikipedia summary + "Critical reception" section, Last.fm stats, and a bio per artist (first 2). Persists to `album_info`, `artist_info`, `genre`/`albumgenrerelationship`. `queue.concurrencyLimit: 1` — MusicBrainz's ~1 req/sec limit is only enforced in-process by `musicbrainz-api`, so this caps actual concurrent runs across the whole environment instead. Last.fm needs `LASTFM_API_KEY` **in the Trigger.dev environment**; without it that source logs one warning and returns nothing |
+| `enrich-missing-album-info` | `enrichMissingAlbumInfo.ts` | `schedules.task` | cron `0 * * * *` (hourly) | Queue `enrich-album-info` for up to 200 albums: first those with no `album_info` row, then incomplete ones whose `next_refresh_at` has passed |
+| `backfill-album-info` | `backfillAlbumInfo.ts` | `task` | manual (dashboard/CLI) | Batch-trigger `enrich-album-info` for every album that has no info or is due a re-check; payload `{ "all": true }` force-re-enriches every album, including complete and given-up ones |
+
+### Album enrichment (`app/api/albums/utilities/enrichAlbumInfo.ts`)
+
+- **Matching is validated, never guessed.** A MusicBrainz release group is only accepted
+  if its title matches (ignoring punctuation and "(Deluxe Edition)"-style suffixes) *and*
+  the artist is credited (`pickReleaseGroupMatch`). When MusicBrainz has no Wikidata link —
+  normal for new releases — Wikipedia is searched directly and a hit only counts if its
+  short description says it's an album by that artist (`isAlbumArticle`). Same idea for
+  artists (`isArtistArticle`). Keep it that way: a wrong match shows another record's
+  reviews under this album.
+- **Only incomplete albums are re-checked, with exponential backoff, for one year**
+  (`scheduleNextRefresh` / `retryDelayDays`, state in `album_info.next_refresh_at` +
+  `refresh_attempts`). Albums are first enriched on release day, when there is usually
+  nothing written yet, so an album missing a summary, reviews (reception text or review
+  links) or its primary artist's bio is re-checked after 2, 4, 8, 16, 32, 64, 128 and 111
+  days — the last gap is shortened so the final check lands 365 days after the first —
+  and then given up on. `next_refresh_at` **null means "no automatic checks"**: the album
+  is complete or out of retries. Complete albums are never re-fetched automatically. A run
+  where a source errored counts as an attempt like any other, so a source that stays
+  broken can't cause endless retries.
+- **Manual re-check**: `POST /api/albums/[albumId]/info/refresh` (the info screen's
+  "Check again") queues a forced run for any album, complete or given-up, via
+  `triggerAlbumEnrichmentManual` — its own 1-minute idempotency key, so it isn't swallowed
+  by the 6h dedupe. `force` also re-fetches artist bios. `backfill-album-info` with
+  `{ "all": true }` does the same for every album.
+- **A failed lookup never overwrites stored data** (`hadErrors`), but a clean run that
+  finds nothing does clear it.
+- Artist bios live in `artist_info` (one row per artist, shared across albums). A found
+  bio is kept until a forced run; a missing one is retried when the artist's albums are,
+  at most once every 2 days.
 
 Cron expressions are **UTC**.
 

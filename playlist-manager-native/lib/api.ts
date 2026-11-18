@@ -8,7 +8,7 @@
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { getValidAccessToken, ReauthRequiredError } from './auth';
-import { API_ENDPOINTS, albumUrl, albumInfoUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl, resumePlaybackUrl } from '../constants/api';
+import { API_ENDPOINTS, albumUrl, albumInfoUrl, albumInfoRefreshUrl, playlistAlbumsUrl, addAlbumToPlaylistUrl, ratingsUrl, nowPlayingUrl, resumePlaybackUrl } from '../constants/api';
 
 export class AuthError extends Error {
   constructor(message = 'Not authenticated') {
@@ -331,28 +331,62 @@ export async function fetchAlbumDetail(albumId: string): Promise<AlbumDetail> {
   return res.json();
 }
 
+export interface AlbumReviewLink {
+  url: string;
+  /** Publication hostname, e.g. "pitchfork.com". */
+  source: string;
+}
+
+export interface AlbumArtistBio {
+  id: string;
+  name: string;
+  /** Short descriptor, e.g. "American rock band". */
+  description: string | null;
+  bio: string;
+  bioSource: 'wikipedia' | 'lastfm' | null;
+  /** "Read more" link for the bio's source. */
+  url: string | null;
+}
+
 export interface AlbumInfo {
   albumId: string;
   type: string | null;
   summary: string | null;
   summaryHtml: string | null;
+  summarySource: 'wikipedia' | 'lastfm' | null;
+  wikipediaUrl: string | null;
+  /** Wikipedia's "Critical reception" section as plain text. */
+  reception: string | null;
+  /** Links to published reviews (from MusicBrainz). */
+  reviewLinks: AlbumReviewLink[];
+  /** Bios for the album's artists — only artists that have one. */
+  artists: AlbumArtistBio[];
   /** Last.fm listener/play counts — null if Last.fm has no match or isn't configured. */
   listeners: number | null;
   playcount: number | null;
+  /** When the info was last looked up — changes each time an enrichment run completes. */
   fetchedAt: string | null;
+  /**
+   * When the server will next re-check automatically. Null once the info is complete or
+   * the retries (exponential backoff over a year) have run out — `refreshAlbumInfo` still
+   * forces a re-check.
+   */
+  nextRefreshAt: string | null;
   /** True when nothing is cached for this album yet. */
   pending: boolean;
   /**
-   * True when a background enrichment run is queued as of this response — poll while
-   * `pending && enrichmentQueued`. `pending` without it means queuing failed server-side.
+   * True when a background enrichment run is queued as of this response (the first fetch,
+   * or a refresh of info that was due) — poll while it's set. `pending` without it means
+   * queuing failed server-side.
    */
   enrichmentQueued: boolean;
 }
 
 /**
  * GET /api/albums/[albumId]/info — MusicBrainz/Wikipedia/Last.fm enrichment (type,
- * summary, Last.fm stats). May return `pending: true` with no summary on first view of an
- * album — the server queues a background fetch, so re-fetch shortly to pick up the result.
+ * summary, critical reception, review links, artist bios, Last.fm stats). May return
+ * `pending: true` with nothing in it on first view of an album — the server queues a
+ * background fetch, so re-fetch shortly to pick up the result.
  */
 export async function fetchAlbumInfo(albumId: string): Promise<AlbumInfo> {
   const res = await authedFetch(albumInfoUrl(albumId));
@@ -362,6 +396,20 @@ export async function fetchAlbumInfo(albumId: string): Promise<AlbumInfo> {
     throw new Error(`fetchAlbumInfo failed: ${res.status}`);
   }
   return res.json();
+}
+
+/**
+ * POST /api/albums/[albumId]/info/refresh — ask the server to look this album up again,
+ * whatever state its info is in. Returns once the run is queued; poll `fetchAlbumInfo`
+ * until `fetchedAt` changes to see the result.
+ */
+export async function refreshAlbumInfo(albumId: string): Promise<void> {
+  const res = await authedFetch(albumInfoRefreshUrl(albumId), { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[api] refreshAlbumInfo failed:', res.status, body);
+    throw new Error(`refreshAlbumInfo failed: ${res.status}`);
+  }
 }
 
 /**
