@@ -50,7 +50,13 @@ npm run build:ios:preview  # eas build --platform ios --profile preview
 npm run build:android      # eas build --platform android --profile development
 ```
 
-There is no lint/test script configured in this app. Env vars live in `.env` (`EXPO_PUBLIC_*` prefix — bundled into the client, never put secrets here); see `.env.example`.
+```bash
+npm run lint               # expo lint
+npm run typecheck          # tsc --noEmit
+npm test                   # jest
+```
+
+CI (`.github/workflows/native-ci.yml`) runs all three on every PR touching this app — lint errors fail the build (warnings don't). Env vars live in `.env` (`EXPO_PUBLIC_*` prefix — bundled into the client, never put secrets here); see `.env.example`.
 
 This app ships a prebuilt `ios/` project (widget extension, App Group entitlements) rather than generating it fresh each time — running `npx expo prebuild` will regenerate it and can clobber those native customizations, so avoid it unless you specifically mean to reconfigure native config and know what you're touching.
 
