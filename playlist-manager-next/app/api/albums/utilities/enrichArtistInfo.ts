@@ -25,6 +25,12 @@ export function artistInfoIsFresh(info: Pick<artist_info, 'bio' | 'fetched_at'> 
 
 export interface ArtistEnrichmentResult {
   hasBio: boolean;
+  /** Where the stored bio came from ('wikipedia' | 'lastfm'), or null without one. */
+  bioSource: string | null;
+  /** True when the cached bio was fresh enough that no lookups were made. */
+  cached: boolean;
+  /** Sources that couldn't be reached on this run, e.g. "Wikipedia search". */
+  errors: string[];
   /** A source couldn't be reached, so "no bio" may not be the real answer. */
   hadErrors: boolean;
 }
@@ -44,14 +50,24 @@ export async function enrichArtistInfo(
   mbArtistIdHint?: string | null,
   force = false
 ): Promise<ArtistEnrichmentResult> {
-  if (!force && artistInfoIsFresh(existing)) return { hasBio: !!existing?.bio, hadErrors: false };
+  if (!force && artistInfoIsFresh(existing)) {
+    return {
+      hasBio: !!existing?.bio,
+      bioSource: existing?.bio_source ?? null,
+      cached: true,
+      errors: [],
+      hadErrors: false
+    };
+  }
 
   let hadErrors = false;
+  const errors: string[] = [];
   const attempt = async <T>(label: string, lookup: () => Promise<T | null>): Promise<T | null> => {
     try {
       return await lookup();
     } catch (error) {
       hadErrors = true;
+      errors.push(label);
       console.error(`[enrichArtistInfo] ${label} failed for artist ${artist.id} (${artist.name})`, error);
       return null;
     }
@@ -105,7 +121,9 @@ export async function enrichArtistInfo(
 
   // A lookup that errored says nothing about whether a bio exists, so don't let it wipe
   // one that an earlier run found.
-  if (!bio && hadErrors && existing?.bio) return { hasBio: true, hadErrors };
+  if (!bio && hadErrors && existing?.bio) {
+    return { hasBio: true, bioSource: existing.bio_source, cached: false, errors, hadErrors };
+  }
 
   const data = {
     mb_artist_id: mbArtistId ?? null,
@@ -121,5 +139,5 @@ export async function enrichArtistInfo(
     create: { artist_id: artist.id, ...data }
   });
 
-  return { hasBio: !!bio, hadErrors };
+  return { hasBio: !!bio, bioSource, cached: false, errors, hadErrors };
 }

@@ -182,6 +182,50 @@ describe('enrichAlbumInfo', () => {
     expect(savedAlbumInfo()).toMatchObject({ next_refresh_at: null, refresh_attempts: 1 });
   });
 
+  it('reports a complete run, including where each piece came from', async () => {
+    mocks.fetchMBReleaseGroup.mockResolvedValue({
+      id: 'rg-1',
+      'primary-type': 'Album',
+      'artist-credit': [{ name: 'Royal Blood', artist: { id: 'mb-artist', name: 'Royal Blood' } }],
+      relations: [{ type: 'review', url: { resource: 'https://www.nme.com/reviews/dead-company' } }]
+    });
+    mocks.wiki.searchWikipediaAlbumTitle.mockResolvedValue('Dead Company');
+    mocks.wiki.searchWikipediaArtistTitle.mockResolvedValue('Royal Blood');
+    mocks.wiki.fetchWikipediaSummary.mockImplementation(async (title: string) => wikipediaPage(title));
+
+    const report = await enrichAlbumInfo('album-1');
+
+    expect(report).toMatchObject({
+      albumId: 'album-1',
+      album: 'Dead Company — Royal Blood',
+      status: 'complete',
+      missing: [],
+      found: {
+        musicBrainz: true,
+        summary: 'wikipedia',
+        reception: false,
+        reviewLinks: 1,
+        lastFmStats: false,
+        artistBios: [{ name: 'Royal Blood', source: 'wikipedia', cached: false }]
+      },
+      errors: [],
+      attempts: 1,
+      nextRefreshAt: null
+    });
+  });
+
+  it('reports what is missing, which lookups failed, and when it will retry', async () => {
+    mocks.fetchMBReleaseGroup.mockRejectedValue(new Error('MusicBrainz 503'));
+    mocks.searchMBArtistId.mockRejectedValue(new Error('MusicBrainz 503'));
+
+    const report = await enrichAlbumInfo('album-1');
+
+    expect(report.status).toBe('incomplete');
+    expect(report.missing).toEqual(['summary', 'reviews', 'artist-bio']);
+    expect(report.errors).toEqual(['MusicBrainz lookup', 'MusicBrainz artist search (Royal Blood)']);
+    expect(daysUntil(new Date(report.nextRefreshAt), new Date())).toBe(FIRST_RETRY_DAYS);
+  });
+
   it('falls back to Wikipedia search and Last.fm when MusicBrainz has no match', async () => {
     mocks.wiki.searchWikipediaAlbumTitle.mockResolvedValue('Dead Company (album)');
     mocks.wiki.fetchWikipediaSummary.mockImplementation(async (title: string) => wikipediaPage(title));
@@ -258,6 +302,7 @@ describe('enrichAlbumInfo', () => {
       refresh_attempts: 9,
       next_refresh_at: null
     });
+    expect((await enrichAlbumInfo('album-1')).status).toBe('gave-up');
   });
 
   it('re-fetches a cached artist bio only when forced', async () => {
@@ -293,8 +338,9 @@ describe('enrichAlbumInfo', () => {
   it('records the attempt for an album with no artists so it is not re-queued forever', async () => {
     mocks.prisma.album.findUnique.mockResolvedValue(album({ albumartistrelationship: [] }));
 
-    await enrichAlbumInfo('album-1');
+    const report = await enrichAlbumInfo('album-1');
 
+    expect(report.status).toBe('skipped');
     expect(mocks.fetchMBReleaseGroup).not.toHaveBeenCalled();
     expect(savedAlbumInfo().next_refresh_at).toBeInstanceOf(Date);
     expect(savedAlbumInfo().refresh_attempts).toBe(1);
