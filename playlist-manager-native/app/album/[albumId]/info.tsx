@@ -212,7 +212,7 @@ export default function AlbumInfoScreen() {
                   <Text style={styles.checkButtonText}>Check again</Text>
                 </Pressable>
                 {recheckError && (
-                  <Text style={styles.footerError}>Couldn't start a check. Please try again.</Text>
+                  <Text style={styles.footerError}>{"Couldn't start a check. Please try again."}</Text>
                 )}
               </View>
             </>
